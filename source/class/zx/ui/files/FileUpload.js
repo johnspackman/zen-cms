@@ -10,9 +10,9 @@ qx.Class.define("zx.ui.files.FileUpload", {
     let layout = new qx.ui.layout.HBox(5).set({ alignY: "middle" });
     this._setLayout(layout);
 
-    this._add(this._createChildControl("lbl"));
-    this._add(this._createChildControl("btnUpload"));
-    this._add(this._createChildControl("btnClear"));
+    this._add(this.getChildControl("lbl"));
+    this._add(this.getChildControl("btnUpload"));
+    this._add(this.getChildControl("btnClear"));
 
     let mgr = qx.core.Init.getApplication().getZxUploadMgr();
     mgr.addListener("addFile", this.__onUploadMgrAddFile, this);
@@ -47,6 +47,10 @@ qx.Class.define("zx.ui.files.FileUpload", {
   members: {
     _applyValue(value, oldValue) {
       this.getChildControl("btnClear").setVisibility(value ? "visible" : "excluded");
+      let lbl = this.getChildControl("lbl");
+      lbl.setValue(value ? `<u>${value.getOriginalFilename()}</u>` : "No File");
+      lbl.setEnabled(!!value);
+      lbl.setCursor(!!value ? "pointer" : "default");
     },
 
     /**@override */
@@ -61,14 +65,6 @@ qx.Class.define("zx.ui.files.FileUpload", {
             },
 
             true
-          );
-          this.bind(
-            "value.originalFilename",
-            new zx.utils.Target(value => {
-              lbl.setValue(value ? `<u>${value}</u>` : "No File");
-              lbl.setEnabled(!!value);
-              lbl.setCursor(!!value ? "pointer" : "default");
-            })
           );
 
           lbl.addListener("click", this.__onDownloadClicked, this);
