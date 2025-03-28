@@ -1,7 +1,7 @@
 qx.Theme.define("zx.ui.theme.avocado.MAppearance", {
   appearances: {
-    "file-upload": "textfield",
-    "file-upload/btn-upload": "button",
-    "file-upload/btn-delete": "button",
+    "uploaded-file": "textfield",
+    "uploaded-file/btnUpload": "button",
+    "uploaded-file/btnClear": "button"
   }
 });

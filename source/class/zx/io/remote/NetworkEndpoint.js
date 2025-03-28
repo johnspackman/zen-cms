@@ -862,9 +862,9 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
           }
         }
 
-        return {
+        return reply.json({
           status: "ok"
-        };
+        });
       }
     },
 

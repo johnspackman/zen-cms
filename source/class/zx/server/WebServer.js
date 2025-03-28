@@ -1026,7 +1026,7 @@ qx.Class.define("zx.server.WebServer", {
      *
      * @returns {fastify.Response}
      */
-    getCurrentReponse() {
+    getCurrentResponse() {
       let instance = zx.server.Standalone.getInstance();
       if (!(instance instanceof zx.server.WebServer)) {
         return null;

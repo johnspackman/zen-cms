@@ -7,3 +7,4 @@ qx_packages
 /tmp/
 /temp/
 website-data/database-status.json
+puppeteer-server/release/runtime
