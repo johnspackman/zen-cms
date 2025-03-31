@@ -23,20 +23,62 @@ qx.Class.define("zx.reports.Group", {
 
   /**
    * Constructor
-   *
-   * @param {String[]} fieldNames names of columns to group by
    */
-  construct(fieldNames) {
+  construct(valueAccessor) {
     super();
-    this.__fieldNames = fieldNames || [];
     this.__accumulators = {};
+    if (valueAccessor) {
+      this.setValueAccessor(valueAccessor);
+    }
   },
 
   properties: {
-    /** The child which is executed for every row in this group */
-    child: {
+    /** How to get the title; either a path or a function that is called with the row from datasource as a parameter.
+     * Defaults to `${valueAccessor}.title`, or just `title` if `valueAccessor` is null
+     * @type {String|Function}
+     */
+    titleAccessor: {
+      init: null,
+      nullable: true
+    },
+
+    /** How to get the value's uuid; either a path or a function that is called with the row from datasource as a parameter
+     * Defaults to `${valueAccessor}._uuid`, or just `_uuid` if `valueAccessor` is null
+     * @type {String|Function}
+     */
+    valueUuidAccessor: {
+      init: null,
+      nullable: true
+    },
+
+    /** How to get the value used for sorting; either a path or a function that is called with the row from datasource as a
+     * parameter.  If null, this defaults to the title
+     * @type {String|Function}
+     */
+    valueAccessor: {
+      init: null,
+      nullable: true
+    },
+
+    /** How to sort the group; can be null, "asc", "desc", or a comparison function */
+    sortMethod: {
+      init: null,
+      check: "Function"
+    },
+
+    /** How to get the extra data; either a path or a function that is called with the row from datasource as a parameter
+     *
+     * @type {String|Function}
+     */
+    extraDataAccessor: {
+      init: null,
+      nullable: true
+    },
+
+    /** The each which is executed for every row in this group */
+    each: {
       check: "zx.reports.Block",
-      apply: "_applyChild"
+      apply: "_applyEach"
     }
   },
 
@@ -48,18 +90,18 @@ qx.Class.define("zx.reports.Group", {
     __accumulators: null,
 
     /**
-     * Apply for `child`
+     * Apply for `each`
      */
-    _applyChild(value, oldValue) {
+    _applyEach(value, oldValue) {
       if (oldValue) {
         if (oldValue.getParent() !== this) {
-          throw new Error("Child has wrong parent");
+          throw new Error("Each has wrong parent");
         }
         oldValue.setParent(null);
       }
       if (value) {
         if (value.getParent() !== null) {
-          throw new Error("Child has a parent already");
+          throw new Error("Each has a parent already");
         }
         value.setParent(this);
       }
@@ -92,41 +134,31 @@ qx.Class.define("zx.reports.Group", {
      */
     getAccumulator(id) {
       let acc = this.__accumulators[id];
-      return acc || super.getAccumulator(id);
+      return acc;
     },
 
     /**
      * @override
      */
-    async _executeImpl(ds, result) {
-      let values = this.getValues(ds);
-      let pass;
+    async executeBefore(row) {
       for (let id in this.__accumulators) {
-        this.__accumulators[id].reset(ds);
+        this.__accumulators[id].reset();
       }
-      await this._before(ds, result);
-      for (pass = 0; ; pass++) {
-        for (let id in this.__accumulators) {
-          this.__accumulators[id].update(ds);
-        }
-        await this._render(this.getChild(), ds, result);
-        let newValues = this.getValues(ds);
-        let groupHasChanged = !qx.lang.Array.equals(values, newValues);
-        if (groupHasChanged || ds.isAtEof()) {
-          break;
-        }
-      }
-      await this._after(ds, result);
+      return await super.executeBefore(row);
     },
 
     /**
-     * Returns an array of values for the column names
-     *
-     * @param {zx.reports.datasource.AbstractDataSource} ds
-     * @returns {Object[]}
+     * @override
      */
-    getValues(ds) {
-      return this.__fieldNames.map(name => ds.get(name));
+    async executeRow(row) {
+      for (let id in this.__accumulators) {
+        this.__accumulators[id].update(row);
+      }
+      let each = this.getEach();
+      if (each) {
+        return await each.executeRow(row);
+      }
+      return await super.executeRow(row);
     }
   }
 });

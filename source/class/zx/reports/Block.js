@@ -21,7 +21,11 @@
  */
 qx.Class.define("zx.reports.Block", {
   extend: qx.core.Object,
-  type: "abstract",
+
+  construct(fnOnRow) {
+    super();
+    this.__fnOnRow = fnOnRow;
+  },
 
   properties: {
     /** Optional parent block - do not set this manually */
@@ -47,109 +51,70 @@ qx.Class.define("zx.reports.Block", {
   },
 
   members: {
+    __fnOnRow: null,
+
     /**
-     * Creates the output
+     * Creates the output for before the row
      *
-     * @param {zx.reports.datasource.AbstractDataSource} ds the datasource
-     * @return {qx.html.Element} the content
+     * @param {*} row the current row from the datasource
      */
-    async execute(ds, result) {
-      if (!result) {
-        result = <div></div>;
+    async executeBefore(row) {
+      let before = this.getBefore();
+      return await this._render(before, row);
+    },
+
+    /**
+     * Creates the output for after the row
+     *
+     * @param {*} row the current row from the datasource
+     */
+    async executeAfter(row) {
+      let after = this.getAfter();
+      return await this._render(after, row);
+    },
+
+    /**
+     * Creates the output for the row
+     *
+     * @param {*} row the current row from the datasource
+     */
+    async executeRow(row) {
+      if (!this.__fnOnRow) {
+        throw new Error(`No onRow function defined for ${this.classname}`);
       }
-
-      await this._before(ds, result);
-      await this._executeImpl(ds, result);
-      await this._after(ds, result);
-
-      return result;
+      return await this._render(await this.__fnOnRow(row), row);
     },
 
     /**
-     * Called to create the body of the content
+     * Provides the an opportunity to wrap the content for a row
      *
-     * @param {zx.reports.datasource.AbstractDataSource} ds the datasource
-     * @param {qx.html.Element} result where to append any content
-     */
-    async _executeImpl(ds, result) {
-      throw new Error(`No such implementation for ${this.classname}._executeImpl`);
-    },
-
-    /**
-     * Gets an accumulator with a given ID
-     *
-     * @param {String} id
+     * @param {*} row the current row from the datasource
+     * @param {qx.html.Element[]} content the content previously compiled for this group for the row
      * @returns
      */
-    getAccumulator(id) {
-      let parent = this.getParent();
-      return parent ? parent.getAccumulator() : null;
+    async executeWrap(row, content) {
+      return content;
     },
 
     /**
      * Helper method that renders a block, depending on what it is.  Does nothing if block is null
      *
      * @param {zx.reports.Block|qx.html.Element?} block the block to render
-     * @param {zx.reports.datasource.AbstractDataSource} ds the datasource
-     * @param {qx.html.Element} result where to append the rendered data
+     * @param {row} the current row from the datasource
+     * @return {qx.html.Element?} the result
      */
-    async _render(block, ds, result) {
+    async _render(block, row) {
       if (!block) {
-        return;
+        return null;
       }
 
       if (block instanceof qx.html.Node) {
-        result.add(block);
+        return block;
       } else if (block instanceof zx.reports.Block) {
-        let html = await block.execute(ds);
-        result.add(html);
+        return await block.executeRow(row);
       } else {
         throw new Error(`Unknown type of block: ${block.classname}`);
       }
-    },
-
-    /**
-     * Called before the block
-     *
-     * @param {zx.reports.datasource.AbstractDataSource} ds the datasource
-     * @param {qx.html.Element} result where to append any content
-     */
-    async _before(ds, result) {
-      await this._render(this.getBefore(), ds, result);
-    },
-
-    /**
-     * Called after the block
-     *
-     * @param {zx.reports.datasource.AbstractDataSource} ds the datasource
-     * @param {qx.html.Element} result where to append any content
-     */
-    async _after(ds, result) {
-      await this._render(this.getAfter(), ds, result);
-    },
-
-    /**
-     * Called when a child is added
-     *
-     * @param {zx.reports.Block} child
-     */
-    _addChild(child) {
-      if (qx.core.Environment.get("qx.debug")) {
-        this.assertTrue(child.getParent() === null);
-      }
-      child.setParent(this);
-    },
-
-    /**
-     * Called when a child is removed
-     *
-     * @param {zx.reports.Block} child
-     */
-    _removeChild(child) {
-      if (qx.core.Environment.get("qx.debug")) {
-        this.assertTrue(child.getParent() === this);
-      }
-      child.setParent(null);
     }
   }
 });
