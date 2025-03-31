@@ -44,6 +44,9 @@ qx.Class.define("zx.server.puppeteer.TakeScreenshotWork", {
       this.debug("Puppeteer client stopped");
 
       return "success!";
-    }
+    },
+
+    /**@override*/
+    async abort(worker) {}
   }
 });

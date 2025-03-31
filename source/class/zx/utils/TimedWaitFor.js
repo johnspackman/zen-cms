@@ -26,8 +26,6 @@ qx.Class.define("zx.utils.TimedWaitFor", {
   extend: qx.core.Object,
 
   /**
-   * Constructor
-   *
    * @param {Integer?} duration
    */
   construct(duration) {

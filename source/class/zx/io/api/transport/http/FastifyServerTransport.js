@@ -54,9 +54,11 @@ qx.Class.define("zx.io.api.transport.http.FastifyServerTransport", {
       let route = this.__route;
       const RE_ROUTE = new RegExp(`^${route}`);
 
-      let data = qx.lang.Object.clone(req.body, true);
+      let data = qx.lang.Object.clone(
+        req.body || {},
+        true //deep clone
+      );
       let path = zx.utils.Uri.breakoutUri(req.originalUrl).path.replace(RE_ROUTE, "");
-      path = qx.lang.String.camelCase(path);
       data.path = path;
       data.restMethod = req.method; // TODO: we should only set this if we get a RESTful request; RPC should have no method
 

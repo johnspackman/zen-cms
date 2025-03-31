@@ -59,6 +59,10 @@ qx.Class.define("zx.utils.Debounce", {
     }
   },
 
+  destruct() {
+    this._cancelTimer();
+  },
+
   members: {
     /** @type{Function} the function to call */
     __fn: null,

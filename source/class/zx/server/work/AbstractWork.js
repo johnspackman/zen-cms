@@ -40,6 +40,9 @@ qx.Class.define("zx.server.work.AbstractWork", {
      */
     execute(workResult) {
       throw new Error(`Abstract method 'execute' of ${this.classname} not implemented`);
-    }
+    },
+
+    /**@override*/
+    async abort(worker) {}
   }
 });

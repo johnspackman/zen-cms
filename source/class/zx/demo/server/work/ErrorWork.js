@@ -27,6 +27,9 @@ qx.Class.define("zx.demo.server.work.ErrorWork", {
     async execute(worker) {
       worker.appendWorkLog("I'm about to throw an exception!");
       throw new Error("oops");
-    }
+    },
+
+    /**@override*/
+    async abort(worker) {}
   }
 });

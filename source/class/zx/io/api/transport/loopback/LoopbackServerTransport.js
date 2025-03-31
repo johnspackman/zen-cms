@@ -38,7 +38,6 @@ qx.Class.define("zx.io.api.transport.loopback.LoopbackServerTransport", {
 
     /**
      * Connects to a client
-     * @param {any} id
      * @param {zx.io.api.transport.loopback.LoopbackClientTransport} client
      */
     connect(client) {

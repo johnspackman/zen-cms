@@ -67,6 +67,9 @@ qx.Class.define("zx.demo.server.work.TestChromiumWork", {
       this.debug("Puppeteer client stopped");
 
       return "success!";
-    }
+    },
+
+    /**@override*/
+    async abort(worker) {}
   }
 });

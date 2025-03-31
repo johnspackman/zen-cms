@@ -44,7 +44,8 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
     this.__runningWorkTrackers = {};
     this.__workResultQueue = [];
 
-    //let api = new zx.server.work.pools.WorkerPoolServerApi(this);
+    let api = new zx.server.work.pools.WorkerPoolServerApi(this);
+    zx.io.api.server.ConnectionManager.getInstance().registerApi(api, "/workers/pool");
   },
 
   properties: {
@@ -412,11 +413,11 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
      *
      * @param {string} uuid
      */
-    killWork(uuid) {
+    async killWork(uuid) {
       if (!this.__runningWorkTrackers[uuid]) {
         throw new Error("No work with that UUID");
       }
-      this.__runningWorkTrackers[uuid].killWork();
+      await this.__runningWorkTrackers[uuid].killWork();
       delete this.__runningWorkTrackers[uuid];
     },
 
@@ -424,8 +425,8 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
      *
      * @returns {Object} Information about all the current work that is running
      */
-    getStatusJson() {
-      return Object.values(this.__runningWorkTrackers).map(workerTracker => workerTracker.getWorkResult().getStatusJson());
+    getDescriptionJson() {
+      return Object.values(this.__runningWorkTrackers).map(workerTracker => workerTracker.getWorkResult().getDescriptionJson());
     },
 
     /**
@@ -440,7 +441,7 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
         throw new Error("No work with that UUID");
       }
 
-      return workerTracker.getWorkResult().getStatusJson();
+      return workerTracker.getWorkResult().getDescriptionJson();
     }
   }
 });

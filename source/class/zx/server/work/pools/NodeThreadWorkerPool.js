@@ -40,8 +40,6 @@ qx.Class.define("zx.server.work.pools.NodeThreadWorkerPool", {
     async createPoolableEntity() {
       this.debug(`Creating new NodeThreadWorkerTracker using ${this.__remoteAppPath}`);
       let nodeThread = new Worker(this.__remoteAppPath, {
-        //name: this.classname + "[" + this.toHashCode() + "]",
-        //argv: ["work", "start-worker-thread"],
         workerData: {
           classname: "zx.server.work.runtime.NodeWorkerService"
         }

@@ -82,11 +82,12 @@ qx.Class.define("zx.server.work.WorkResult", {
       this.__workdir = workdir;
       this.__jsonWork = jsonWork;
       await fs.promises.mkdir(this.__workdir, { recursive: true });
-      this.__logStream = fs.createWriteStream(path.join(this.__workdir, "log.txt"));
+      let logFilePath = path.join(this.__workdir, "log.txt");
+      this.__logStream = fs.createWriteStream(logFilePath);
       await fs.promises.writeFile(path.join(this.__workdir, "work.json"), JSON.stringify(jsonWork, null, 2));
       this.__workStatus = {
         started: new Date(),
-        logFile: "log.txt"
+        logFile: path.resolve(logFilePath)
       };
       this.appendWorkLog("Starting work: " + JSON.stringify(jsonWork, null, 2));
       this.writeStatus();
@@ -99,7 +100,8 @@ qx.Class.define("zx.server.work.WorkResult", {
       return {
         workJson: this.__jsonWork,
         workStatus: this.__workStatus,
-        log: await this.getWorkLog()
+        log: await this.getWorkLog(),
+        response: this.response
       };
     },
 
@@ -153,11 +155,14 @@ qx.Class.define("zx.server.work.WorkResult", {
     },
 
     /**
-     * Returns the status of the work as a JSON object; this is persisted to disk with calls
-     * to `writeStatus`
+     * Returns a description of the work
+     * @returns {Object}
      */
-    getStatusJson() {
-      return this.__workStatus;
+    getDescriptionJson() {
+      return {
+        status: this.__workStatus,
+        workJson: this.__jsonWork
+      };
     },
 
     /**

@@ -19,10 +19,6 @@
  * Interface for a scheduler that can be polled for work and notify when work is completed.  This is
  * effectively the Server API for work schedulers.
  *
- * Every work item which is added to a queue is JSON and must comply with the following schema:
- * @typedef WorkJson
- * @property {String} uuid the work UUID
- * @property {String} classname the name of the class to instantiate to perform the work
  *
  */
 qx.Interface.define("zx.server.work.scheduler.ISchedulerApi", {
@@ -35,7 +31,7 @@ qx.Interface.define("zx.server.work.scheduler.ISchedulerApi", {
     /**
      * Polls the queue for work to do.  If there is work to do, it is removed from the queue
      *
-     * @return {WorkJson?} the work to do, or null if there is no work
+     * @return {zx.server.work.IWork.WorkJson?} the work to do, or null if there is no work
      */
     async pollForWork() {},
 

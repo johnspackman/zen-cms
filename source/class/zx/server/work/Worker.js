@@ -24,6 +24,12 @@ qx.Class.define("zx.server.work.Worker", {
   construct() {
     super();
     this.__serverApi = zx.io.api.ApiUtils.createServerApi(zx.server.work.IWorkerApi, this);
+
+    /**
+     * Promise that resolves when the worker has shutdown
+     * and it is safe to terminate the process the worker is running in
+     */
+    this.__promiseShutdown = new qx.Promise();
   },
 
   destruct() {
@@ -45,11 +51,6 @@ qx.Class.define("zx.server.work.Worker", {
       check: "Array",
       apply: "_applyDataMounts"
     }
-  },
-
-  events: {
-    /** Fired when we are asked to shutdown (eg by the WorkerPool) */
-    shutdown: "qx.event.type.Event"
   },
 
   members: {
@@ -89,6 +90,10 @@ qx.Class.define("zx.server.work.Worker", {
       if (this.__workJson) {
         this.__serverApi.publish("log", { caller: this.__workJson.uuid, message });
       }
+    },
+
+    ping() {
+      this.__serverApi.publish("ping");
     },
 
     /**
@@ -161,6 +166,7 @@ qx.Class.define("zx.server.work.Worker", {
       }
 
       let workInstance = new clazz(...(workJson.args || []));
+      this.__workInstance = workInstance;
       this.__workJson = workJson;
       workInstance.setExplicitUuid(workJson.uuid);
 
@@ -187,8 +193,18 @@ qx.Class.define("zx.server.work.Worker", {
     /**
      * @Override
      */
-    shutdown() {
-      this.fireEvent("shutdown");
+    async shutdown() {
+      await this.__workInstance.abort(this);
+      this.dispose();
+      this.__promiseShutdown.resolve();
+    },
+
+    /**
+     * Waits until the worker has shutdown and it is safe to terminate the worker process
+     * @returns {qx.Promise<void>}
+     */
+    async waitUntilShutdown() {
+      return this.__promiseShutdown;
     },
 
     /**

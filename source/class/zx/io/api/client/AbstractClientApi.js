@@ -123,7 +123,7 @@ qx.Class.define("zx.io.api.client.AbstractClientApi", {
 
     /**
      * Terminates the client API, rejecting all pending subscriptions and method calls
-     * Note: This does not clear the session data on the server ATMw
+     * Note: This does not clear the session data on the server ATM
      */
     terminate() {
       if (this.__terminated) {

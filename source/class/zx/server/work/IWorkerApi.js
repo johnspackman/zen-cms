@@ -33,6 +33,12 @@ qx.Interface.define("zx.server.work.IWorkerApi", {
       log: true,
 
       /**
+       * Send when a worker pings the pool,
+       * to show that it's still alive
+       */
+      ping: true,
+
+      /**
        * Sent when a work completes, whether successfully or not
        * @type {object}
        * @prop {string} caller uuid of the work which completed

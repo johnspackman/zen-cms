@@ -302,6 +302,7 @@ qx.Class.define("zx.server.WebServer", {
       await this._initApis(app);
       await this._initWorkScheduler();
       await this._initUrlRules();
+
       return app;
     },
 
@@ -565,6 +566,8 @@ qx.Class.define("zx.server.WebServer", {
         this.error("No work configuration found in cms.json");
         return;
       }
+      await zx.server.email.FlushQueue.createTask();
+      let workerCliPath = config.workerCliPath;
       let poolType = config.pool.type || "local";
       let poolConfig = {
         minSize: config.pool.minSize || 1,
@@ -577,7 +580,7 @@ qx.Class.define("zx.server.WebServer", {
           poolConfig
         });
       } else if (poolType == "node-thread") {
-        pool = new zx.server.work.pools.NodeThreadWorkerPool(null, "./compiled/source-node/cli/index.js").set({
+        pool = new zx.server.work.pools.NodeThreadWorkerPool(null, workerCliPath).set({
           poolConfig
         });
       } else {
@@ -587,11 +590,7 @@ qx.Class.define("zx.server.WebServer", {
           nodeLocation: "host"
         };
 
-        if (qx.core.Environment.get("qx.debug")) {
-          settings.hostNodeCommand = ["./compiled/source-node/cli/index.js", "work", "start-worker"];
-        } else {
-          settings.hostNodeCommand = ["./compiled/build-node/cli/index.js", "work", "start-worker"];
-        }
+        settings.hostNodeCommand = [workerCliPath, `work`, `start-worker`];
 
         if (poolType == "node-process") {
           settings.nodeLocation = "host";
@@ -604,7 +603,7 @@ qx.Class.define("zx.server.WebServer", {
       }
       if (qx.core.Environment.get("qx.debug")) {
         let dockerMounts = pool.getDockerMounts() || [];
-        dockerMounts.push("compiled/source-node:/home/pptruser/app/runtime");
+        dockerMounts.push(`compiled/source-node:/home/pptruser/app/runtime`);
         pool.setDockerMounts(dockerMounts);
       }
       if (config.extraHosts) {

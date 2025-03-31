@@ -32,7 +32,7 @@ qx.Class.define("zx.server.work.pools.WorkerPoolServerApi", {
     this._registerGet("shutdown", () => this.__workerPool.shutdown());
     this._registerGet("kill/{uuid}", (req, res) => this.__workerPool.killWork(req.getPathArgs().uuid));
     this._registerGet("worker-status/{uuid}", (req, res) => this.__workerPool.getWorkerStatusJson(req.getPathArgs().uuid));
-    this._registerGet("status", (req, res) => this.__workerPool.getStatusJson());
+    this._registerGet("status", (req, res) => this.__workerPool.getDescriptionJson());
   },
 
   members: {

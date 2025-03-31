@@ -16,13 +16,12 @@
 * ************************************************************************ */
 
 /**
- * @typedef WorkQueueEntry
- * @property {String} cronExpression the cron expression for the task
- * @property {String} workJson the work to do
+ * Scans the database of tasks `zx.server.work.scheduler.ScheduledTask` for work to be done
+ * and adds it to the QueueScheduler
  */
 qx.Class.define("zx.server.work.scheduler.DbScanner", {
   extend: qx.core.Object,
-  include: [uk.co.spar.services.MMongoClient],
+  include: [zx.utils.mongo.MMongoClient],
 
   /**
    * Constructor; adds work to the QueueScheduler from the database
@@ -32,15 +31,28 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
   construct(queueScheduler) {
     super();
     this.__queueScheduler = queueScheduler;
+
+    /**
+     * @type {qx.data.Array<String>} Array of UUIDs of zx.server.work.scheduler.ScheduledTask
+     * which are waiting until their CRON expression is ready to run
+     */
+    this.__cronTasksOnHold = new qx.data.Array();
+
+    /**
+     * @type {Object<String, cron.CronJob>} Map of CRON task UUIDs to their cron jobs
+     */
+    this.__registeredCronTasks = {};
+
+    /**
+     * All tasks which have been queued on the scheduler and are waiting to be completed
+     * Maps the work JSON UUID to the task JSON (zx.server.work.scheduler.ScheduledTask)
+     */
+    this.__runningTasks = {};
   },
 
   members: {
     /** @type{zx.server.work.scheduler.QueueScheduler} */
     __queueScheduler: null,
-
-    /** @type{Object<String, WorkQueueEntry>} */
-    __pendingImmediateTasks: {},
-    __pendingScheduledTasks: {},
 
     __pollDatabasePromise: null,
 
@@ -80,29 +92,69 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
       let cursor = await this.aggregate(zx.server.work.scheduler.ScheduledTask, [
         {
           $match: {
-            enabled: true,
-            cronExpression: null
+            enabled: true
           }
         }
       ]);
+
       while (await cursor.hasNext()) {
-        let json = await cursor.next();
-        if (!this.__pendingImmediateTasks[json._uuid] && !this.__pendingScheduledTasks[json._uuid]) {
-          delete this.__pendingImmediateTasks[json._uuid];
-          delete this.__pendingScheduledTasks[json._uuid];
-          if (!json.cronExpression) {
-            this.__pendingImmediateTasks[json._uuid] = json;
-            this.debug(`Found immediate task ${json._uuid} in database`);
-            json.workJson.uuid = json._uuid;
-            this.__queueScheduler.pushWork(json.workJson);
-          } else {
-            this.debug(`Found cron task ${json._uuid} in database - CRON IS NOT IMPLEMENETED`);
-            this.__pendingScheduledTasks[json._uuid] = {
-              cronExpression: json.cronExpression,
-              uuid: json._uuid,
-              dateCompleted: json.dateCompleted
-            };
+        let taskJson = await cursor.next();
+        let workJson = taskJson.workJson;
+
+        if (!workJson.uuid) {
+          workJson.uuid = taskJson._uuid + "-work-task";
+        }
+
+        if (!workJson.title) {
+          workJson.title = "Task: " + taskJson.title;
+        }
+
+        if (!workJson.description) {
+          workJson.description = taskJson.description;
+        }
+
+        let taskIsRunning = Object.values(this.__runningTasks).find(task => task._uuid === taskJson._uuid);
+        if (taskIsRunning) {
+          this.debug(`Ignoring task ${taskJson._uuid} because it is still running.`);
+          continue;
+        }
+        if (taskJson.earliestStartDate && taskJson.earliestStartDate.getTime() > new Date().getTime()) {
+          this.debug(`Ignoring task ${taskJson._uuid} because it is not ready to run yet`);
+          continue;
+        }
+
+        if (!qx.core.Environment.get("qx.debug")) {
+          if (taskJson.failCount >= zx.server.work.scheduler.ScheduledTask.MAX_FAIL_COUNT) {
+            this.debug(`Ignoring task ${taskJson._uuid} because it has failed too many times`);
+            continue;
           }
+        }
+
+        if (taskJson.cronExpression) {
+          if (!this.__registeredCronTasks[taskJson._uuid]) {
+            this.debug("Found new CRON task: " + taskJson._uuid);
+            const cron = require("cron");
+            this.__registeredCronTasks[taskJson._uuid] = new cron.CronJob(
+              taskJson.cronExpression,
+              () => this.__cronTasksOnHold.remove(taskJson._uuid),
+              null, // onComplete
+              true
+            );
+          }
+
+          if (!this.__cronTasksOnHold.includes(taskJson._uuid)) {
+            this.debug(`Scheduling CRON task ${taskJson._uuid}`);
+            this.__runningTasks[workJson.uuid] = taskJson;
+            this.__cronTasksOnHold.push(taskJson._uuid);
+            this.__queueScheduler.pushWork(workJson);
+          } else {
+            this.debug(`Ignoring CRON task ${taskJson._uuid} because it's too early to run it yet.`);
+          }
+        } else {
+          //not cron
+          this.__runningTasks[workJson.uuid] = taskJson;
+          this.debug(`Found immediate task ${workJson.uuid} in database: ${taskJson.title}`);
+          this.__queueScheduler.pushWork(workJson);
         }
       }
     },
@@ -114,9 +166,10 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
      */
     async __onWorkStarted(evt) {
       let workJson = evt.getData();
+      let taskJson = this.__runningTasks[workJson.uuid];
       await this.updateOne(
         zx.server.work.scheduler.ScheduledTask,
-        { _uuid: workJson.uuid },
+        { _uuid: taskJson._uuid },
         {
           $set: {
             dateStarted: new Date()
@@ -132,32 +185,45 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
      */
     async __onWorkCompleted(evt) {
       let workResultJson = evt.getData();
-      let uuid = workResultJson.workJson.uuid;
-      if (this.__pendingImmediateTasks[uuid]) {
-        await this.updateOne(
-          zx.server.work.scheduler.ScheduledTask,
-          { _uuid: uuid },
-          {
-            $set: {
-              enabled: false,
-              dateCompleted: new Date()
-            }
-          }
-        );
-        delete this.__pendingImmediateTasks[uuid];
-      } else if (this.__pendingScheduledTasks[uuid]) {
-        let dt = new Date();
-        await this.updateOne(
-          zx.server.work.scheduler.ScheduledTask,
-          { _uuid: uuid },
-          {
-            $set: {
-              dateCompleted: dt
-            }
-          }
-        );
-        this.__pendingScheduledTasks[uuid].dateCompleted = dt;
+      let workUuid = workResultJson.workJson.uuid;
+      let taskJson = this.__runningTasks[workUuid];
+
+      if (!taskJson) {
+        this.warn("should not call here! Scheduler reported task as finished which actually wasn't running.");
+        debugger;
+        return;
       }
+
+      let update = {
+        dateCompleted: new Date(),
+        failCount: 0
+      };
+
+      if (workResultJson.response.exception) {
+        debugger;
+        update.failCount = (taskJson.failCount || 0) + 1;
+        zx.server.email.AlertEmail.getInstance().alert(
+          `A task has failed`,
+          `Task with UUID ${taskJson._uuid} (${taskJson.title}) failed to run.
+          Work JSON output:
+          ${workResultJson.log}`
+        );
+      }
+
+      if (!taskJson.cronExpression && !workResultJson.response.exception) {
+        update.enabled = false;
+      }
+      delete this.__runningTasks[workUuid];
+
+      this.debug(`Task ${taskJson._uuid} completed: ${taskJson.title}`);
+
+      await this.updateOne(
+        zx.server.work.scheduler.ScheduledTask,
+        { _uuid: taskJson._uuid },
+        {
+          $set: update
+        }
+      );
     }
   }
 });

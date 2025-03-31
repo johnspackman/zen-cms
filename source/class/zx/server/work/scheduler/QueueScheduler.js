@@ -22,7 +22,7 @@ const path = require("path");
  * A simple queue based scheduler
  *
  * @typedef WorkQueueEntry
- * @property {WorkJson} workJson the work to do
+ * @property {zx.server.work.IWork.WorkJson} workJson the work to do
  * @property {Promise} promise the promise which resolves when the work is done
  *
  *
@@ -60,22 +60,22 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
   },
 
   members: {
-    /** @type{String?} the directory to store work results */
+    /** @type {String?} the directory to store work results */
     __workDir: null,
 
-    /** @type{String} the directory to store work results, after rotation */
+    /** @type {String} the directory to store work results, after rotation */
     __rotatedWorkDir: null,
 
-    /** @type{Date} the last day that we tried to rotate - we only check once per day */
+    /** @type {Date} the last day that we tried to rotate - we only check once per day */
     __lastRotation: null,
 
-    /** @type{WorkQueueEntry[]} the queue */
+    /** @type {WorkQueueEntry[]} the queue */
     __queue: null,
 
-    /** @type{Object<String, WorkQueueEntry>} the running work, indexed by work UUID */
+    /** @type {Object<String, WorkQueueEntry>} the running work, indexed by work UUID */
     __running: null,
 
-    /** @type{zx.server.work.scheduler.ISchedulerApi} a server API that can be used to call this scheduler */
+    /** @type {zx.server.work.scheduler.ISchedulerApi} a server API that can be used to call this scheduler */
     __serverApi: null,
 
     /**
@@ -127,7 +127,7 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
     /**
      * Adds a work item to the queue
      *
-     * @param {WorkJson} workJson
+     * @param {zx.server.work.IWork.WorkJson} workJson
      * @return {Promise} resolves when the work is completed
      */
     async pushWork(workJson) {
@@ -182,7 +182,7 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
         this.debug(`Work completed for job ${workResultData.workJson.uuid} but not found in running list (Worker Pool has queued this work)`);
       }
       const archiveIt = async () => {
-        let workDir = path.join(this.getWorkDir(), workResultData.workJson.uuid);
+        let workDir = path.join(this.getWorkDir(), zx.server.Standalone.getUuidAsPath(workResultData.workJson.uuid));
         await fs.promises.mkdir(workDir, { recursive: true });
         let workResult = zx.server.work.WorkResult.deserializeFromScheduler(workDir, workResultData);
       };

@@ -25,7 +25,7 @@
  * `complete` to finish.
  */
 qx.Class.define("zx.thin.puppeteer.EmailUtils", {
-  extend: qx.core.Object,
+  type: "static",
 
   statics: {
     /**

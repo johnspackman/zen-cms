@@ -29,6 +29,14 @@ qx.Class.define("zx.server.work.runtime.NodeWorkerService", {
     this.__workerData = workerData;
   },
 
+  environment: {
+    /**
+     * The name of the concrete class to use for the server.
+     * Must be or be a subclass of `zx.server.Standalone`
+     */
+    "zx.server.work.runtime.NodeWorkerService.serverClass": "zx.server.Standalone"
+  },
+
   members: {
     __workerData: null,
 
@@ -39,7 +47,9 @@ qx.Class.define("zx.server.work.runtime.NodeWorkerService", {
         throw new Error(`zx.server.work.runtime.NodeWorkerApp is designed for use in a worker thread and should not be executed in ${currentExecution}`);
       }
 
-      let server = new zx.server.Standalone();
+      let clazz = qx.core.Environment.get("zx.server.work.runtime.NodeWorkerService.serverClass");
+      clazz = qx.Class.getByName(clazz);
+      let server = new clazz();
       await server.start();
 
       let worker = new zx.server.work.Worker();
@@ -49,14 +59,8 @@ qx.Class.define("zx.server.work.runtime.NodeWorkerService", {
       zx.io.api.server.ConnectionManager.getInstance().registerApi(worker.getServerApi(), "/work/worker");
 
       new zx.io.api.transport.nodeworker.NodeWorkerServerTransport();
-      let promise = new qx.Promise();
-      worker.addListener("shutdown", () => {
-        this.info("Shutting down worker thread");
-        worker.dispose();
-        server.stop();
-        promise.resolve();
-      });
-      await promise;
+      await worker.waitUntilShutdown();
+      server.stop();
     }
   }
 });

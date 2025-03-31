@@ -44,6 +44,9 @@ qx.Class.define("zx.demo.server.work.TestWork", {
       }
       // TODO: anything!
       return "success!";
-    }
+    },
+
+    /**@override*/
+    async abort(worker) {}
   }
 });

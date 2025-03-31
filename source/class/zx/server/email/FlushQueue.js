@@ -20,7 +20,7 @@
  */
 qx.Class.define("zx.server.email.FlushQueue", {
   extend: qx.core.Object,
-  include: [zx.utils.MConsoleLog],
+  implement: [zx.server.work.IWork],
   members: {
     /**
      * Flushes the email queue and attempts to send all emails which have not failed to send i.e. have `lastErrorMessage` set to `null`.
@@ -28,54 +28,65 @@ qx.Class.define("zx.server.email.FlushQueue", {
      * @param {boolean} clearQueue If true, we will delete emails that have been successfully sent from the queue.
      *  Otherwise, all emails (even the sent ones) will remain in the queue.
      */
-    async run(clearQueue = true) {
+    async execute(worker, clearQueue = true) {
       let emailsCollection = await zx.server.Standalone.getInstance().getDb().getCollection("zx.server.email.Message");
-      this.debug("Got emails collection.");
+      worker.appendWorkLog("Got emails collection.");
 
-      let websiteName = zx.server.Standalone.getInstance().getWebsiteName();
-      let emailsCursor = await emailsCollection.find({ lastErrorMessage: null, dateDelivered: null, websiteName });
-      this.debug("Got emails cursor.");
+      let emailsCursor = await emailsCollection.find({ lastErrorMessage: null, dateDelivered: null });
+      worker.appendWorkLog("Got emails cursor.");
 
       let sentUuids = [];
-      for await (const emailJson of emailsCursor) {
+      for await (let emailJson of emailsCursor) {
         let email = await zx.server.Standalone.getInstance().findOneObjectByType(zx.server.email.Message, { _uuid: emailJson._uuid }, false);
-        this.debug(`Before sending email ${email.toUuid()}.`);
-        let success = await email.sendEmail(msg => this.log(msg));
-        this.debug(`After sending email ${email.toUuid()}.`);
+        worker.appendWorkLog(`Before sending email ${email.toUuid()}.`);
+        let success = await email.sendEmail(msg => worker.appendWorkLog(msg));
+        worker.appendWorkLog(`After sending email ${email.toUuid()}.`);
         if (success) {
-          this.log(`Email ${email.toUuid()} sent successfully: ${success}`);
+          worker.appendWorkLog(`Email ${email.toUuid()} sent successfully: ${success}`);
           sentUuids.push(email.toUuid());
         }
       }
 
-      this.debug("Traversed email queue.");
+      worker.appendWorkLog("Traversed email queue.");
       if (clearQueue) {
         let server = zx.server.Standalone.getInstance();
         await server.deleteObjectsByType(zx.server.email.Message, { _id: { $in: sentUuids } });
       }
-      this.log("Email queue flushed");
+      worker.appendWorkLog("Email queue flushed");
     },
+    /**@override*/
+    async abort(worker) {}
+  },
 
+  statics: {
     /**
-     * Runs the `run` method in a loop with a specified interval.
-     * @param {number} intervalMs
+     * Creates the tasks which flushes the email queue,
+     * if there isn't one already
      */
-    async runLoop(intervalMs = 10000) {
-      try {
-        await this.run();
-      } catch (e) {
-        this.log("Exception has occused in " + this.classname + ".runLoop(): " + e.stack);
-      } finally {
-        setTimeout(() => this.runLoop(), intervalMs);
-      }
-    },
+    async createTask() {
+      let query = {
+        wellKnownId: "zx.server.email.FlushQueue",
+        websiteName: zx.server.Standalone.getInstance().getWebsiteName()
+      };
 
-    /**
-     * Temporary for debugging statements while we fix a bug
-     * @param {string} msg
-     */
-    debug(msg) {
-      this.log("DEBUG: " + msg);
+      let collection = zx.server.Standalone.getInstance().getDb().getCollection("zx.server.work.scheduler.ScheduledTask");
+      let task = await collection.findOne(query);
+      let uuid = task?._uuid || qx.util.Uuid.createUuidV4();
+
+      await collection.findOneAndUpdate(
+        query,
+        {
+          $set: {
+            _uuid: uuid,
+            enabled: true,
+            cronExpression: "*/20 * * * * *",
+            workJson: {
+              workClassname: "zx.server.email.FlushQueue"
+            }
+          }
+        },
+        { upsert: true }
+      );
     }
   }
 });

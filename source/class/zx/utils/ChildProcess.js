@@ -24,10 +24,11 @@ qx.Class.define("zx.utils.ChildProcess", {
     /**
      * Runs the given command and returns an object containing information on the
      * `exitCode`, the `output`, potential `error`s, and additional `messages`.
+     * @typedef {(msg: string, output: string) => void} Logger Callback for the console output
      * @param {Map} opts options, containing:
      *    cmd {String|String[]} command and arguments
      *    cwd {String} The current working directory
-     *    onConsole {Function} callback for the console output
+     *    onConsole {{log: Logger} | Logger} callback for the console output
      *    copyToConsole {Boolean?} if true, console output is copied to this process' console
      *    mergeOutput {Boolean?} if true, stderr is merged into stdout (this is the default)
      *
@@ -53,7 +54,7 @@ qx.Class.define("zx.utils.ChildProcess", {
         };
 
         if (opts.cwd) {
-          spawnArgs.cmd = opts.cwd;
+          spawnArgs.cwd = opts.cwd;
         }
         let proc = child_process.spawn(cmd, args, spawnArgs);
         let result = {
@@ -63,26 +64,27 @@ qx.Class.define("zx.utils.ChildProcess", {
           messages: null
         };
 
+        let log = opts.onConsole ? opts.onConsole.log ?? opts.onConsole : null;
+
         function onStdout(data) {
-          data = data.toString().trim();
+          data = data.toString();
           if (opts.copyToConsole) {
             console.log(data);
           }
           result.output += data;
 
           if (opts.onConsole) {
-            let log = opts.onConsole.log ?? opts.onConsole;
             log(data, "stdout");
           }
         }
         function onStderr(data) {
-          data = data.toString().trim();
+          data = data.toString();
           if (opts.copyToConsole) {
             console.error(data);
           }
           result.error += data;
           if (opts.onConsole) {
-            opts.onConsole(data, "stderr");
+            log(data, "stderr");
           }
         }
         proc.stdout.on("data", onStdout);
@@ -90,7 +92,11 @@ qx.Class.define("zx.utils.ChildProcess", {
 
         proc.on("close", code => {
           result.exitCode = code;
-          resolve(result);
+          if (code === 0) {
+            resolve(result);
+          } else {
+            reject(result);
+          }
         });
         proc.on("error", err => {
           reject(err);

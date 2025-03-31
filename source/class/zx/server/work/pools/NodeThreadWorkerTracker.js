@@ -45,7 +45,7 @@ qx.Class.define("zx.server.work.pools.NodeThreadWorkerTracker", {
         this.setStatus("dead");
       });
 
-      this.__apiClientTransport = new zx.io.api.transport.nodeworker.NodeWorkerClientTransport("");
+      this.__apiClientTransport = new zx.io.api.transport.nodeworker.NodeWorkerClientTransport();
       await this.__apiClientTransport.connect(this.__nodeThread);
 
       let workerClientApi = zx.io.api.ApiUtils.createClientApi(zx.server.work.IWorkerApi, this.__apiClientTransport, "/work/worker");
@@ -75,7 +75,7 @@ qx.Class.define("zx.server.work.pools.NodeThreadWorkerTracker", {
         this.trace(`Expected exception while shutting down worker: ${ex}`);
       }
       await timedWaitFor.wait();
-      await clientApi.terminate();
+      clientApi.terminate();
       await this._closeContainer();
       this.__nodeThread.terminate();
       this.__nodeThread = null;
