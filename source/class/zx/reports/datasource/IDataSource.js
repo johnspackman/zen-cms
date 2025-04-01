@@ -29,6 +29,7 @@ qx.Interface.define("zx.reports.datasource.IDataSource", {
 
     /**
      * Moves to the next row
+     * @return {Boolean} true if there is a row to read (ie false if at EOF)
      */
     async next() {},
 

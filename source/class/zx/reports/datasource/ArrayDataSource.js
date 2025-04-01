@@ -16,22 +16,22 @@
  * ************************************************************************ */
 
 /**
- * Provides a simple datasource that accesses arrays of JSON objects
+ * Provides a simple datasource that accesses arrays of objects
  */
-qx.Class.define("zx.reports.datasource.JsonDataSource", {
+qx.Class.define("zx.reports.datasource.ArrayDataSource", {
   extend: zx.reports.datasource.AbstractDataSource,
 
-  construct(json) {
+  construct(objects) {
     super();
-    if (!qx.lang.Type.isArray(json)) {
+    if (!qx.lang.Type.isArray(objects)) {
       throw new Error("Expected an array of JSON objects as a datasource");
     }
-    this.__json = json;
+    this.__objects = objects;
   },
 
   members: {
     /** @type{Array} array of JSON objects */
-    __json: null,
+    __objects: null,
 
     /** @type{Integer} current index */
     __index: -1,
@@ -40,7 +40,7 @@ qx.Class.define("zx.reports.datasource.JsonDataSource", {
      * @Override
      */
     _nextImpl() {
-      if (this.__index == this.__json.length - 1) {
+      if (this.__index == this.__objects.length - 1) {
         return false;
       }
 
@@ -52,10 +52,13 @@ qx.Class.define("zx.reports.datasource.JsonDataSource", {
      * @Override
      */
     current() {
-      if (this.__index < 0 || this.__index > this.__json.length - 1) {
+      if (this.__index < 0 || this.__index > this.__objects.length - 1) {
         return null;
       }
-      return this.__json[this.__index];
+      if (this.__objects.getItem) {
+        return this.__objects.getItem(this.__index);
+      }
+      return this.__objects[this.__index];
     }
   }
 });

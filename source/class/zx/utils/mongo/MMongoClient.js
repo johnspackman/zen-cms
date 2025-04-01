@@ -189,22 +189,26 @@ qx.Mixin.define("zx.utils.mongo.MMongoClient", {
 
     /**
      * Shorthand for `set( field = first( field ) )`
-     * @param {string} name The name of the array field to set to it's first item
+     *
      * @example
      * ```js
      * collection.aggregate([
      *   uk.co.spar.services.MongoUtil.setToFirst("$someField"),
      * ]);
      * ```
+     *
+     * @param {string} name The name of the array field to set to it's first item
+     * @return {Object}
      */
     setToFirst(name) {
-      return /**@type {const}*/ {
+      return {
         $set: { [name]: { $first: `$${name}` } }
       };
     },
+
     /**
      * Shorthand for `lookup( field = ... ), set( field = first( field ) )`
-     * @param {$lookup} lookup The lookup to perform. `.foreignField` defaults to `"_uuid"`
+     *
      * @example
      * ```js
      * collection.aggregate([
@@ -223,7 +227,9 @@ qx.Mixin.define("zx.utils.mongo.MMongoClient", {
      *   }),
      * ]);
      * ```
-     * @returns {{$lookup: Object}[]}
+     *
+     * @param {$lookup} lookup The lookup to perform. `.foreignField` defaults to `"_uuid"`
+     * @returns {Object[]}
      */
     lookupFirst(lookup) {
       if (!lookup.from) {
@@ -235,13 +241,14 @@ qx.Mixin.define("zx.utils.mongo.MMongoClient", {
       if ("localField" in lookup) {
         lookup.foreignField ??= "_uuid";
       }
-      return /**@type {const}*/ [
+      return [
         {
           $lookup: lookup
         },
-        /**@type {typeof this.setToFirst} */ zx.utils.mongo.MongoHelpers.setToFirst(lookup.as)
+        zx.utils.mongo.MongoHelpers.setToFirst(lookup.as)
       ];
     },
+
     /**
      * Partial, case insensitive match
      */

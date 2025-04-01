@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * @deprecated use `zx.utils.mongo.MMongoClient` instead
@@ -44,22 +44,25 @@ qx.Class.define("zx.utils.mongo.MongoHelpers", {
   statics: {
     /**
      * Shorthand for `set( field = first( field ) )`
-     * @param {string} name The name of the array field to set to it's first item
+     *
      * @example
      * ```js
      * collection.aggregate([
      *   uk.co.spar.services.MongoUtil.setToFirst("$someField"),
      * ]);
      * ```
+     *
+     * @param {string} name The name of the array field to set to it's first item
      */
     setToFirst(name) {
-      return /**@type {const}*/ {
+      return {
         $set: { [name]: { $first: `$${name}` } }
       };
     },
+
     /**
      * Shorthand for `lookup( field = ... ), set( field = first( field ) )`
-     * @param {$lookup} lookup The lookup to perform. `.foreignField` defaults to `"_uuid"`
+     *
      * @example
      * ```js
      * collection.aggregate([
@@ -78,6 +81,8 @@ qx.Class.define("zx.utils.mongo.MongoHelpers", {
      *   }),
      * ]);
      * ```
+     *
+     * @param {$lookup} lookup The lookup to perform. `.foreignField` defaults to `"_uuid"`
      * @returns {{$lookup: Object}[]}
      */
     lookupFirst(lookup) {
@@ -90,13 +95,14 @@ qx.Class.define("zx.utils.mongo.MongoHelpers", {
       if ("localField" in lookup) {
         lookup.foreignField ??= "_uuid";
       }
-      return /**@type {const}*/ [
+      return [
         {
           $lookup: lookup
         },
-        /**@type {typeof this.setToFirst} */ zx.utils.mongo.MongoHelpers.setToFirst(lookup.as)
+        zx.utils.mongo.MongoHelpers.setToFirst(lookup.as)
       ];
     },
+
     /**
      * Partial, case insensitive match
      */

@@ -32,7 +32,6 @@ qx.Class.define("zx.reports.datasource.AbstractDataSource", {
       }
       this.__position = "before-start";
       await this._openImpl();
-      await this.next();
     },
 
     /**
@@ -56,13 +55,15 @@ qx.Class.define("zx.reports.datasource.AbstractDataSource", {
 
       if (this.__position == "at-eof") {
         this.__position = "beyond-eof";
-        return;
+        return false;
       }
 
       if (!(await this._nextImpl())) {
         this.__position = "at-eof";
+        return false;
       } else {
         this.__position = "on-row";
+        return true;
       }
     },
 
