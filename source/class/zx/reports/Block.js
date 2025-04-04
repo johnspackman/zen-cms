@@ -104,7 +104,7 @@ qx.Class.define("zx.reports.Block", {
      * @return {qx.html.Element?} the result
      */
     async _render(block, row) {
-      if (!block) {
+      if (block === null || block === undefined) {
         return null;
       }
 
@@ -112,9 +112,18 @@ qx.Class.define("zx.reports.Block", {
         return block;
       } else if (block instanceof zx.reports.Block) {
         return await block.executeRow(row);
-      } else {
-        throw new Error(`Unknown type of block: ${block.classname}`);
+      } else if (qx.lang.Type.isArray(block) || block instanceof qx.data.Array) {
+        let result = [];
+        for (let child of block) {
+          let childResult = await this._render(child, row);
+          if (childResult) {
+            result.push(childResult);
+          }
+        }
+        return result;
       }
+
+      return String(block);
     }
   }
 });

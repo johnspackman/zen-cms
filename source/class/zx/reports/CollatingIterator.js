@@ -41,22 +41,27 @@ qx.Class.define("zx.reports.CollatingIterator", {
     _flattenGroups() {
       let groupInfos = [];
       let group = this.__report;
-      while (group instanceof zx.reports.Group) {
-        let sortMethod = group.getSortMethod();
-        if (sortMethod == null) {
-          sortMethod = function () {};
-        } else if (sortMethod == "asc") {
-          sortMethod = function (a, b) {
-            return a.localeCompare(b);
-          };
-        } else if (sortMethod == "desc") {
-          sortMethod = function (a, b) {
-            return b.localeCompare(a);
-          };
-        } else if (typeof sortMethod != "function") {
-          throw new Error(`Invalid sort method ${sortMethod}`);
-        }
 
+      const compare = (a, b) => {
+        if (a === undefined) {
+          a = null;
+        }
+        if (b === undefined) {
+          b = null;
+        }
+        if (a === null && b === null) {
+          return 0;
+        }
+        if (a === null) {
+          return -1;
+        }
+        if (b === null) {
+          return 1;
+        }
+        return a.localeCompare(b);
+      };
+
+      const createGroupInfo = group => {
         let valueUuidAccessor = group.getValueUuidAccessor();
         if (valueUuidAccessor == null) {
           if (group.getValueAccessor() == null) {
@@ -71,14 +76,45 @@ qx.Class.define("zx.reports.CollatingIterator", {
             titleAccessor = group.getValueAccessor() + ".title";
           }
         }
-        groupInfos.push({
+        if (valueUuidAccessor == null && titleAccessor) {
+          valueUuidAccessor = titleAccessor;
+        }
+
+        let groupInfo = {
           group,
-          sortMethod,
           getTitle: zx.reports.Utils.compileGetter(titleAccessor),
           getValue: zx.reports.Utils.compileGetter(group.getValueAccessor() || titleAccessor),
           getValueUuid: zx.reports.Utils.compileGetter(valueUuidAccessor),
           getExtraData: zx.reports.Utils.compileGetter(group.getExtraDataAccessor())
-        });
+        };
+
+        const defaultSortMethod = function (a, b) {
+          a = groupInfo.getTitle(a);
+          b = groupInfo.getTitle(b);
+          return compare(a, b);
+        };
+
+        let sortMethod = group.getSortMethod();
+        if (sortMethod == null) {
+          sortMethod = function () {};
+        } else if (sortMethod == "asc") {
+          sortMethod = defaultSortMethod;
+        } else if (sortMethod == "desc") {
+          sortMethod = function (a, b) {
+            return -defaultSortMethod(a, b);
+          };
+        } else if (typeof sortMethod != "function") {
+          throw new Error(`Invalid sort method ${sortMethod}`);
+        }
+        groupInfo.sortMethod = sortMethod;
+
+        return groupInfo;
+      };
+
+      while (group instanceof zx.reports.Group) {
+        group.toHashCode();
+        let groupInfo = createGroupInfo(group);
+        groupInfos.push(groupInfo);
         group = group.getEach();
       }
       return groupInfos;
@@ -178,7 +214,12 @@ qx.Class.define("zx.reports.CollatingIterator", {
             let group = childData.groupInfo.group;
             let groupContent = [];
             groupContent.push(await group.executeBefore(childData.row));
-            groupContent.push(await executeGroupData(childData));
+            let childContent = await executeGroupData(childData);
+            if (childContent) {
+              for (let html of childContent) {
+                groupContent.push(html);
+              }
+            }
             groupContent.push(await group.executeAfter(childData.row));
             groupContent = groupContent.filter(html => !!html);
             groupContent = await group.executeWrap(childData.row, groupContent);
@@ -193,16 +234,12 @@ qx.Class.define("zx.reports.CollatingIterator", {
           }
         }
         content = content.filter(html => !!html);
-        if (content.length == 1) {
-          return content[0];
-        } else {
-          return <div>{content}</div>;
-        }
+        return content;
       };
 
       // Execute the report
       let content = await executeGroupData(rootData);
-      return content;
+      return <div>{content}</div>;
     }
   }
 });

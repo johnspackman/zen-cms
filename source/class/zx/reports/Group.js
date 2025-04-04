@@ -24,11 +24,11 @@ qx.Class.define("zx.reports.Group", {
   /**
    * Constructor
    */
-  construct(valueAccessor) {
+  construct(titleAccessor) {
     super();
     this.__accumulators = {};
-    if (valueAccessor) {
-      this.setValueAccessor(valueAccessor);
+    if (titleAccessor) {
+      this.setTitleAccessor(titleAccessor);
     }
   },
 
@@ -62,7 +62,7 @@ qx.Class.define("zx.reports.Group", {
 
     /** How to sort the group; can be null, "asc", "desc", or a comparison function */
     sortMethod: {
-      init: null,
+      init: "asc",
       check: "Function"
     },
 
