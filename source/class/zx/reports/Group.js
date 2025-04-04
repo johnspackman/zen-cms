@@ -150,6 +150,16 @@ qx.Class.define("zx.reports.Group", {
     /**
      * @override
      */
+    async executeAsCsvBefore(row) {
+      for (let id in this.__accumulators) {
+        this.__accumulators[id].reset();
+      }
+      return await super.executeAsCsvBefore(row);
+    },
+
+    /**
+     * @override
+     */
     async executeRow(row) {
       for (let id in this.__accumulators) {
         this.__accumulators[id].update(row);
@@ -159,6 +169,20 @@ qx.Class.define("zx.reports.Group", {
         return await each.executeRow(row);
       }
       return await super.executeRow(row);
+    },
+
+    /**
+     * @override
+     */
+    async executeAsCsvRow(row) {
+      for (let id in this.__accumulators) {
+        this.__accumulators[id].update(row);
+      }
+      let each = this.getEach();
+      if (each) {
+        return await each.executeAsCsvRow(row);
+      }
+      return await super.executeAsCsvRow(row);
     }
   }
 });

@@ -27,6 +27,13 @@ qx.Class.define("zx.reports.table.Table", {
     /**
      * @override
      */
+    async executeAsCsvBefore(row) {
+      return this.__captions;
+    },
+
+    /**
+     * @override
+     */
     async executeWrap(row, content) {
       return [
         <table>

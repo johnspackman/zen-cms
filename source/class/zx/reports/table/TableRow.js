@@ -57,6 +57,24 @@ qx.Class.define("zx.reports.table.TableRow", {
         }
       }
       return <tr>{tds}</tr>;
+    },
+
+    /**
+     * Creates the output for the row
+     *
+     * @param {*} row the current row from the datasource
+     */
+    async executeAsCsvRow(row) {
+      let cells = [];
+      for (let accessor of this.__columnAccessors) {
+        let value = await this._renderCsv(await accessor(row), row);
+        if (value !== null) {
+          cells.push(value);
+        } else {
+          cells.push("");
+        }
+      }
+      return cells;
     }
   }
 });

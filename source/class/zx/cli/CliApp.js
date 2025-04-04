@@ -30,7 +30,18 @@ const { isMainThread, workerData } = require("node:worker_threads");
 qx.Class.define("zx.cli.CliApp", {
   extend: qx.application.Basic,
 
+  construct() {
+    super();
+    this.__apis = {};
+  },
+
   members: {
+    /** @type{Object<String,qx.core.Object>} map of APIs, indexed by api name */
+    __apis: null,
+
+    /**
+     * @Override
+     */
     async main() {
       qx.log.Logger.register(zx.utils.NativeLogger);
       qx.log.appender.Formatter.getFormatter().setFormatTimeAs("datetime");
@@ -95,6 +106,30 @@ qx.Class.define("zx.cli.CliApp", {
         rootCmd.addSubcommand(new zx.cli.commands.DemoCommand());
       }
       return rootCmd;
+    },
+
+    /**
+     * Gets a named API, intended to be compatible with `zx.thin.ThinClientApp.getApi`
+     *
+     * @param {String} apiName
+     * @returns {qx.core.Object}
+     */
+    async getApi(apiName) {
+      let api = this.__apis[apiName];
+      if (!api) {
+        let clazz;
+        if (typeof apiName == "string") {
+          clazz = qx.Class.getByName(apiName);
+          if (!clazz) {
+            throw new Error("Cannot find API " + apiName);
+          }
+        } else {
+          clazz = apiName;
+        }
+        api = new clazz();
+        this.__apis[apiName] = api;
+      }
+      return api;
     }
   }
 });
