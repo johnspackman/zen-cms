@@ -10,9 +10,9 @@ qx.Class.define("zx.ui.files.FileUpload", {
     let layout = new qx.ui.layout.HBox(5).set({ alignY: "middle" });
     this._setLayout(layout);
 
-    this._add(this.getChildControl("lbl"));
-    this._add(this.getChildControl("btnUpload"));
-    this._add(this.getChildControl("btnClear"));
+    this._add(this.getChildControl("lbl"), { flex: 1 });
+    this._add(this.getChildControl("btnUpload"), { flex: 0 });
+    this._add(this.getChildControl("btnClear"), { flex: 0 });
 
     let mgr = qx.core.Init.getApplication().getZxUploadMgr();
     mgr.addListener("addFile", this.__onUploadMgrAddFile, this);
