@@ -17,46 +17,36 @@
 
 qx.Class.define("zx.reports.table.Table", {
   extend: zx.reports.Group,
-  implement: [zx.reports.table.IHasColumns],
 
-  construct(columns, row) {
+  construct(...captions) {
     super();
-    if (columns) {
-      this.setColumns(columns);
-    }
-    this.setChild(row || new zx.reports.table.TableRow());
-  },
-
-  properties: {
-    columns: {
-      check: "Array"
-    }
+    this.__captions = captions;
   },
 
   members: {
     /**
      * @override
      */
-    async _executeImpl(ds, result) {
-      let tbody = <tbody></tbody>;
+    async executeAsCsvBefore(row) {
+      return this.__captions;
+    },
 
-      let row = this.getChild();
-      while (!ds.isAtEof()) {
-        await row.execute(ds, tbody);
-      }
-
-      result.add(
+    /**
+     * @override
+     */
+    async executeWrap(row, content) {
+      return [
         <table>
           <thead>
             <tr>
-              {this.getColumns().map(column => (
-                <th>{column.getHeaderValue(ds, this)}</th>
+              {this.__captions.map(caption => (
+                <th>{caption}</th>
               ))}
             </tr>
           </thead>
-          {tbody}
+          <tbody>{content}</tbody>
         </table>
-      );
+      ];
     }
   }
 });

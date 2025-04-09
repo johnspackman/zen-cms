@@ -18,7 +18,15 @@
 qx.Class.define("zx.reports.table.TableRow", {
   extend: zx.reports.Block,
 
+  construct(...columnAccessors) {
+    super();
+    this.__columnAccessors = columnAccessors.map(accessor => zx.reports.Utils.compileGetter(accessor));
+  },
+
   members: {
+    /** @type{(Function|String)[]?} accessors for the columns */
+    __columnAccessors: null,
+
     /**
      * Finds the nearest parent table
      *
@@ -34,32 +42,39 @@ qx.Class.define("zx.reports.table.TableRow", {
     },
 
     /**
-     * Returns the columns of the nearest table, or from this if it is overridden
+     * Creates the output for the row
      *
-     * @returns {zx.reports.table.TableColumn[]}
+     * @param {*} row the current row from the datasource
      */
-    getEffectiveColumns() {
-      for (let tmp = this.getParent(); tmp; tmp = tmp.getParent()) {
-        if (qx.Interface.classImplements(tmp.constructor, zx.reports.IHasColumns)) {
-          return tmp.getColumns();
+    async executeRow(row) {
+      let tds = [];
+      for (let accessor of this.__columnAccessors) {
+        let value = await this._render(await accessor(row), row);
+        if (value !== null) {
+          tds.push(<td>{value}</td>);
+        } else {
+          tds.push(<td>&nbsp;</td>);
         }
       }
-      throw new Error("Cannot find columns");
+      return <tr>{tds}</tr>;
     },
 
     /**
-     * @override
+     * Creates the output for the row
+     *
+     * @param {*} row the current row from the datasource
      */
-    async _executeImpl(ds, result) {
-      let tr = <tr></tr>;
-
-      let table = this.getTable();
-      this.getEffectiveColumns().forEach(column => {
-        tr.add(<td>{column ? column.getDisplayValue(ds, table) : "&nbsp;"}</td>);
-      });
-
-      result.add(tr);
-      await ds.next();
+    async executeAsCsvRow(row) {
+      let cells = [];
+      for (let accessor of this.__columnAccessors) {
+        let value = await this._renderCsv(await accessor(row), row);
+        if (value !== null) {
+          cells.push(value);
+        } else {
+          cells.push("");
+        }
+      }
+      return cells;
     }
   }
 });

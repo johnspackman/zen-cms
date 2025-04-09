@@ -64,6 +64,16 @@ qx.Class.define("zx.reports.Block", {
     },
 
     /**
+     * Creates the output for before the row, when exporting to CSV
+     *
+     * @param {*} row the current row from the datasource
+     */
+    async executeAsCsvBefore(row) {
+      let before = this.getBefore();
+      return await this._renderCsv(before, row);
+    },
+
+    /**
      * Creates the output for after the row
      *
      * @param {*} row the current row from the datasource
@@ -71,6 +81,16 @@ qx.Class.define("zx.reports.Block", {
     async executeAfter(row) {
       let after = this.getAfter();
       return await this._render(after, row);
+    },
+
+    /**
+     * Creates the output for after the row, when exporting to CSV
+     *
+     * @param {*} row the current row from the datasource
+     */
+    async executeAsCsvAfter(row) {
+      let after = this.getAfter();
+      return await this._renderCsv(after, row);
     },
 
     /**
@@ -83,6 +103,18 @@ qx.Class.define("zx.reports.Block", {
         throw new Error(`No onRow function defined for ${this.classname}`);
       }
       return await this._render(await this.__fnOnRow(row), row);
+    },
+
+    /**
+     * Creates the output for the row, when exporting to CSV
+     *
+     * @param {*} row the current row from the datasource
+     */
+    async executeAsCsvRow(row) {
+      if (!this.__fnOnRow) {
+        throw new Error(`No onRow function defined for ${this.classname}`);
+      }
+      return await this._renderCsv(await this.__fnOnRow(row), row);
     },
 
     /**
@@ -104,7 +136,7 @@ qx.Class.define("zx.reports.Block", {
      * @return {qx.html.Element?} the result
      */
     async _render(block, row) {
-      if (!block) {
+      if (block === null || block === undefined) {
         return null;
       }
 
@@ -112,9 +144,56 @@ qx.Class.define("zx.reports.Block", {
         return block;
       } else if (block instanceof zx.reports.Block) {
         return await block.executeRow(row);
-      } else {
-        throw new Error(`Unknown type of block: ${block.classname}`);
+      } else if (qx.lang.Type.isArray(block) || block instanceof qx.data.Array) {
+        let result = [];
+        for (let child of block) {
+          let childResult = await this._render(child, row);
+          if (childResult) {
+            result.push(childResult);
+          }
+        }
+        return result;
       }
+
+      let str = String(block);
+      let segs = str.split(/(\r?\n)/);
+      let result = [];
+      for (let i = 0; i < segs.length; i++) {
+        if (i > 0) {
+          result.push(<br />);
+        }
+        result.push(segs[i]);
+      }
+      return result;
+    },
+
+    /**
+     * Helper method that renders a block, depending on what it is.  Does nothing if block is null
+     *
+     * @param {zx.reports.Block|*?} block the block to render
+     * @param {row} the current row from the datasource
+     * @return {Object[]} the result
+     */
+    async _renderCsv(block, row) {
+      if (block === null || block === undefined) {
+        return null;
+      }
+
+      if (block instanceof zx.reports.Block) {
+        return await block.executeAsCsvRow(row);
+      } else if (qx.lang.Type.isArray(block) || block instanceof qx.data.Array) {
+        let result = [];
+        for (let child of block) {
+          let childResult = await this._renderCsv(child, row);
+          if (childResult) {
+            result.push(childResult);
+          }
+        }
+        return result;
+      }
+
+      let str = String(block);
+      return str;
     }
   }
 });

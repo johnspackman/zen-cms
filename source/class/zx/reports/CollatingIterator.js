@@ -41,44 +41,115 @@ qx.Class.define("zx.reports.CollatingIterator", {
     _flattenGroups() {
       let groupInfos = [];
       let group = this.__report;
-      while (group instanceof zx.reports.Group) {
-        let sortMethod = group.getSortMethod();
-        if (sortMethod == null) {
-          sortMethod = function () {};
-        } else if (sortMethod == "asc") {
-          sortMethod = function (a, b) {
-            return a.localeCompare(b);
-          };
-        } else if (sortMethod == "desc") {
-          sortMethod = function (a, b) {
-            return b.localeCompare(a);
-          };
-        } else if (typeof sortMethod != "function") {
-          throw new Error(`Invalid sort method ${sortMethod}`);
+
+      const compare = (a, b) => {
+        if (a === undefined) {
+          a = null;
+        }
+        if (b === undefined) {
+          b = null;
+        }
+        if (a === null && b === null) {
+          return 0;
+        }
+        if (a === null) {
+          return -1;
+        }
+        if (b === null) {
+          return 1;
+        }
+        return a.localeCompare(b);
+      };
+
+      const createGroupInfo = (group, isLast) => {
+        let getValue = null;
+        if (group.getValueAccessor()) {
+          getValue = zx.reports.Utils.compileGetter(group.getValueAccessor());
+        } else {
+          getValue = row => row;
         }
 
-        let valueUuidAccessor = group.getValueUuidAccessor();
-        if (valueUuidAccessor == null) {
-          if (group.getValueAccessor() == null) {
-            valueUuidAccessor = "_uuid";
-          } else {
-            valueUuidAccessor = group.getValueAccessor() + "._uuid";
-          }
+        let getTitle = null;
+        if (group.getTitleAccessor()) {
+          getTitle = zx.reports.Utils.compileGetter(group.getTitleAccessor());
+        } else {
+          getTitle = row => {
+            let title = row.title || (row.getTitle ? row.getTitle() : null);
+            if (title) {
+              return title;
+            }
+            if (getValue) {
+              let value = getValue(row);
+              title = value.title || (value.getTitle ? value.getTitle() : null);
+              if (title) {
+                return title;
+              }
+            }
+            return null;
+          };
         }
-        let titleAccessor = group.getTitleAccessor();
-        if (titleAccessor == null) {
-          if (group.getValueAccessor() !== null) {
-            titleAccessor = group.getValueAccessor() + ".title";
-          }
+
+        let getValueUuid = null;
+        if (group.getValueUuidAccessor()) {
+          getValueUuid = zx.reports.Utils.compileGetter(group.getValueUuidAccessor());
+        } else if (isLast) {
+          getValueUuid = row => {
+            let uuid = row._uuid || row.uuid || (row.toUuid ? row.toUuid() : null);
+            if (uuid) {
+              return uuid;
+            }
+            if (getValue) {
+              let value = getValue(row);
+              uuid = value._uuid || value.uuid || (value.toUuid ? value.toUuid() : null);
+              if (uuid) {
+                return uuid;
+              }
+            }
+            if (getTitle) {
+              let title = getTitle(row);
+              if (title) {
+                return title;
+              }
+            }
+            return null;
+          };
         }
-        groupInfos.push({
+
+        let groupInfo = {
           group,
-          sortMethod,
-          getTitle: zx.reports.Utils.compileGetter(titleAccessor),
-          getValue: zx.reports.Utils.compileGetter(group.getValueAccessor() || titleAccessor),
-          getValueUuid: zx.reports.Utils.compileGetter(valueUuidAccessor),
+          getTitle,
+          getValue,
+          getValueUuid,
           getExtraData: zx.reports.Utils.compileGetter(group.getExtraDataAccessor())
-        });
+        };
+
+        const defaultSortMethod = function (a, b) {
+          a = groupInfo.getTitle(a.row);
+          b = groupInfo.getTitle(b.row);
+          return compare(a, b);
+        };
+
+        let sortMethod = group.getSortMethod();
+        if (sortMethod == null) {
+          groupInfo.sortMethod = function () {};
+        } else if (sortMethod == "asc") {
+          groupInfo.sortMethod = defaultSortMethod;
+        } else if (sortMethod == "desc") {
+          groupInfo.sortMethod = (a, b) => -defaultSortMethod(a, b);
+        } else if (typeof sortMethod != "function") {
+          throw new Error(`Invalid sort method ${sortMethod}`);
+        } else {
+          groupInfo.sortMethod = (a, b) => group.getSortMethod()(a, b);
+        }
+
+        return groupInfo;
+      };
+
+      while (group instanceof zx.reports.Group) {
+        group.toHashCode();
+        let isLast = !(group.getEach() instanceof zx.reports.Group);
+        let groupInfo = createGroupInfo(group, isLast);
+        groupInfos.push(groupInfo);
         group = group.getEach();
       }
       return groupInfos;
@@ -106,56 +177,49 @@ qx.Class.define("zx.reports.CollatingIterator", {
         title: null,
         alias: null,
         valueUuid: null,
-        children: []
+        children: {}
       };
-      let currentDataFlat = [];
 
       // Collect and collate all rows
       await this.__datasource.open();
       while (await this.__datasource.next()) {
         let row = this.__datasource.current();
-        let valueUuids = groupInfos.map(group => group.getValueUuid(row));
-        while (currentDataFlat.length > 0) {
-          let currentData = currentDataFlat[currentDataFlat.length - 1];
-          if (currentData.valueUuid == valueUuids[currentDataFlat.length]) {
-            break;
+        let currentData = rootData;
+        for (let groupIndex = 0; groupIndex < groupInfos.length; groupIndex++) {
+          let groupInfo = groupInfos[groupIndex];
+          let valueUuid = groupInfo.getValueUuid ? groupInfo.getValueUuid(row) : null;
+          if (currentData.children === undefined) {
+            currentData.children = {};
           }
-          currentDataFlat.pop();
-        }
-        while (currentDataFlat.length < valueUuids.length) {
-          let index = currentDataFlat.length;
-          let parentData = index == 0 ? rootData : currentDataFlat[index - 1];
-          let groupInfo = groupInfos[index];
-          let childData = {
-            row,
-            groupInfo,
-            title: groupInfo.getTitle(row),
-            value: groupInfo.getValue(row),
-            valueUuid: valueUuids[index]
-          };
-          if (parentData.children === undefined) {
-            parentData.children = [];
+          let groupData = currentData.children[valueUuid];
+          if (groupData === undefined) {
+            groupData = {
+              row,
+              groupInfo,
+              title: groupInfo.getTitle(row),
+              value: groupInfo.getValue(row),
+              valueUuid
+            };
+            currentData.children[valueUuid] = groupData;
           }
-          parentData.children.push(childData);
-          currentDataFlat.push(childData);
+          currentData = groupData;
         }
-
-        let parentData = currentDataFlat[currentDataFlat.length - 1];
-        if (parentData.rows === undefined) {
-          parentData.rows = [];
+        if (currentData.rows === undefined) {
+          currentData.rows = [];
         }
-        parentData.rows.push(row);
+        currentData.rows.push(row);
       }
       await this.__datasource.close();
 
       // Sort the data
       const sortGroupData = (groupData, groupIndex) => {
-        if (groupData.children) {
-          groupData.children.sort(groupInfos[groupIndex].sortMethod);
-          groupData.children.forEach(childData => sortGroupData(childData, groupIndex + 1));
-        }
         if (groupData.rows) {
           groupData.rows.sort(groupInfos[groupIndex - 1].sortMethod);
+        }
+        if (groupData.children) {
+          groupData.children = Object.values(groupData.children);
+          groupData.children.sort(groupInfos[groupIndex].sortMethod);
+          groupData.children.forEach(childData => sortGroupData(childData, groupIndex + 1));
         }
       };
       sortGroupData(rootData, 0);
@@ -178,7 +242,12 @@ qx.Class.define("zx.reports.CollatingIterator", {
             let group = childData.groupInfo.group;
             let groupContent = [];
             groupContent.push(await group.executeBefore(childData.row));
-            groupContent.push(await executeGroupData(childData));
+            let childContent = await executeGroupData(childData);
+            if (childContent) {
+              for (let html of childContent) {
+                groupContent.push(html);
+              }
+            }
             groupContent.push(await group.executeAfter(childData.row));
             groupContent = groupContent.filter(html => !!html);
             groupContent = await group.executeWrap(childData.row, groupContent);
@@ -193,11 +262,50 @@ qx.Class.define("zx.reports.CollatingIterator", {
           }
         }
         content = content.filter(html => !!html);
-        if (content.length == 1) {
-          return content[0];
-        } else {
-          return <div>{content}</div>;
+        return content;
+      };
+
+      // Execute the report
+      let content = await executeGroupData(rootData);
+      return <div>{content}</div>;
+    },
+
+    /**
+     * Executes the report
+     *
+     * @returns {Promise<qx.html.Element>}
+     */
+    async executeAsCsv() {
+      let groupInfos = this._flattenGroups();
+      let rootData = await this._collateGroupData(groupInfos);
+
+      const executeGroupData = async groupData => {
+        let content = [];
+        if (groupData.children) {
+          for (let childData of groupData.children) {
+            let group = childData.groupInfo.group;
+            let groupContent = [];
+            groupContent.push(await group.executeAsCsvBefore(childData.row));
+            let childContent = await executeGroupData(childData);
+            if (childContent) {
+              for (let csvRow of childContent) {
+                groupContent.push(csvRow);
+              }
+            }
+            groupContent.push(await group.executeAsCsvAfter(childData.row));
+            groupContent = groupContent.filter(csvRow => !!csvRow);
+            for (let csvRow of groupContent) {
+              content.push(csvRow);
+            }
+          }
         }
+        if (groupData.rows) {
+          for (let row of groupData.rows) {
+            content.push(await groupData.groupInfo.group.executeAsCsvRow(row));
+          }
+        }
+        content = content.filter(csvRow => !!csvRow);
+        return content;
       };
 
       // Execute the report
