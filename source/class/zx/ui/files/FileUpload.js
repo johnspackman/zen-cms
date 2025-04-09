@@ -1,20 +1,3 @@
-/* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
-
 /**
  * A widget for uploading files. Contains a label with the file name, and upload and delete buttons
  */
@@ -27,9 +10,9 @@ qx.Class.define("zx.ui.files.FileUpload", {
     let layout = new qx.ui.layout.HBox(5).set({ alignY: "middle" });
     this._setLayout(layout);
 
-    this._add(this.getChildControl("lbl"));
-    this._add(this.getChildControl("btnUpload"));
-    this._add(this.getChildControl("btnClear"));
+    this._add(this.getChildControl("lbl"), { flex: 1 });
+    this._add(this.getChildControl("btnUpload"), { flex: 0 });
+    this._add(this.getChildControl("btnClear"), { flex: 0 });
 
     let mgr = qx.core.Init.getApplication().getZxUploadMgr();
     mgr.addListener("addFile", this.__onUploadMgrAddFile, this);
