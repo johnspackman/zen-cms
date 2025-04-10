@@ -1,22 +1,20 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    Patryk Malinowski (@p9malino26)
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
-
-
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    Patryk Malinowski (@p9malino26)
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Base class for client-side API implementations
@@ -130,6 +128,18 @@ qx.Class.define("zx.io.api.client.AbstractClientApi", {
         return;
       }
 
+      this.reset();
+
+      //Disconnect from the transport
+      this.__transport.removeListener("message", this.__onMessage, this);
+      this.__terminated = true;
+    },
+
+    /**
+     * Resets the client API, rejecting all pending subscriptions and method calls.
+     * Unlike terminate, this method means the API can still be used again.
+     */
+    reset() {
       //reject pending subscriptions
       for (let [eventName, subData] of Object.entries(this.__subscriptions)) {
         if (subData.promise) {
@@ -137,6 +147,7 @@ qx.Class.define("zx.io.api.client.AbstractClientApi", {
         }
         this.__transport.unsubscribe();
       }
+      this.__subscriptions = {};
 
       //reject pending method calls
       for (let pending of Object.values(this.__pendingMethodCalls)) {
@@ -144,10 +155,7 @@ qx.Class.define("zx.io.api.client.AbstractClientApi", {
         pending.promise = null;
         promise.reject(new Error(`Client API terminated - method ${this.classname}.${pending.methodName}`));
       }
-
-      //Disconnect from the transport
-      this.__transport.removeListener("message", this.__onMessage, this);
-      this.__terminated = true;
+      this.__pendingMethodCalls = {};
     },
 
     /**
@@ -365,6 +373,11 @@ qx.Class.define("zx.io.api.client.AbstractClientApi", {
      * @param {zx.io.api.IResponseJson.IResponseData} data
      */
     __processData(data) {
+      if (data.type == "reset") {
+        this.reset();
+        return;
+      }
+
       //Ignore messages that are not for this API
       if (data.headers["Client-Api-Uuid"] != this.toUuid()) {
         return;

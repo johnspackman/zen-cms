@@ -1,22 +1,20 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    Patryk Malinowski (@p9malino26)
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
-
-
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    Patryk Malinowski (@p9malino26)
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Basic implementation of the IClientTransport interface.
@@ -57,6 +55,16 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
   },
 
   properties: {
+    /**
+     * Whether we should poll always i.e. even when there are no subscriptions,
+     * just to test the connection.
+     */
+    pollAlways: {
+      init: false,
+      check: "Boolean",
+      event: "changePollAlways"
+    },
+
     /**
      * If enabled, this transport will poll to all subscribed hostnames
      * every set interval (property: pollInterval)
@@ -132,6 +140,10 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
      */
     unsubscribe() {
       this.__subscriptions--;
+      if (this.__subscriptions == 0) {
+        this.__sessionUuid = null;
+      }
+
       if (qx.core.Environment.get("qx.debug")) {
         if (this.__subscriptions == -1) {
           console.warn("You have unsubscribed more times than you have subscribed. There is a bug in your code.");
@@ -166,7 +178,14 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
      * @returns {Promise<void>}
      */
     async __poll() {
-      if (!this.__serverUri || this.__subscriptions === 0) {
+      if (this.__numberConsecutiveFailures > zx.io.api.client.AbstractClientTransport.MAX_CONSECUTIVE_POLLING_FAILURES) {
+        this.error("Too many consecutive failures, stopping polling");
+        this.setPolling(false);
+        debugger;
+        return;
+      }
+
+      if (!this.getPollAlways() && this.__subscriptions === 0) {
         return;
       }
       let requestJson = { headers: { "Session-Uuid": this.__sessionUuid }, type: "poll", body: {} };
@@ -175,10 +194,6 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
         this.__numberConsecutiveFailures = 0;
       } catch (e) {
         this.__numberConsecutiveFailures++;
-        if (this.__numberConsecutiveFailures > zx.io.api.client.AbstractClientTransport.MAX_CONSECUTIVE_POLLING_FAILURES) {
-          this.error("Too many consecutive failures, stopping polling");
-          this.setPolling(false);
-        }
       }
     },
 
