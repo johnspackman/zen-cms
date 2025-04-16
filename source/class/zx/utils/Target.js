@@ -53,11 +53,14 @@ qx.Class.define("zx.utils.Target", {
   statics: {
     bindEvent(object, path, eventName, cb, context) {
       var target = new zx.utils.Target(function (value, oldValue) {
-        if (oldValue) {
-          oldValue.removeListener(eventName, cb, context);
+        let listenerId = target.getUserData("bindEvent.listenerId");
+        if (listenerId) {
+          oldValue.removeListenerById(listenerId);
+          target.setUserData("bindEvent.listenerId", null);
         }
         if (value) {
-          value.addListener(eventName, cb, context);
+          let listenerId = value.addListener(eventName, cb, context);
+          target.setUserData("bindEvent.listenerId", listenerId);
         }
       });
       object.bind(path, target, "value");
