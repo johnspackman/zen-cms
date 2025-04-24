@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Helper functions to convert data that has been returned from Mongo into read-only Qooxdoo objects.
@@ -69,21 +69,19 @@ qx.Class.define("zx.utils.marshal.Marshal", {
      * @return {qx.core.Object | qx.data.Array<qx.core.Object>} Qooxdoo object or array of Qooxdoo objects
      */
     __doit(obj) {
-      const thisClass = zx.utils.marshal.Marshal;
-
       if (obj instanceof qx.data.Array) {
         obj = obj.toArray();
       }
 
-      if (!thisClass.__marshaller) {
+      if (!zx.utils.marshal.Marshal.__marshaller) {
         const delegate = {
           getModelMixins() {
             return zx.utils.marshal.MServerObjectProxy;
           }
         };
-        thisClass.__marshaller = new qx.data.marshal.Json(delegate);
+        zx.utils.marshal.Marshal.__marshaller = new qx.data.marshal.Json(delegate);
       }
-      let marshaller = thisClass.__marshaller;
+      let marshaller = zx.utils.marshal.Marshal.__marshaller;
       marshaller.toClass(obj);
       obj = marshaller.toModel(obj, false);
 
