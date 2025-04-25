@@ -37,7 +37,13 @@ qx.Class.define("zx.server.email.FlushQueue", {
 
       let sentUuids = [];
       for await (let emailJson of emailsCursor) {
-        let email = await zx.server.Standalone.getInstance().findOneObjectByType(zx.server.email.Message, { _uuid: emailJson._uuid }, false);
+        let email = await zx.server.Standalone.getInstance()
+          .findOneObjectByType(zx.server.email.Message, { _uuid: emailJson._uuid }, false)
+          .catch(e => {
+            worker.appendWorkLog(`Error getting email as ZX server Object ${emailJson._uuid}: ${e}. Skipping...`);
+            return null;
+          });
+        if (!email) continue;
         worker.appendWorkLog(`Before sending email ${email.toUuid()}.`);
         let success = await email.sendEmail(msg => worker.appendWorkLog(msg));
         worker.appendWorkLog(`After sending email ${email.toUuid()}.`);
