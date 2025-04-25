@@ -101,6 +101,10 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
         let taskJson = await cursor.next();
         let workJson = taskJson.workJson;
 
+        if (!taskJson._uuid) {
+          taskJson._uuid = qx.util.Uuid.createUuidV4();
+        }
+
         if (!workJson.uuid) {
           workJson.uuid = taskJson._uuid + "-work-task";
         }
