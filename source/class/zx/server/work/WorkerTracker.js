@@ -406,8 +406,11 @@ qx.Class.define("zx.server.work.WorkerTracker", {
 
       // prettier-ignore
       let config = zx.server.Config.getInstance().getConfigData();
-      let websiteName = config.websiteName;
-      Env.ZX_NODE_ARGS = `./runtime/${websiteName}/puppeteer-server/index.js launch --port=11000`;
+      if (config.work.multiHomed) {
+        Env.ZX_NODE_ARGS = `./runtime/${config.websiteName}/puppeteer-server/index.js launch --port=11000`;
+      } else {
+        Env.ZX_NODE_ARGS = `./runtime/puppeteer-server/index.js launch --port=11000`;
+      }
       Env.ZX_MODE = `worker`;
 
       /** @type {import('dockerode').ContainerCreateOptions} */
