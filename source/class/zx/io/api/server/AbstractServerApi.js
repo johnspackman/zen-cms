@@ -1,22 +1,20 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    Patryk Malinowski (@p9malino26)
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
-
-
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    Patryk Malinowski (@p9malino26)
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 const path = require("path");
 /**
@@ -90,7 +88,9 @@ qx.Class.define("zx.io.api.server.AbstractServerApi", {
     async receiveMessage(request, response) {
       let type = request.getType();
 
-      this.assertTrue(response.getData().length === 0, "Response data must be empty before calling receiveMessage");
+      if (qx.core.Environment.get("qx.debug")) {
+        this.assertTrue(response.getData().length === 0, "Response data must be empty before calling receiveMessage");
+      }
 
       let responseData;
       if (type == "callMethod") {
