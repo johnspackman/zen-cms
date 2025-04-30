@@ -79,6 +79,20 @@ qx.Class.define("zx.reports.Group", {
     each: {
       check: "zx.reports.Block",
       apply: "_applyEach"
+    },
+
+    /** Whether this group supports drill down */
+    drillable: {
+      init: false,
+      check: "Boolean",
+      event: "changeDrillable"
+    },
+
+    /** The meta data for this group; can be a literal value or a Function to call */
+    meta: {
+      init: null,
+      nullable: true,
+      event: "changeMeta"
     }
   },
 

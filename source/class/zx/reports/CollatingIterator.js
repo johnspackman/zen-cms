@@ -40,7 +40,6 @@ qx.Class.define("zx.reports.CollatingIterator", {
      */
     _flattenGroups() {
       let groupInfos = [];
-      let group = this.__report;
 
       const compare = (a, b) => {
         if (a === undefined) {
@@ -114,12 +113,29 @@ qx.Class.define("zx.reports.CollatingIterator", {
             return null;
           };
         }
+        if (getValue && !getValueUuid) {
+          getValueUuid = row => {
+            let value = getValue(row);
+            let uuid = value._uuid || value.uuid || (value.toUuid ? value.toUuid() : null);
+            if (uuid) {
+              return uuid;
+            }
+            if (getTitle) {
+              let title = getTitle(row);
+              if (title) {
+                return title;
+              }
+            }
+            return null;
+          };
+        }
 
         let groupInfo = {
           group,
           getTitle,
           getValue,
           getValueUuid,
+          getMeta: zx.reports.Utils.compileGetter(group.getMeta()),
           getExtraData: zx.reports.Utils.compileGetter(group.getExtraDataAccessor())
         };
 
@@ -145,6 +161,7 @@ qx.Class.define("zx.reports.CollatingIterator", {
         return groupInfo;
       };
 
+      let group = this.__report.getEach();
       while (group instanceof zx.reports.Group) {
         group.toHashCode();
         let isLast = !(group.getEach() instanceof zx.reports.Group);
@@ -172,13 +189,17 @@ qx.Class.define("zx.reports.CollatingIterator", {
      * @returns {GroupData} the root
      */
     async _collateGroupData(groupInfos) {
+      const removeAllStartingAt = (array, index) => {
+        if (array.length > index) {
+          array.splice(index, array.length - index);
+        }
+        return array;
+      };
       let rootData = {
-        row: null,
-        title: null,
-        alias: null,
-        valueUuid: null,
         children: {}
       };
+
+      let groupDataStack = [];
 
       // Collect and collate all rows
       await this.__datasource.open();
@@ -188,34 +209,35 @@ qx.Class.define("zx.reports.CollatingIterator", {
         for (let groupIndex = 0; groupIndex < groupInfos.length; groupIndex++) {
           let groupInfo = groupInfos[groupIndex];
           let valueUuid = groupInfo.getValueUuid ? groupInfo.getValueUuid(row) : null;
-          if (currentData.children === undefined) {
-            currentData.children = {};
-          }
-          let groupData = currentData.children[valueUuid];
-          if (groupData === undefined) {
-            groupData = {
+          if (groupDataStack[groupIndex] === undefined || groupDataStack[groupIndex].valueUuid !== valueUuid) {
+            removeAllStartingAt(groupDataStack, groupIndex);
+            groupDataStack[groupIndex] = {
               row,
               groupInfo,
               title: groupInfo.getTitle(row),
               value: groupInfo.getValue(row),
               valueUuid
             };
-            currentData.children[valueUuid] = groupData;
+            if (groupIndex > 0) {
+              let parentGroupData = groupDataStack[groupIndex - 1];
+              if (!parentGroupData.children) {
+                parentGroupData.children = {};
+              }
+              parentGroupData.children[valueUuid] = groupDataStack[groupIndex];
+            } else {
+              rootData.children[valueUuid] = groupDataStack[groupIndex];
+            }
           }
-          currentData = groupData;
         }
-        if (currentData.rows === undefined) {
-          currentData.rows = [];
+        if (!groupDataStack[groupInfos.length - 1].rows) {
+          groupDataStack[groupInfos.length - 1].rows = [];
         }
-        currentData.rows.push(row);
+        groupDataStack[groupInfos.length - 1].rows.push(row);
       }
       await this.__datasource.close();
 
       // Sort the data
       const sortGroupData = (groupData, groupIndex) => {
-        if (groupData.rows) {
-          groupData.rows.sort(groupInfos[groupIndex - 1].sortMethod);
-        }
         if (groupData.children) {
           groupData.children = Object.values(groupData.children);
           groupData.children.sort(groupInfos[groupIndex].sortMethod);
@@ -226,14 +248,48 @@ qx.Class.define("zx.reports.CollatingIterator", {
       return rootData;
     },
 
+    async _initialise() {
+      if (!this._groupInfos) {
+        this._groupInfos = this._flattenGroups();
+      }
+      if (!this._rootData) {
+        this._rootData = await this._collateGroupData(this._groupInfos);
+      }
+    },
+
+    async getDrilldown() {
+      await this._initialise();
+      let rootData = this._rootData;
+
+      const executeGroupData = groupData => {
+        let meta = {
+          title: groupData.title ?? null,
+          uuid: groupData.valueUuid ?? null,
+          meta: groupData.groupInfo?.getMeta(groupData.value, groupData.row) ?? null
+        };
+        if (groupData.children) {
+          meta.children = [];
+          for (let childGroupData of groupData.children) {
+            let childMeta = executeGroupData(childGroupData);
+            meta.children.push(childMeta);
+          }
+        }
+        return meta;
+      };
+
+      // Execute the report
+      let meta = executeGroupData(rootData);
+      return meta;
+    },
+
     /**
      * Executes the report
      *
      * @returns {Promise<qx.html.Element>}
      */
     async execute() {
-      let groupInfos = this._flattenGroups();
-      let rootData = await this._collateGroupData(groupInfos);
+      await this._initialise();
+      let rootData = this._rootData;
 
       const executeGroupData = async groupData => {
         let content = [];
@@ -276,8 +332,8 @@ qx.Class.define("zx.reports.CollatingIterator", {
      * @returns {Promise<qx.html.Element>}
      */
     async executeAsCsv() {
-      let groupInfos = this._flattenGroups();
-      let rootData = await this._collateGroupData(groupInfos);
+      await this._initialise();
+      let rootData = this._rootData;
 
       const executeGroupData = async groupData => {
         let content = [];
