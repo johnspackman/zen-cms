@@ -1,0 +1,118 @@
+qx.Class.define("zx.reports.ReportRunner", {
+  extend: qx.core.Object,
+
+  construct(iterator) {
+    super();
+    this.__iterator = iterator;
+  },
+
+  properties: {
+    cssClass: {
+      check: "String",
+      init: "report-runner"
+    },
+
+    header: {
+      check: "qx.html.Element",
+      init: null,
+      nullable: true
+    },
+
+    footer: {
+      check: "qx.html.Element",
+      init: null,
+      nullable: true
+    },
+
+    rootElement: {
+      check: "qx.html.Element",
+      init: null,
+      nullable: true
+    }
+  },
+
+  members: {
+    /** @type{qx.html.Element} the element to output the report into */
+    __rootElement: null,
+
+    /** @type{zx.reports.IIterator} the report iterator */
+    __iterator: null,
+
+    /**
+     * Runs the report; can be called multiple times, but if it is already
+     * running, it will return the same promise as the first call
+     */
+    run() {
+      if (this.__runPromise) {
+        return this.__runPromise;
+      }
+      let promise = this.__runImpl();
+      promise = promise.then(
+        () => {
+          this.__runPromise = null;
+        },
+        () => {
+          this.__runPromise = null;
+        }
+      );
+      this.__runPromise = promise;
+      return promise;
+    },
+
+    /**
+     * Runs the report; this is the implementation of the run() method
+     */
+    async __runImpl() {
+      let rootElement = this.getRootElement();
+      rootElement.removeAll();
+      rootElement.setCssClass("spar-report");
+      this.jsx = uk.co.spar.reports.ci.util.Component;
+      let loadingMessage = <this.jsx.LoadingWheel />;
+      rootElement.add(loadingMessage);
+      qx.html.Element.flush();
+
+      try {
+        let result = await this.__iterator.execute();
+        let drilldown = await this.__iterator.getDrilldown();
+        console.log("Drilldown: ", JSON.stringify(drilldown, null, 2));
+        rootElement.remove(loadingMessage);
+
+        let reportElement = <div print-control></div>;
+        if (this.getHeader()) {
+          reportElement.add(this.getHeader());
+        }
+
+        let body = <div print-control-flow></div>;
+        reportElement.add(body);
+        body.add(result);
+        if (this.getFooter()) {
+          reportElement.add(this.getFooter());
+        }
+
+        rootElement.add(reportElement);
+      } catch (e) {
+        this.error(e);
+        debugger;
+        rootElement.removeAll();
+        rootElement.add(
+          <div>
+            <p>An error occurred while generating the report.</p>
+            <p>Retry by refreshing the page, or by returning to the previous page and confirming the correct details have been entered/selected.</p>
+            <p>If the problem persists, please contact support.</p>
+          </div>
+        );
+      }
+
+      qx.html.Element.flush();
+    },
+
+    /**
+     * Returns the report iterator
+     *
+     * @returns {zx.reports.IIterator} the iterator
+     */
+    getIterator() {
+      return this.__iterator;
+    }
+  }
+});

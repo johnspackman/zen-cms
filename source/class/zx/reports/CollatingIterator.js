@@ -5,6 +5,7 @@
  */
 qx.Class.define("zx.reports.CollatingIterator", {
   extend: qx.core.Object,
+  implement: [zx.reports.IReportIterator, zx.reports.api.IDrillDown],
 
   /**
    * Constructor
@@ -16,6 +17,12 @@ qx.Class.define("zx.reports.CollatingIterator", {
     super();
     this.__datasource = datasource;
     this.__report = report;
+    this.__serverApiDrillDown = zx.io.api.ApiUtils.createServerApi(zx.reports.api.IDrillDown, this);
+  },
+
+  destruct() {
+    this.__serverApiDrillDown.dispose();
+    this.__serverApiDrillDown = null;
   },
 
   members: {
@@ -24,6 +31,9 @@ qx.Class.define("zx.reports.CollatingIterator", {
 
     /** @type{zx.reports.Report} */
     __report: null,
+
+    /** @type{zx.reports.api.IDrillDown} server API implementation */
+    __serverApiDrillDown: null,
 
     /**
      * Compiles a flat lookup of the groups, property accessors and sort method
@@ -248,15 +258,22 @@ qx.Class.define("zx.reports.CollatingIterator", {
       return rootData;
     },
 
+    /**
+     * Initialises the iterator; this is called when the report is executed, and is safe to call multiple times
+     */
     async _initialise() {
       if (!this._groupInfos) {
         this._groupInfos = this._flattenGroups();
+        this.__updateGroupFilters();
       }
       if (!this._rootData) {
         this._rootData = await this._collateGroupData(this._groupInfos);
       }
     },
 
+    /**
+     * @Override
+     */
     async getDrilldown() {
       await this._initialise();
       let rootData = this._rootData;
@@ -277,15 +294,53 @@ qx.Class.define("zx.reports.CollatingIterator", {
         return meta;
       };
 
-      // Execute the report
+      // Compile the drill down data
       let meta = executeGroupData(rootData);
       return meta;
     },
 
     /**
-     * Executes the report
-     *
-     * @returns {Promise<qx.html.Element>}
+     * @Override
+     */
+    setGroupFilters(groupFilters) {
+      if (qx.core.Environment.get("qx.debug")) {
+        this.assertTrue(groupFilters == null || qx.lang.Type.isArray(groupFilters), "groupFilters must be an array");
+      }
+      if (groupFilters) {
+        groupFilters = groupFilters.map(groupFilter => {
+          if (groupFilter == null) {
+            return () => true;
+          }
+          if (qx.lang.Type.isString(groupFilter)) {
+            return (groupValue, groupValueUuid, row) => groupFilter === groupValueUuid;
+          }
+          if (qx.lang.Type.isArray(groupFilter)) {
+            return (groupValue, groupValueUuid, row) => groupFilter.find(groupFilter => groupFilter === groupValueUuid);
+          }
+          if (qx.lang.Type.isFunction(groupFilter)) {
+            return groupFilter;
+          }
+          throw new Error(`Invalid group filter ${groupFilter}`);
+        });
+      }
+      this.__groupFilters = groupFilters;
+      if (this._groupInfos) {
+        this.__updateGroupFilters();
+      }
+    },
+
+    __updateGroupFilters() {
+      if (this._groupInfos) {
+        for (let groupIndex = 0; groupIndex < this._groupInfos.length; groupIndex++) {
+          let groupInfo = this._groupInfos[groupIndex];
+          let groupFilter = (this.__groupFilters && this.__groupFilters[groupIndex]) || null;
+          groupInfo.groupFilter = groupFilter;
+        }
+      }
+    },
+
+    /**
+     * @Override
      */
     async execute() {
       await this._initialise();
@@ -295,6 +350,14 @@ qx.Class.define("zx.reports.CollatingIterator", {
         let content = [];
         if (groupData.children) {
           for (let childData of groupData.children) {
+            let childGroupFilter = childData.groupInfo?.groupFilter;
+            if (childGroupFilter && childData.value) {
+              let filterResult = childGroupFilter(childData.value, childData.valueUuid, childData.row);
+              if (!filterResult) {
+                continue;
+              }
+            }
+
             let group = childData.groupInfo.group;
             let groupContent = [];
             groupContent.push(await group.executeBefore(childData.row));
@@ -327,9 +390,7 @@ qx.Class.define("zx.reports.CollatingIterator", {
     },
 
     /**
-     * Executes the report
-     *
-     * @returns {Promise<qx.html.Element>}
+     * @Override
      */
     async executeAsCsv() {
       await this._initialise();
