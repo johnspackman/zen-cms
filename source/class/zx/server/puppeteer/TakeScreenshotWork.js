@@ -36,7 +36,7 @@ qx.Class.define("zx.server.puppeteer.TakeScreenshotWork", {
 
       let filename = worker.resolveFile(json.filename);
       this.debug("Saving PNG to " + filename);
-      await ctlr.getPuppeteer().takeScreenshot(filename);
+      await ctlr.getPuppeteerClient().takeScreenshot(filename);
       this.debug("PNG saved");
 
       await ctlr.close();

@@ -102,7 +102,7 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
         let workJson = taskJson.workJson;
 
         if (!taskJson._uuid) {
-          taskJson._uuid = qx.util.Uuid.createUuidV4();
+          throw new Error("Task does not have a UUID.");
         }
 
         if (!workJson.uuid) {
@@ -205,6 +205,7 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
 
       if (workResultJson.response.exception) {
         debugger;
+        this.__cronTasksOnHold.remove(taskJson._uuid); //if a CRON task has failed, we want it to run immediately again
         update.failCount = (taskJson.failCount || 0) + 1;
         zx.server.email.AlertEmail.getInstance().alert(
           `A task has failed`,

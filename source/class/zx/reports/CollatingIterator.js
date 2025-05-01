@@ -27,10 +27,14 @@ qx.Class.define("zx.reports.CollatingIterator", {
   /**
    * Constructor
    *
+   * @param {zx.reports.datasource.IDataSource?} ds the data source to use
    * @param {zx.reports.Report} report
    */
-  construct(report) {
+  construct(ds, report) {
     super();
+    if (ds) {
+      this.setDatasource(ds);
+    }
     this.__report = report;
   },
 
@@ -129,24 +133,7 @@ qx.Class.define("zx.reports.CollatingIterator", {
           getValueUuid = zx.reports.Utils.compileGetter(group.getValueUuidAccessor());
         } else if (isLast) {
           getValueUuid = row => {
-            let uuid = row._uuid || row.uuid || (row.toUuid ? row.toUuid() : null);
-            if (uuid) {
-              return uuid;
-            }
-            if (getValue) {
-              let value = getValue(row);
-              uuid = value._uuid || value.uuid || (value.toUuid ? value.toUuid() : null);
-              if (uuid) {
-                return uuid;
-              }
-            }
-            if (getTitle) {
-              let title = getTitle(row);
-              if (title) {
-                return title;
-              }
-            }
-            return null;
+            return true;
           };
         }
         if (getValue && !getValueUuid) {
