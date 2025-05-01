@@ -22,9 +22,10 @@
 qx.Class.define("zx.reports.Block", {
   extend: qx.core.Object,
 
-  construct(fnOnRow) {
+  construct(fnOnRow, fnOnRowCsv) {
     super();
     this.__fnOnRow = fnOnRow;
+    this.__fnOnRowCsv = fnOnRowCsv;
   },
 
   properties: {
@@ -52,6 +53,7 @@ qx.Class.define("zx.reports.Block", {
 
   members: {
     __fnOnRow: null,
+    __fnOnRowCsv: null,
 
     /**
      * Creates the output for before the row
@@ -111,10 +113,10 @@ qx.Class.define("zx.reports.Block", {
      * @param {*} row the current row from the datasource
      */
     async executeAsCsvRow(row) {
-      if (!this.__fnOnRow) {
+      if (!this.__fnOnRowCsv) {
         throw new Error(`No onRow function defined for ${this.classname}`);
       }
-      return await this._renderCsv(await this.__fnOnRow(row), row);
+      return await this._renderCsv(await this.__fnOnRowCsv(row), row);
     },
 
     /**
