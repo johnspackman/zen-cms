@@ -1,3 +1,20 @@
+/* ************************************************************************
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
+
 /**
  * A CollatingIterator iterates over a data source, and collates the data into the groups defined by a Report;
  * this assumes that it can read the entire data source in order to provide the necessary grouping, and therefore
@@ -5,24 +22,16 @@
  */
 qx.Class.define("zx.reports.CollatingIterator", {
   extend: qx.core.Object,
-  implement: [zx.reports.IReportIterator, zx.reports.api.IDrillDown],
+  implement: [zx.reports.IReportIterator],
 
   /**
    * Constructor
    *
-   * @param {zx.reports.datasource.IDataSource} datasource
    * @param {zx.reports.Report} report
    */
-  construct(datasource, report) {
+  construct(report) {
     super();
-    this.__datasource = datasource;
     this.__report = report;
-    this.__serverApiDrillDown = zx.io.api.ApiUtils.createServerApi(zx.reports.api.IDrillDown, this);
-  },
-
-  destruct() {
-    this.__serverApiDrillDown.dispose();
-    this.__serverApiDrillDown = null;
   },
 
   members: {
@@ -32,8 +41,23 @@ qx.Class.define("zx.reports.CollatingIterator", {
     /** @type{zx.reports.Report} */
     __report: null,
 
-    /** @type{zx.reports.api.IDrillDown} server API implementation */
-    __serverApiDrillDown: null,
+    __groupInfos: null,
+    __rootData: null,
+    __groupFilters: null,
+
+    /**
+     * The data source to use
+     *
+     * @param {zx.reports.datasource.IDataSource} datasource
+     */
+    setDatasource(datasource) {
+      if (this.__datasource != datasource) {
+        this.__datasource = datasource;
+        this.__rootData = null;
+        this.__groupInfos = null;
+        this.__groupFilters = null;
+      }
+    },
 
     /**
      * Compiles a flat lookup of the groups, property accessors and sort method
@@ -89,9 +113,11 @@ qx.Class.define("zx.reports.CollatingIterator", {
             }
             if (getValue) {
               let value = getValue(row);
-              title = value.title || (value.getTitle ? value.getTitle() : null);
-              if (title) {
-                return title;
+              if (value) {
+                title = value.title || (value.getTitle ? value.getTitle() : null);
+                if (title) {
+                  return title;
+                }
               }
             }
             return null;
@@ -126,9 +152,11 @@ qx.Class.define("zx.reports.CollatingIterator", {
         if (getValue && !getValueUuid) {
           getValueUuid = row => {
             let value = getValue(row);
-            let uuid = value._uuid || value.uuid || (value.toUuid ? value.toUuid() : null);
-            if (uuid) {
-              return uuid;
+            if (value) {
+              let uuid = value._uuid || value.uuid || (value.toUuid ? value.toUuid() : null);
+              if (uuid) {
+                return uuid;
+              }
             }
             if (getTitle) {
               let title = getTitle(row);
@@ -221,21 +249,29 @@ qx.Class.define("zx.reports.CollatingIterator", {
           let valueUuid = groupInfo.getValueUuid ? groupInfo.getValueUuid(row) : null;
           if (groupDataStack[groupIndex] === undefined || groupDataStack[groupIndex].valueUuid !== valueUuid) {
             removeAllStartingAt(groupDataStack, groupIndex);
-            groupDataStack[groupIndex] = {
-              row,
-              groupInfo,
-              title: groupInfo.getTitle(row),
-              value: groupInfo.getValue(row),
-              valueUuid
-            };
             if (groupIndex > 0) {
               let parentGroupData = groupDataStack[groupIndex - 1];
-              if (!parentGroupData.children) {
-                parentGroupData.children = {};
-              }
-              parentGroupData.children[valueUuid] = groupDataStack[groupIndex];
+              groupDataStack[groupIndex] = (parentGroupData.children && parentGroupData.children[valueUuid]) || null;
             } else {
-              rootData.children[valueUuid] = groupDataStack[groupIndex];
+              groupDataStack[groupIndex] = rootData.children[valueUuid];
+            }
+            if (!groupDataStack[groupIndex]) {
+              groupDataStack[groupIndex] = {
+                row,
+                groupInfo,
+                title: groupInfo.getTitle(row),
+                value: groupInfo.getValue(row),
+                valueUuid
+              };
+              if (groupIndex > 0) {
+                let parentGroupData = groupDataStack[groupIndex - 1];
+                if (!parentGroupData.children) {
+                  parentGroupData.children = {};
+                }
+                parentGroupData.children[valueUuid] = groupDataStack[groupIndex];
+              } else {
+                rootData.children[valueUuid] = groupDataStack[groupIndex];
+              }
             }
           }
         }
@@ -262,21 +298,27 @@ qx.Class.define("zx.reports.CollatingIterator", {
      * Initialises the iterator; this is called when the report is executed, and is safe to call multiple times
      */
     async _initialise() {
-      if (!this._groupInfos) {
-        this._groupInfos = this._flattenGroups();
+      if (!this.__datasource) {
+        return false;
+      }
+      if (!this.__groupInfos) {
+        this.__groupInfos = this._flattenGroups();
         this.__updateGroupFilters();
       }
-      if (!this._rootData) {
-        this._rootData = await this._collateGroupData(this._groupInfos);
+      if (!this.__rootData) {
+        this.__rootData = await this._collateGroupData(this.__groupInfos);
       }
+      return true;
     },
 
     /**
      * @Override
      */
     async getDrilldown() {
-      await this._initialise();
-      let rootData = this._rootData;
+      if (!(await this._initialise())) {
+        return null;
+      }
+      let rootData = this.__rootData;
 
       const executeGroupData = groupData => {
         let meta = {
@@ -296,7 +338,7 @@ qx.Class.define("zx.reports.CollatingIterator", {
 
       // Compile the drill down data
       let meta = executeGroupData(rootData);
-      return meta;
+      return meta?.children || null;
     },
 
     /**
@@ -324,15 +366,15 @@ qx.Class.define("zx.reports.CollatingIterator", {
         });
       }
       this.__groupFilters = groupFilters;
-      if (this._groupInfos) {
+      if (this.__groupInfos) {
         this.__updateGroupFilters();
       }
     },
 
     __updateGroupFilters() {
-      if (this._groupInfos) {
-        for (let groupIndex = 0; groupIndex < this._groupInfos.length; groupIndex++) {
-          let groupInfo = this._groupInfos[groupIndex];
+      if (this.__groupInfos) {
+        for (let groupIndex = 0; groupIndex < this.__groupInfos.length; groupIndex++) {
+          let groupInfo = this.__groupInfos[groupIndex];
           let groupFilter = (this.__groupFilters && this.__groupFilters[groupIndex]) || null;
           groupInfo.groupFilter = groupFilter;
         }
@@ -343,8 +385,10 @@ qx.Class.define("zx.reports.CollatingIterator", {
      * @Override
      */
     async execute() {
-      await this._initialise();
-      let rootData = this._rootData;
+      if (!(await this._initialise())) {
+        return <div></div>;
+      }
+      let rootData = this.__rootData;
 
       const executeGroupData = async groupData => {
         let content = [];
@@ -369,7 +413,6 @@ qx.Class.define("zx.reports.CollatingIterator", {
             }
             groupContent.push(await group.executeAfter(childData.row));
             groupContent = groupContent.filter(html => !!html);
-            groupContent = await group.executeWrap(childData.row, groupContent);
             for (let html of groupContent) {
               content.push(html);
             }
@@ -381,6 +424,9 @@ qx.Class.define("zx.reports.CollatingIterator", {
           }
         }
         content = content.filter(html => !!html);
+        if (groupData.groupInfo) {
+          content = await groupData.groupInfo.group.executeWrap(groupData.row, content);
+        }
         return content;
       };
 
@@ -393,8 +439,10 @@ qx.Class.define("zx.reports.CollatingIterator", {
      * @Override
      */
     async executeAsCsv() {
-      await this._initialise();
-      let rootData = this._rootData;
+      if (!(await this._initialise())) {
+        return [];
+      }
+      let rootData = this.__rootData;
 
       const executeGroupData = async groupData => {
         let content = [];
