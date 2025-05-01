@@ -113,9 +113,11 @@ qx.Class.define("zx.reports.CollatingIterator", {
             }
             if (getValue) {
               let value = getValue(row);
-              title = value.title || (value.getTitle ? value.getTitle() : null);
-              if (title) {
-                return title;
+              if (value) {
+                title = value.title || (value.getTitle ? value.getTitle() : null);
+                if (title) {
+                  return title;
+                }
               }
             }
             return null;
@@ -150,9 +152,11 @@ qx.Class.define("zx.reports.CollatingIterator", {
         if (getValue && !getValueUuid) {
           getValueUuid = row => {
             let value = getValue(row);
-            let uuid = value._uuid || value.uuid || (value.toUuid ? value.toUuid() : null);
-            if (uuid) {
-              return uuid;
+            if (value) {
+              let uuid = value._uuid || value.uuid || (value.toUuid ? value.toUuid() : null);
+              if (uuid) {
+                return uuid;
+              }
             }
             if (getTitle) {
               let title = getTitle(row);
@@ -245,21 +249,29 @@ qx.Class.define("zx.reports.CollatingIterator", {
           let valueUuid = groupInfo.getValueUuid ? groupInfo.getValueUuid(row) : null;
           if (groupDataStack[groupIndex] === undefined || groupDataStack[groupIndex].valueUuid !== valueUuid) {
             removeAllStartingAt(groupDataStack, groupIndex);
-            groupDataStack[groupIndex] = {
-              row,
-              groupInfo,
-              title: groupInfo.getTitle(row),
-              value: groupInfo.getValue(row),
-              valueUuid
-            };
             if (groupIndex > 0) {
               let parentGroupData = groupDataStack[groupIndex - 1];
-              if (!parentGroupData.children) {
-                parentGroupData.children = {};
-              }
-              parentGroupData.children[valueUuid] = groupDataStack[groupIndex];
+              groupDataStack[groupIndex] = (parentGroupData.children && parentGroupData.children[valueUuid]) || null;
             } else {
-              rootData.children[valueUuid] = groupDataStack[groupIndex];
+              groupDataStack[groupIndex] = rootData.children[valueUuid];
+            }
+            if (!groupDataStack[groupIndex]) {
+              groupDataStack[groupIndex] = {
+                row,
+                groupInfo,
+                title: groupInfo.getTitle(row),
+                value: groupInfo.getValue(row),
+                valueUuid
+              };
+              if (groupIndex > 0) {
+                let parentGroupData = groupDataStack[groupIndex - 1];
+                if (!parentGroupData.children) {
+                  parentGroupData.children = {};
+                }
+                parentGroupData.children[valueUuid] = groupDataStack[groupIndex];
+              } else {
+                rootData.children[valueUuid] = groupDataStack[groupIndex];
+              }
             }
           }
         }
@@ -401,7 +413,6 @@ qx.Class.define("zx.reports.CollatingIterator", {
             }
             groupContent.push(await group.executeAfter(childData.row));
             groupContent = groupContent.filter(html => !!html);
-            groupContent = await group.executeWrap(childData.row, groupContent);
             for (let html of groupContent) {
               content.push(html);
             }
@@ -413,6 +424,9 @@ qx.Class.define("zx.reports.CollatingIterator", {
           }
         }
         content = content.filter(html => !!html);
+        if (groupData.groupInfo) {
+          content = await groupData.groupInfo.group.executeWrap(groupData.row, content);
+        }
         return content;
       };
 
