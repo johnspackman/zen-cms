@@ -27,10 +27,14 @@ qx.Class.define("zx.reports.CollatingIterator", {
   /**
    * Constructor
    *
+   * @param {zx.reports.datasource.IDataSource?} ds the data source to use
    * @param {zx.reports.Report} report
    */
-  construct(report) {
+  construct(ds, report) {
     super();
+    if (ds) {
+      this.setDatasource(ds);
+    }
     this.__report = report;
   },
 
