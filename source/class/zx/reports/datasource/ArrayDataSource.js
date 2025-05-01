@@ -36,6 +36,11 @@ qx.Class.define("zx.reports.datasource.ArrayDataSource", {
     /** @type{Integer} current index */
     __index: -1,
 
+    async open() {
+      await super.open();
+      this.__index = -1;
+    },
+
     /**
      * @Override
      */

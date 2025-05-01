@@ -1,3 +1,25 @@
+/* ************************************************************************
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
+
+/**
+ * Runs a report, using the given iterator to generate the report, adds loading
+ * message while the report is being generated, and then replaces the loading
+ * message with the report
+ */
 qx.Class.define("zx.reports.ReportRunner", {
   extend: qx.core.Object,
 
@@ -43,6 +65,11 @@ qx.Class.define("zx.reports.ReportRunner", {
      * running, it will return the same promise as the first call
      */
     run() {
+      let rootElement = this.getRootElement();
+      if (!rootElement) {
+        this.debug("ReportRunner has no rootElement set");
+        return;
+      }
       if (this.__runPromise) {
         return this.__runPromise;
       }
@@ -64,6 +91,10 @@ qx.Class.define("zx.reports.ReportRunner", {
      */
     async __runImpl() {
       let rootElement = this.getRootElement();
+      if (!rootElement) {
+        this.debug("ReportRunner has no rootElement set");
+        return;
+      }
       rootElement.removeAll();
       rootElement.setCssClass("spar-report");
       this.jsx = uk.co.spar.reports.ci.util.Component;
