@@ -36,7 +36,7 @@ qx.Class.define("zx.server.puppeteer.PrintPdfWork", {
 
       let filename = worker.resolveFile(json.filename);
       this.debug("Saving PDF to " + filename);
-      await ctlr.getPuppeteer().printToPdf(filename);
+      await ctlr.getPuppeteerClient().printToPdf(filename);
       this.debug("PDF saved");
 
       await ctlr.close();

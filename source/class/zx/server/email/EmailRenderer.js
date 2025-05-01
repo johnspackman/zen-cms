@@ -28,7 +28,6 @@ qx.Class.define("zx.server.email.EmailRenderer", {
      */
     async run(worker, url, clientConfig) {
       let messages = [];
-      let config = grasshopper.services.ServicesConfig.getInstance().getConfigData();
 
       await zx.server.puppeteer.CapturePage.execute(worker, {
         url,
@@ -40,7 +39,6 @@ qx.Class.define("zx.server.email.EmailRenderer", {
             /**@type {EmailParameters}*/
             parameters
           } = data;
-          let pageApi = ctlr.getClientApi(zx.server.puppeteer.api.IPageApi);
 
           parameters.to = parameters.to?.split(",") ?? [];
           parameters.cc = parameters.cc?.split(",") ?? [];

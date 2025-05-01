@@ -76,14 +76,12 @@ qx.Class.define("zx.server.email.FlushQueue", {
       };
 
       let collection = zx.server.Standalone.getInstance().getDb().getCollection("zx.server.work.scheduler.ScheduledTask");
-      let task = await collection.findOne(query);
-      let uuid = task?._uuid || qx.util.Uuid.createUuidV4();
 
       await collection.findOneAndUpdate(
         query,
         {
           $set: {
-            _uuid: uuid,
+            _uuid: qx.util.Uuid.createUuidV4(),
             enabled: true,
             cronExpression: "*/20 * * * * *",
             workJson: {
