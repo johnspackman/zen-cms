@@ -40,20 +40,39 @@ qx.Class.define("zx.reports.Block", {
     before: {
       init: null,
       nullable: true,
-      check: "zx.reports.Block"
+      check: "zx.reports.Block",
+      apply: "_applyBefore"
     },
 
     /** Block executed after the content */
     after: {
       init: null,
       nullable: true,
-      check: "zx.reports.Block"
+      check: "zx.reports.Block",
+      apply: "_applyAfter"
     }
   },
 
   members: {
     __fnOnRow: null,
     __fnOnRowCsv: null,
+
+    _applyBefore(value, old) {
+      this._applyChild(value, old);
+    },
+
+    _applyAfter(value, old) {
+      this._applyChild(value, old);
+    },
+
+    _applyChild(value, old) {
+      if (old) {
+        old.setParent(null);
+      }
+      if (value) {
+        value.setParent(this);
+      }
+    },
 
     /**
      * Creates the output for before the row
