@@ -508,7 +508,9 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
         return null;
       }
 
-      const serializeValue = async value => {
+      let puts = [];
+
+      const serializeValue = value => {
         if (value === null || value === undefined) {
           return value;
         }
@@ -521,7 +523,7 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
         if (qx.lang.Type.isArray(value)) {
           value = qx.lang.Array.clone(value);
           for (let i = 0; i < value.length; i++) {
-            value[i] = await serializeValue(value[i]);
+            value[i] = serializeValue(value[i]);
           }
           return value;
         }
@@ -529,7 +531,7 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
         if (controller.isCompatibleObject(value)) {
           let uuid = value.toUuid();
           if (!uuid || !this.hasObject(uuid)) {
-            await this.put(value);
+            puts.push(this.put(value));
             uuid = value.toUuid();
           }
           return {
@@ -566,7 +568,7 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
 
           let result = {};
           for (let key in value) {
-            result[key] = await serializeValue(value[key]);
+            result[key] = serializeValue(value[key]);
           }
           return result;
         }
@@ -575,18 +577,23 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
         };
       };
 
-      let result = await serializeValue(value);
+      let result = serializeValue(value);
+      await qx.Promise.all(puts);
       return result;
     },
 
-    async _deserializeReturnValue(value) {
-      const deserializeValue = async value => {
+    _deserializeReturnValue(value) {
+      let promises = [];
+      const deserializeValue = value => {
         if (value === null || value === undefined) {
           return value;
         }
         if (qx.lang.Type.isArray(value)) {
           for (let i = 0; i < value.length; i++) {
-            value[i] = await deserializeValue(value[i]);
+            value[i] = deserializeValue(value[i]);
+            if (qx.lang.Type.isPromise(value[i])) {
+              promises.push(value[i].then(newValue => (value[i] = newValue)));
+            }
           }
           return value;
         }
@@ -595,9 +602,9 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
           if (!clazz) {
             throw new Error(`Cannot return ${value._uuid} because there is no class called ${value._classname}`);
           }
-          let obj = await this.getController().getByUuid(clazz, value._uuid);
-          if (obj) {
-            value = obj;
+          let promise = this.getController().getByUuid(clazz, value._uuid);
+          if (promise) {
+            value = promise;
           }
         }
         if (value.$$rawObject !== undefined) {
@@ -606,7 +613,12 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
         return value;
       };
 
-      return await deserializeValue(value);
+      let result = deserializeValue(value);
+      if (promises.length) {
+        return qx.Promise.all(promises).then(() => result);
+      }
+
+      return result;
     },
 
     async _receivePacketsImpl(context) {
