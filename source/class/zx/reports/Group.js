@@ -127,7 +127,7 @@ qx.Class.define("zx.reports.Group", {
      * @param {String} id
      * @param {zx.reports.Accumulator} acc
      */
-    addAccumulator(acc) {
+    addAccumulator(id, acc) {
       this.__accumulators[id] = acc;
     },
 
@@ -155,10 +155,13 @@ qx.Class.define("zx.reports.Group", {
      * @override
      */
     async executeBefore(row) {
+      return await super.executeBefore(row);
+    },
+
+    resetAccumulators(row) {
       for (let id in this.__accumulators) {
         this.__accumulators[id].reset();
       }
-      return await super.executeBefore(row);
     },
 
     /**
@@ -175,14 +178,19 @@ qx.Class.define("zx.reports.Group", {
      * @override
      */
     async executeRow(row) {
-      for (let id in this.__accumulators) {
-        this.__accumulators[id].update(row);
-      }
+      this.__updateAccumulatorsToRoot(row);
       let each = this.getEach();
       if (each) {
         return await each.executeRow(row);
       }
       return await super.executeRow(row);
+    },
+
+    __updateAccumulatorsToRoot(row) {
+      for (let id in this.__accumulators) {
+        this.__accumulators[id].update(row);
+      }
+      this.getParent()?.__updateAccumulatorsToRoot(row);
     },
 
     /**

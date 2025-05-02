@@ -36,6 +36,11 @@ qx.Class.define("zx.reports.CollatingIterator", {
   },
 
   members: {
+    /**
+     * @type {GroupExecutionState[]}
+     */
+    __executionContext: null,
+
     /** @type{zx.reports.datasource.IDataSource} */
     __datasource: null,
 
@@ -394,6 +399,7 @@ qx.Class.define("zx.reports.CollatingIterator", {
 
             let group = childData.groupInfo.group;
             let groupContent = [];
+            group.resetAccumulators();
             groupContent.push(await group.executeBefore(childData.row));
             let childContent = await executeGroupData(childData);
             if (childContent) {
