@@ -39,6 +39,11 @@ qx.Class.define("zx.reports.CollatingIterator", {
   },
 
   members: {
+    /**
+     * @type {GroupExecutionState[]}
+     */
+    __executionContext: null,
+
     /** @type{zx.reports.datasource.IDataSource} */
     __datasource: null,
 
@@ -329,7 +334,8 @@ qx.Class.define("zx.reports.CollatingIterator", {
     },
 
     /**
-     * @Override
+     * @typedef {(groupValue: any, groupValueUuid: string, row: Object) => boolean} GroupFilterFunc
+     * @param {(GroupFilterFunc | string | null)[]}
      */
     setGroupFilters(groupFilters) {
       if (qx.core.Environment.get("qx.debug")) {
@@ -376,11 +382,16 @@ qx.Class.define("zx.reports.CollatingIterator", {
         return <div></div>;
       }
       let rootData = this.__rootData;
+      this.__executionContext = [];
 
       const executeGroupData = async groupData => {
         let content = [];
+        let context = { childIndex: -1, childData: null, groupData };
+        this.__executionContext.push(context);
         if (groupData.children) {
           for (let childData of groupData.children) {
+            context.childIndex++;
+            context.childData = childData;
             let childGroupFilter = childData.groupInfo?.groupFilter;
             if (childGroupFilter && childData.value) {
               let filterResult = childGroupFilter(childData.value, childData.valueUuid, childData.row);
@@ -391,6 +402,7 @@ qx.Class.define("zx.reports.CollatingIterator", {
 
             let group = childData.groupInfo.group;
             let groupContent = [];
+            group.resetAccumulators();
             groupContent.push(await group.executeBefore(childData.row));
             let childContent = await executeGroupData(childData);
             if (childContent) {
@@ -403,23 +415,38 @@ qx.Class.define("zx.reports.CollatingIterator", {
             for (let html of groupContent) {
               content.push(html);
             }
+            if (childData.groupInfo) {
+              content = await group.executeWrap(childData.row, content);
+            }
           }
         }
+        this.__executionContext.pop();
         if (groupData.rows) {
           for (let row of groupData.rows) {
             content.push(await groupData.groupInfo.group.executeRow(row));
           }
         }
         content = content.filter(html => !!html);
-        if (groupData.groupInfo) {
-          content = await groupData.groupInfo.group.executeWrap(groupData.row, content);
-        }
+
         return content;
       };
 
       // Execute the report
       let content = await executeGroupData(rootData);
       return <div>{content}</div>;
+    },
+
+    /**
+     * An array (zipper) containing information about the current groups that we are in and
+     * the current children that we are executing.
+     * @typedef {Object} GroupExecutionState
+     * @property {Number} childIndex - the index of the current child in `groupData.children`
+     * @property {GroupData} childData - the current child data. Same as `groupData.children[childIndex]`
+     * @property {GroupData} groupData - the current group data
+     * @returns {GroupExecutionState[]}
+     */
+    getExecutionContext() {
+      return this.__executionContext;
     },
 
     /**
