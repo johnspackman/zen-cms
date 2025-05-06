@@ -31,7 +31,7 @@ qx.Class.define("zx.reports.ReportRunner", {
   properties: {
     cssClass: {
       check: "String",
-      init: "report-runner"
+      init: "spar-report"
     },
 
     header: {
@@ -96,7 +96,7 @@ qx.Class.define("zx.reports.ReportRunner", {
         return;
       }
       rootElement.removeAll();
-      rootElement.setCssClass("spar-report");
+      rootElement.setCssClass(this.getCssClass());
       this.jsx = uk.co.spar.reports.ci.util.Component;
       let loadingMessage = <this.jsx.LoadingWheel />;
       rootElement.add(loadingMessage);

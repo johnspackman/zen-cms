@@ -15,6 +15,9 @@
  *
  * ************************************************************************ */
 
+/**
+ * @ignore(BigNumber)
+ */
 qx.Class.define("zx.reports.accumulators.BigNumberSumAccumulator", {
   extend: qx.core.Object,
   implement: [zx.reports.accumulators.IAccumulator],
@@ -25,7 +28,7 @@ qx.Class.define("zx.reports.accumulators.BigNumberSumAccumulator", {
    */
   construct(columnName) {
     super();
-    this.__columnName = columnName;
+    this.__valueAccessor = zx.reports.Utils.compileGetter(columnName);
   },
 
   properties: {
@@ -37,8 +40,8 @@ qx.Class.define("zx.reports.accumulators.BigNumberSumAccumulator", {
   },
 
   members: {
-    /** @type{String} the name of the column to count*/
-    __columnName: null,
+    /** @type{Function} the accessor for the column */
+    __valueAccessor: null,
 
     /**
      * @override
@@ -51,7 +54,7 @@ qx.Class.define("zx.reports.accumulators.BigNumberSumAccumulator", {
      * @override
      */
     update(ds) {
-      let value = ds.get(this.__columnName);
+      let value = this.__valueAccessor(ds);
       this.setSum(this.getSum().plus(value));
     }
   }

@@ -123,7 +123,7 @@ qx.Class.define("zx.reports.Block", {
       if (!this.__fnOnRow) {
         throw new Error(`No onRow function defined for ${this.classname}`);
       }
-      return await this._render(await this.__fnOnRow(row), row);
+      return await this._render(await this.__fnOnRow(row, this), row);
     },
 
     /**
@@ -135,7 +135,7 @@ qx.Class.define("zx.reports.Block", {
       if (!this.__fnOnRowCsv) {
         throw new Error(`No onRow function defined for ${this.classname}`);
       }
-      return await this._renderCsv(await this.__fnOnRowCsv(row), row);
+      return await this._renderCsv(await this.__fnOnRowCsv(row, this), row);
     },
 
     /**

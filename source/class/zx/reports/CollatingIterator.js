@@ -100,6 +100,18 @@ qx.Class.define("zx.reports.CollatingIterator", {
         if (b === null) {
           return 1;
         }
+        if (typeof a === "string" || typeof b === "string") {
+          a = String(a);
+          b = String(b);
+        } else if (typeof a === "number" && typeof b === "number") {
+          if (isNaN(a)) {
+            a = 0;
+          }
+          if (isNaN(b)) {
+            b = 0;
+          }
+          return a - b;
+        }
         return a.localeCompare(b);
       };
 
@@ -249,6 +261,7 @@ qx.Class.define("zx.reports.CollatingIterator", {
             }
             if (!groupDataStack[groupIndex]) {
               groupDataStack[groupIndex] = {
+                _classname: groupInfo.group.classname,
                 row,
                 groupInfo,
                 title: groupInfo.getTitle(row),
@@ -385,6 +398,64 @@ qx.Class.define("zx.reports.CollatingIterator", {
       this.__executionContext = [];
 
       const executeGroupData = async groupData => {
+        let groupFilter = groupData.groupInfo?.groupFilter;
+        if (groupFilter && groupData.value) {
+          let filterResult = groupFilter(groupData.value, groupData.valueUuid, groupData.row);
+          if (!filterResult) {
+            return [];
+          }
+        }
+
+        let content = [];
+        let group = groupData.groupInfo.group;
+        let groupContent = [];
+
+        let context = { childIndex: -1, childData: null, groupData };
+        this.__executionContext.push(context);
+
+        group.resetAccumulators();
+        groupContent.push(await group.executeBefore(groupData.row));
+
+        if (qx.core.Environment.get("qx.debug")) {
+          this.assertTrue(!groupData.children || !groupData.rows, "GroupData cannot have both children and rows");
+        }
+
+        if (groupData.children) {
+          for (let childData of groupData.children) {
+            context.childIndex++;
+            context.childData = childData;
+            let childContent = await executeGroupData(childData);
+            if (childContent) {
+              for (let html of childContent) {
+                groupContent.push(html);
+              }
+            }
+          }
+        }
+        if (groupData.rows) {
+          for (let row of groupData.rows) {
+            context.childIndex++;
+            context.row = row;
+            groupContent.push(await groupData.groupInfo.group.executeRow(row));
+          }
+        }
+
+        groupContent.push(await group.executeAfter(groupData.row));
+        groupContent = groupContent.filter(html => !!html);
+        for (let html of groupContent) {
+          content.push(html);
+        }
+        if (groupData.groupInfo) {
+          content = await group.executeWrap(groupData.row, content);
+        }
+
+        this.__executionContext.pop();
+        content = content.filter(html => !!html);
+
+        return content;
+      };
+
+      const executeGroupDataold = async groupData => {
         let content = [];
         let context = { childIndex: -1, childData: null, groupData };
         this.__executionContext.push(context);
@@ -420,19 +491,30 @@ qx.Class.define("zx.reports.CollatingIterator", {
             }
           }
         }
-        this.__executionContext.pop();
+        if (qx.core.Environment.get("qx.debug")) {
+          this.assertTrue(!groupData.children || !groupData.rows, "GroupData must have either children or rows");
+        }
         if (groupData.rows) {
           for (let row of groupData.rows) {
             content.push(await groupData.groupInfo.group.executeRow(row));
           }
         }
+        this.__executionContext.pop();
         content = content.filter(html => !!html);
 
         return content;
       };
 
       // Execute the report
-      let content = await executeGroupData(rootData);
+      let content = [];
+      for (let childData of rootData.children) {
+        let tmp = await executeGroupData(childData);
+        if (tmp) {
+          for (let html of tmp) {
+            content.push(html);
+          }
+        }
+      }
       return <div>{content}</div>;
     },
 

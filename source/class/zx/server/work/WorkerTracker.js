@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 const Docker = require("dockerode");
 const fs = require("fs");
@@ -284,7 +284,7 @@ qx.Class.define("zx.server.work.WorkerTracker", {
      */
     _getChromiumPort() {
       if (!this.__chromiumPort) {
-        this.__chromiumPort = zx.server.PortRanges.getChromiumPortRange().acquire();
+        this.__chromiumPort = zx.server.PortRanges.CHROMIUM_PORT_RANGE.acquire();
       }
       return this.__chromiumPort;
     },
@@ -296,7 +296,7 @@ qx.Class.define("zx.server.work.WorkerTracker", {
      */
     _getNodeHttpPort() {
       if (!this._nodeHttpPort) {
-        this._nodeHttpPort = zx.server.PortRanges.getNodeHttpServerApiPortRange().acquire();
+        this._nodeHttpPort = zx.server.PortRanges.NODE_HTTP_SERVER_API_PORT_RANGE.acquire();
       }
       return this._nodeHttpPort;
     },
@@ -375,7 +375,7 @@ qx.Class.define("zx.server.work.WorkerTracker", {
         PortBindings[`11000/tcp`] = [{ HostPort: String(this._getChromiumPort()) }];
 
         if (inspect != "none") {
-          this.__chromiumDebugPort = zx.server.PortRanges.getNodeDebugPortRange().acquire();
+          this.__chromiumDebugPort = zx.server.PortRanges.NODE_DEBUG_PORT_RANGE.acquire();
           ExposedPorts[`9230/tcp`] = {};
           PortBindings[`9230/tcp`] = [{ HostPort: String(this.__chromiumDebugPort) }];
           Env.ZX_NODE_INSPECT = `--${inspect}=0.0.0.0:9230`;
@@ -385,7 +385,7 @@ qx.Class.define("zx.server.work.WorkerTracker", {
         PortBindings[`11000/tcp`] = [{ HostPort: String(this._getChromiumPort()) }];
 
         if (inspect != "none") {
-          this.__chromiumDebugPort = zx.server.PortRanges.getNodeDebugPortRange().acquire();
+          this.__chromiumDebugPort = zx.server.PortRanges.NODE_DEBUG_PORT_RANGE.acquire();
           ExposedPorts[`9230/tcp`] = {};
           PortBindings[`9230/tcp`] = [{ HostPort: String(this.__chromiumDebugPort) }];
           Env.ZX_NODE_INSPECT = `--${inspect}=0.0.0.0:9230`;
@@ -561,7 +561,7 @@ qx.Class.define("zx.server.work.WorkerTracker", {
         this._container = null;
       }
       if (this.__chromiumPort) {
-        zx.server.PortRanges.getChromiumPortRange().release(this.__chromiumPort);
+        zx.server.PortRanges.CHROMIUM_PORT_RANGE.release(this.__chromiumPort);
         this.__chromiumPort = null;
       }
     },

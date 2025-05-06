@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 const fs = require("fs");
 const path = require("path");
@@ -234,17 +234,17 @@ qx.Class.define("zx.server.work.pools.NodeProcessWorkerTracker", {
       }
       await this._closeContainer();
       await clientApi.terminate();
-      zx.server.PortRanges.getNodeHttpServerApiPortRange().release(this._nodeHttpPort);
+      zx.server.PortRanges.NODE_HTTP_SERVER_API_PORT_RANGE.release(this._nodeHttpPort);
       this._nodeHttpPort = null;
       if (this.__nodeDebugPort) {
-        zx.server.PortRanges.getNodeDebugPortRange().release(this.__nodeDebugPort);
+        zx.server.PortRanges.NODE_DEBUG_PORT_RANGE.release(this.__nodeDebugPort);
         this.__nodeDebugPort = null;
       }
     },
 
     _getNodeDebugPort() {
       if (!this.__nodeDebugPort) {
-        this.__nodeDebugPort = zx.server.PortRanges.getNodeDebugPortRange().acquire();
+        this.__nodeDebugPort = zx.server.PortRanges.NODE_DEBUG_PORT_RANGE.acquire();
       }
       return this.__nodeDebugPort;
     }

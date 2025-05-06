@@ -115,7 +115,13 @@ qx.Class.define("zx.reports.thin.AbstractReportRunnerFeature", {
         connectionManager.registerApi(reportDescriptor.getServerApi(), `/reports/executors/${reportDescriptor.getId()}`);
       }
 
-      this.setActiveReportId(reportDescriptors[0].getId());
+      let defaultReportId = new URL(window.location.href).searchParams.get("defaultReport");
+      let reportDescriptor = defaultReportId ? this.__reportDescriptors[defaultReportId] : null;
+      if (!reportDescriptor) {
+        reportDescriptor = reportDescriptors[0];
+      }
+
+      this.setActiveReportId(reportDescriptor.getId());
     },
 
     /**

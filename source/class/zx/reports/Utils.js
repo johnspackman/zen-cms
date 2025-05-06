@@ -32,6 +32,9 @@ qx.Class.define("zx.reports.Utils", {
       if (!path) {
         return new Function("return null;");
       }
+      if (path == ".") {
+        return new Function("return this;");
+      }
       let parts = path.split(".");
       let upnames = parts.map(part => qx.lang.String.firstUp(part));
       return function (obj) {

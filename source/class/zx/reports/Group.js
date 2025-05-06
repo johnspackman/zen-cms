@@ -77,6 +77,8 @@ qx.Class.define("zx.reports.Group", {
 
     /** The each which is executed for every row in this group */
     each: {
+      init: null,
+      nullable: true,
       check: "zx.reports.Block",
       apply: "_applyEach"
     },
@@ -183,7 +185,7 @@ qx.Class.define("zx.reports.Group", {
       if (each) {
         return await each.executeRow(row);
       }
-      return await super.executeRow(row);
+      return [];
     },
 
     __updateAccumulatorsToRoot(row) {

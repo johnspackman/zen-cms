@@ -23,6 +23,14 @@ qx.Class.define("zx.reports.table.TableRow", {
     this.__columnAccessors = columnAccessors.map(accessor => zx.reports.Utils.compileGetter(accessor));
   },
 
+  properties: {
+    cssClass: {
+      init: null,
+      nullable: true,
+      check: "String"
+    }
+  },
+
   members: {
     /** @type{(Function|String)[]?} accessors for the columns */
     __columnAccessors: null,
@@ -56,7 +64,11 @@ qx.Class.define("zx.reports.table.TableRow", {
           tds.push(<td>&nbsp;</td>);
         }
       }
-      return <tr>{tds}</tr>;
+      let tr = <tr>{tds}</tr>;
+      if (this.getCssClass()) {
+        tr.setCssClass(this.getCssClass());
+      }
+      return tr;
     },
 
     /**

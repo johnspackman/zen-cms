@@ -8,7 +8,7 @@ qx.Class.define("zx.reports.api.ServerReportDescriptor", {
     this.setName(title);
     this.setFormats(formats);
     this.__reportRunner = reportRunner;
-    this.__createDatasource = createDatasource;
+    this.__createDatasourceFn = createDatasource;
     this.__serverApi = zx.io.api.ApiUtils.createServerApi(zx.reports.api.IReportExecutor, this);
   },
 
@@ -45,7 +45,7 @@ qx.Class.define("zx.reports.api.ServerReportDescriptor", {
 
   members: {
     /** @type{Function} creates the datasource for a given set of parameters */
-    __createDatasource: null,
+    __createDatasourceFn: null,
 
     /** @type{zx.reports.ReportRunner} the report runner */
     __reportRunner: null,
@@ -60,7 +60,7 @@ qx.Class.define("zx.reports.api.ServerReportDescriptor", {
      * Apply for `params` property
      */
     async _applyParams(value, oldValue) {
-      this.__datasource = await this.__createDatasource(value);
+      this.__datasource = await this.__createDatasourceFn(value);
     },
 
     getServerApi() {

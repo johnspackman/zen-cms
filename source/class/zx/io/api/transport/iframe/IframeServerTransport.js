@@ -25,13 +25,20 @@ qx.Class.define("zx.io.api.transport.iframe.IframeServerTransport", {
 
   construct() {
     super();
-    window.addEventListener("message", evt => this._onMessage(evt));
+    if (window.parent === window) {
+      this.error("IframeServerTransport must be run in an iframe");
+    } else {
+      window.addEventListener("message", evt => this._onMessage(evt));
+    }
   },
 
   members: {
     __ready: false,
 
     sendReady() {
+      if (window.parent === window) {
+        return;
+      }
       if (this.__ready) {
         return;
       }
@@ -95,6 +102,9 @@ qx.Class.define("zx.io.api.transport.iframe.IframeServerTransport", {
      * @param {zx.io.api.IRequestJson} data
      */
     postMessage(data) {
+      if (window.parent === window) {
+        return;
+      }
       window.parent.postMessage(
         zx.utils.Json.stringifyJson({
           messagePayload: data,

@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Scans the database of tasks `zx.server.work.scheduler.ScheduledTask` for work to be done
@@ -138,12 +138,19 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
           if (!this.__registeredCronTasks[taskJson._uuid]) {
             this.debug("Found new CRON task: " + taskJson._uuid);
             const cron = require("cron");
-            this.__registeredCronTasks[taskJson._uuid] = new cron.CronJob(
-              taskJson.cronExpression,
-              () => this.__cronTasksOnHold.remove(taskJson._uuid),
-              null, // onComplete
-              true
-            );
+            let cronJob = null;
+            try {
+              cronJob = new cron.CronJob(
+                taskJson.cronExpression,
+                () => this.__cronTasksOnHold.remove(taskJson._uuid),
+                null, // onComplete
+                true
+              );
+            } catch (ex) {
+              this.error(`Error creating CRON task ${taskJson._uuid} (${taskJson.cronExpression}): ${ex}`);
+              continue;
+            }
+            this.__registeredCronTasks[taskJson._uuid] = cronJob;
           }
 
           if (!this.__cronTasksOnHold.includes(taskJson._uuid)) {
