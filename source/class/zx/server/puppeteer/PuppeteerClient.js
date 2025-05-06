@@ -268,22 +268,25 @@ qx.Class.define("zx.server.puppeteer.PuppeteerClient", {
       if (this.isUsesZxApi()) {
         //wait until page is ready to use Remote APIs
         //by repeatedly polling the page for the ready flag
-        this.__readyPromise = new Promise(async (resolve, reject) => {
+        const readyFn = async () => {
           const TIMEOUT = 30; //massive 30 second timeout
           const INTERVAL = 100;
           const MAX_PASSES = (TIMEOUT * 1000) / INTERVAL;
+          const testFn = () => window["zx"] && window["zx"].thin?.puppeteer?.PuppeteerServerTransport?.getInstance()?.isReady();
 
           for (let pass = 0; pass < MAX_PASSES; pass++) {
-            let ready = await page.evaluate(() => window["zx"] && window["zx"].thin?.puppeteer?.PuppeteerServerTransport?.getInstance()?.isReady());
+            let promise = page.evaluate(testFn);
+            let ready = await promise;
             if (ready) {
-              return resolve();
+              return true;
             }
             console.log("Page remote API not ready yet, waiting...");
             await new Promise(res => setTimeout(res, INTERVAL));
           }
 
-          reject(new Error("Page did not become ready to use remote APIs within timeout"));
-        });
+          throw new Error("Page did not become ready to use remote APIs within timeout");
+        };
+        this.__readyPromise = readyFn();
       } else {
         this.__readyPromise = Promise.resolve();
       }
