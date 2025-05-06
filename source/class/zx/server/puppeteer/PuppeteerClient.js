@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /*
  * @ignore(Buffer)
@@ -274,7 +274,7 @@ qx.Class.define("zx.server.puppeteer.PuppeteerClient", {
           const MAX_PASSES = (TIMEOUT * 1000) / INTERVAL;
 
           for (let pass = 0; pass < MAX_PASSES; pass++) {
-            let ready = await page.evaluate(() => window["zx"].thin.puppeteer.PuppeteerServerTransport.getInstance().isReady());
+            let ready = await page.evaluate(() => window["zx"] && window["zx"].thin?.puppeteer?.PuppeteerServerTransport?.getInstance()?.isReady());
             if (ready) {
               return resolve();
             }

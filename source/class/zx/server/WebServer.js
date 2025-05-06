@@ -605,6 +605,10 @@ qx.Class.define("zx.server.WebServer", {
         let dockerMounts = pool.getDockerMounts() || [];
         dockerMounts.push(`compiled/source-node:/home/pptruser/app/runtime`);
         pool.setDockerMounts(dockerMounts);
+      } else {
+        let dockerMounts = pool.getDockerMounts() || [];
+        dockerMounts.push(`compiled/build-node:/home/pptruser/app/runtime`);
+        pool.setDockerMounts(dockerMounts);
       }
       if (config.extraHosts) {
         pool.setDockerExtraHosts(config.extraHosts);
