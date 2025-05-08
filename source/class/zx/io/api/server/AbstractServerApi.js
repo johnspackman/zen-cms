@@ -331,7 +331,7 @@ qx.Class.define("zx.io.api.server.AbstractServerApi", {
       zx.io.api.server.SessionManager.getInstance()
         .getAllSessions()
         .forEach(session => {
-          this.debug(`Publishing ${eventName} to ${session}`);
+          this.trace(`Publishing ${eventName} to ${session}`);
           session.publish(this, eventName, data);
         });
     }

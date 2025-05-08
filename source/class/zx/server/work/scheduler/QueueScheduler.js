@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 const fs = require("fs");
 const path = require("path");
@@ -177,17 +177,16 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
       if (info) {
         delete this.__running[workResultData.workJson.uuid];
         info.promise.resolve(workResultData);
-        await this.fireDataEventAsync("workCompleted", workResultData);
       } else {
         this.debug(`Work completed for job ${workResultData.workJson.uuid} but not found in running list (Worker Pool has queued this work)`);
       }
-      const archiveIt = async () => {
+      if (this.__workDir) {
         let workDir = path.join(this.getWorkDir(), zx.server.Standalone.getUuidAsPath(workResultData.workJson.uuid));
         await fs.promises.mkdir(workDir, { recursive: true });
-        let workResult = zx.server.work.WorkResult.deserializeFromScheduler(workDir, workResultData);
-      };
-      if (this.__workDir) {
-        archiveIt();
+        await zx.server.work.WorkResult.deserializeFromScheduler(workDir, workResultData);
+      }
+      if (info) {
+        await this.fireDataEventAsync("workCompleted", workResultData);
       }
     },
 
