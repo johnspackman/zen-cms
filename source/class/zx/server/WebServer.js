@@ -693,7 +693,7 @@ qx.Class.define("zx.server.WebServer", {
         }
       }
 
-      this._handleProxyLogin(request, reply);
+      await this._handleProxyLogin(request, reply);
 
       let url = request.url.toLowerCase();
       let pos = url.indexOf("?");
