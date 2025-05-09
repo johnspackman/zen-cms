@@ -365,9 +365,6 @@ qx.Class.define("zx.server.Standalone", {
         if (!object) {
           object = await this._dbController.getByUuid(clazz, uuid);
         }
-        if (qx.core.Environment.get("qx.debug")) {
-          this.assertTrue(!!object);
-        }
         return object;
       }
 
