@@ -293,7 +293,7 @@ qx.Class.define("zx.server.puppeteer.PuppeteerClient", {
         this.__readyPromise = Promise.resolve();
       }
 
-      // javascript-obfuscator:enable
+      // javascript-obfuscator:disable
       return result;
     },
 
