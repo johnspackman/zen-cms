@@ -46,11 +46,12 @@ qx.Mixin.define("zx.utils.mongo.MMongoClient", {
      *
      * @param {String|qx.Class} clazz
      * @param {import("mongodb").Filter<MongoDocument>} query
-     * @returns {Promise<import("mongodb").FindCursor>}
+     * @param {Object} options
+     * @returns {import("mongodb").FindCursor}
      */
-    async find(clazz, query) {
+    find(clazz, query, options) {
       this._debugMongo(clazz, query);
-      return await zx.server.Standalone.getInstance().getDb().find(clazz, query);
+      return zx.server.Standalone.getInstance().getDb().getCollection(clazz).find(query, options);
     },
 
     /**

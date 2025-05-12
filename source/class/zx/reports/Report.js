@@ -23,5 +23,18 @@ qx.Class.define("zx.reports.Report", {
     if (each) {
       this.setEach(each);
     }
+  },
+
+  properties: {
+    /**
+     * If set, these CSV headers will be shown
+     * at the very beginning of the CSV output
+     * and anything in the `before` blocks of any group will be ignored.
+     */
+    csvHeaders: {
+      check: "Array",
+      nullable: true,
+      event: "changeCsvHeaders"
+    }
   }
 });

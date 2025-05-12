@@ -454,57 +454,6 @@ qx.Class.define("zx.reports.CollatingIterator", {
 
         return content;
       };
-
-      const executeGroupDataold = async groupData => {
-        let content = [];
-        let context = { childIndex: -1, childData: null, groupData };
-        this.__executionContext.push(context);
-        if (groupData.children) {
-          for (let childData of groupData.children) {
-            context.childIndex++;
-            context.childData = childData;
-            let childGroupFilter = childData.groupInfo?.groupFilter;
-            if (childGroupFilter && childData.value) {
-              let filterResult = childGroupFilter(childData.value, childData.valueUuid, childData.row);
-              if (!filterResult) {
-                continue;
-              }
-            }
-
-            let group = childData.groupInfo.group;
-            let groupContent = [];
-            group.resetAccumulators();
-            groupContent.push(await group.executeBefore(childData.row));
-            let childContent = await executeGroupData(childData);
-            if (childContent) {
-              for (let html of childContent) {
-                groupContent.push(html);
-              }
-            }
-            groupContent.push(await group.executeAfter(childData.row));
-            groupContent = groupContent.filter(html => !!html);
-            for (let html of groupContent) {
-              content.push(html);
-            }
-            if (childData.groupInfo) {
-              content = await group.executeWrap(childData.row, content);
-            }
-          }
-        }
-        if (qx.core.Environment.get("qx.debug")) {
-          this.assertTrue(!groupData.children || !groupData.rows, "GroupData must have either children or rows");
-        }
-        if (groupData.rows) {
-          for (let row of groupData.rows) {
-            content.push(await groupData.groupInfo.group.executeRow(row));
-          }
-        }
-        this.__executionContext.pop();
-        content = content.filter(html => !!html);
-
-        return content;
-      };
-
       // Execute the report
       let content = [];
       for (let childData of rootData.children) {
@@ -521,6 +470,8 @@ qx.Class.define("zx.reports.CollatingIterator", {
     /**
      * An array (zipper) containing information about the current groups that we are in and
      * the current children that we are executing.
+     *
+     * NOTE: currently doesn't work when we are executing CSV (returns null).
      * @typedef {Object} GroupExecutionState
      * @property {Number} childIndex - the index of the current child in `groupData.children`
      * @property {GroupData} childData - the current child data. Same as `groupData.children[childIndex]`
@@ -528,6 +479,7 @@ qx.Class.define("zx.reports.CollatingIterator", {
      * @returns {GroupExecutionState[]}
      */
     getExecutionContext() {
+      console.log("debug: internal context is: " + this.__executionContext);
       return this.__executionContext;
     },
 
@@ -546,7 +498,9 @@ qx.Class.define("zx.reports.CollatingIterator", {
           for (let childData of groupData.children) {
             let group = childData.groupInfo.group;
             let groupContent = [];
-            groupContent.push(await group.executeAsCsvBefore(childData.row));
+            if (!this.__report.getCsvHeaders()) {
+              groupContent.push(await group.executeAsCsvBefore(childData.row));
+            }
             let childContent = await executeGroupData(childData);
             if (childContent) {
               for (let csvRow of childContent) {
@@ -571,6 +525,10 @@ qx.Class.define("zx.reports.CollatingIterator", {
 
       // Execute the report
       let content = await executeGroupData(rootData);
+
+      if (this.__report.getCsvHeaders()) {
+        content.unshift(this.__report.getCsvHeaders());
+      }
       return content;
     }
   }

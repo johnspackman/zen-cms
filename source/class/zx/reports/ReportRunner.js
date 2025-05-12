@@ -137,6 +137,19 @@ qx.Class.define("zx.reports.ReportRunner", {
       qx.html.Element.flush();
     },
 
+    async runCsv() {
+      let csv = await this.__iterator.executeAsCsv();
+      let strData = zx.utils.Csv.stringify(csv);
+      let filename = "report.csv"; //TODO use actual file name
+      let blob = new Blob([strData], { type: "text/csv;charset=utf-8;" });
+      let link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
+
     /**
      * Returns the report iterator
      *

@@ -133,7 +133,7 @@ qx.Class.define("zx.reports.Block", {
      */
     async executeAsCsvRow(row) {
       if (!this.__fnOnRowCsv) {
-        throw new Error(`No onRow function defined for ${this.classname}`);
+        return;
       }
       return await this._renderCsv(await this.__fnOnRowCsv(row, this), row);
     },

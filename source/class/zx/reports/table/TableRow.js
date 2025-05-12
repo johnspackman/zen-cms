@@ -28,6 +28,15 @@ qx.Class.define("zx.reports.table.TableRow", {
       init: null,
       nullable: true,
       check: "String"
+    },
+
+    /**
+     * Where to place the CSV fields (if provided) in relation to the existing fields (provided via columnaccessors)
+     */
+    placeCsvValues: {
+      check: ["prepend", "append", "override"],
+      init: "prepend",
+      event: "changePlaceCsvValues"
     }
   },
 
@@ -47,6 +56,17 @@ qx.Class.define("zx.reports.table.TableRow", {
         }
       }
       throw new Error("Cannot find table");
+    },
+
+    /**
+     * @param {(string|Function)[]} accessors
+     *
+     * Extra fields to include if we are in a CSV file.
+     * This is because, unlike visual reports, CSV files are often desired to be a strict 2D grid, and hence cannot have headings/subheadings
+     * Therefore, it will be useful to add the heading information into each row
+     */
+    setCsvColumnAccessors(accessors) {
+      this.__csvColumnAccessors = accessors.map(accessor => zx.reports.Utils.compileGetter(accessor));
     },
 
     /**
@@ -78,7 +98,18 @@ qx.Class.define("zx.reports.table.TableRow", {
      */
     async executeAsCsvRow(row) {
       let cells = [];
-      for (let accessor of this.__columnAccessors) {
+
+      let accessors = this.__columnAccessors;
+
+      if (this.__csvColumnAccessors) {
+        if (this.getPlaceCsvValues() == "prepend") {
+          accessors = [...this.__csvColumnAccessors, ...accessors];
+        } else {
+          throw new Error("Only prepend is currently supported for CSV accessor placement");
+        }
+      }
+
+      for (let accessor of accessors) {
         let value = await this._renderCsv(await accessor(row), row);
         if (value !== null) {
           cells.push(value);
