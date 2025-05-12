@@ -92,6 +92,7 @@ qx.Class.define("zx.reports.ReportRunner", {
     async __runImpl() {
       let rootElement = this.getRootElement();
       if (!rootElement) {
+        debugger;
         this.debug("ReportRunner has no rootElement set");
         return;
       }

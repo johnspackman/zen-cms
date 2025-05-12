@@ -1,22 +1,20 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    Patryk Malinowski (@p9malino26)
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
-
-
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    Patryk Malinowski (@p9malino26)
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Connection manager for the server
@@ -104,8 +102,9 @@ qx.Class.define("zx.io.api.server.ConnectionManager", {
           throw new Error(`API ${apiName} not found. Did you forget to register it?`);
         }
       } else if (request.getType() !== "poll" && request.getPath()) {
+        let requestPath = request.getPath();
         for (let [apiPath, api_] of Object.entries(this.__apisByPath)) {
-          if (request.getPath().startsWith(apiPath)) {
+          if (requestPath == apiPath || requestPath.startsWith(apiPath + "/")) {
             api = api_;
             break;
           }
