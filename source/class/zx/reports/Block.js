@@ -50,6 +50,13 @@ qx.Class.define("zx.reports.Block", {
       nullable: true,
       check: "zx.reports.Block",
       apply: "_applyAfter"
+    },
+
+    /** Function called to wrap content */
+    wrap: {
+      init: null,
+      nullable: true,
+      check: "Function"
     }
   },
 
@@ -146,6 +153,14 @@ qx.Class.define("zx.reports.Block", {
      * @returns
      */
     async executeWrap(row, content) {
+      let wrap = this.getWrap();
+      if (wrap) {
+        let tmp = await wrap(row, content);
+        if (!qx.lang.Type.isArray(tmp)) {
+          tmp = [tmp];
+        }
+        content = tmp;
+      }
       return content;
     },
 
