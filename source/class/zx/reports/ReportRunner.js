@@ -19,6 +19,8 @@
  * Runs a report, using the given iterator to generate the report, adds loading
  * message while the report is being generated, and then replaces the loading
  * message with the report
+ *
+ * @ignore(Blob)
  */
 qx.Class.define("zx.reports.ReportRunner", {
   extend: qx.core.Object,
