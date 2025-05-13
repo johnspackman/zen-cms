@@ -464,6 +464,7 @@ qx.Class.define("zx.reports.CollatingIterator", {
           }
         }
       }
+      this.__executionContext = null;
       return <div>{content}</div>;
     },
 
