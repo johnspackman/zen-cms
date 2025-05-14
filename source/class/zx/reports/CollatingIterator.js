@@ -494,23 +494,33 @@ qx.Class.define("zx.reports.CollatingIterator", {
       let rootData = this.__rootData;
 
       const executeGroupData = async groupData => {
+        let groupFilter = groupData.groupInfo?.groupFilter;
+        if (groupFilter && groupData.value) {
+          let filterResult = groupFilter(groupData.value, groupData.valueUuid, groupData.row);
+          if (!filterResult) {
+            return [];
+          }
+        }
+
         let content = [];
         if (groupData.children) {
           for (let childData of groupData.children) {
-            let group = childData.groupInfo.group;
-            let groupContent = [];
+            let childGroup = childData.groupInfo.group;
+            childGroup.resetAccumulators();
+            let childRows = [];
+
             if (!this.__report.getCsvHeaders()) {
-              groupContent.push(await group.executeAsCsvBefore(childData.row));
+              childRows.push(await childGroup.executeAsCsvBefore(childData.row));
             }
             let childContent = await executeGroupData(childData);
             if (childContent) {
               for (let csvRow of childContent) {
-                groupContent.push(csvRow);
+                childRows.push(csvRow);
               }
             }
-            groupContent.push(await group.executeAsCsvAfter(childData.row));
-            groupContent = groupContent.filter(csvRow => !!csvRow);
-            for (let csvRow of groupContent) {
+            childRows.push(await childGroup.executeAsCsvAfter(childData.row));
+            childRows = childRows.filter(csvRow => !!csvRow);
+            for (let csvRow of childRows) {
               content.push(csvRow);
             }
           }
