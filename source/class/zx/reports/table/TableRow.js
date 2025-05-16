@@ -34,8 +34,8 @@ qx.Class.define("zx.reports.table.TableRow", {
      * Where to place the CSV fields (if provided) in relation to the existing fields (provided via columnaccessors)
      */
     placeCsvValues: {
-      check: ["prepend", "append", "override"],
-      init: "prepend",
+      init: "auto",
+      check: ["prepend", "append", "override", "auto"],
       event: "changePlaceCsvValues"
     }
   },
@@ -102,10 +102,23 @@ qx.Class.define("zx.reports.table.TableRow", {
       let accessors = this.__columnAccessors;
 
       if (this.__csvColumnAccessors) {
-        if (this.getPlaceCsvValues() == "prepend") {
-          accessors = [...this.__csvColumnAccessors, ...accessors];
-        } else {
-          throw new Error("Only prepend is currently supported for CSV accessor placement");
+        switch (this.getPlaceCsvValues()) {
+          case "prepend":
+            accessors = [...this.__csvColumnAccessors, ...accessors];
+            break;
+          case "append":
+            accessors = [...accessors, ...this.__csvColumnAccessors];
+            break;
+          case "override":
+            accessors = this.__csvColumnAccessors;
+            break;
+          case "auto":
+            if (this.__csvColumnAccessors.length) {
+              accessors = this.__csvColumnAccessors;
+            } else {
+              accessors = this.__columnAccessors;
+            }
+            break;
         }
       }
 

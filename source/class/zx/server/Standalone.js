@@ -37,6 +37,7 @@ qx.Class.define("zx.server.Standalone", {
 
   construct() {
     super();
+    qx.log.appender.Formatter.setFormatter(new zx.utils.LogFormatter());
     if (zx.server.Standalone.__instance) {
       console.error("Multiple instances of zx.server.Standalone detected - this is probably not intentional");
     }
