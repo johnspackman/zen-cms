@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 const fs = require("fs");
 const path = require("path");
@@ -249,29 +249,37 @@ qx.Class.define("zx.server.email.Message", {
         let mime = (await import("mime")).default;
         this.getAttachments().forEach(attachment => {
           let filename = attachment.getPath();
-          let stream = fs.createReadStream(filename);
-          let attachmentData = {};
-          if (stream) {
-            attachmentData.stream = stream;
-          } else {
-            attachmentData.path = filename;
-          }
+          try {
+            if (!fs.existsSync(filename)) {
+              this.error(`Attachment ${filename} does not exist`);
+              return;
+            }
+            let stream = fs.createReadStream(filename);
+            let attachmentData = {};
+            if (stream) {
+              attachmentData.stream = stream;
+            } else {
+              attachmentData.path = filename;
+            }
 
-          if (attachment.getContentType()) {
-            attachmentData.type = attachment.getContentType();
-          } else {
-            let fileExt = path.extname(filename);
-            if (fileExt.startsWith(".")) {
-              fileExt = fileExt.substring(1);
-              let mimeType = mime.getType(fileExt);
-              if (mimeType) {
-                attachmentData.type = mimeType;
+            if (attachment.getContentType()) {
+              attachmentData.type = attachment.getContentType();
+            } else {
+              let fileExt = path.extname(filename);
+              if (fileExt.startsWith(".")) {
+                fileExt = fileExt.substring(1);
+                let mimeType = mime.getType(fileExt);
+                if (mimeType) {
+                  attachmentData.type = mimeType;
+                }
               }
             }
-          }
 
-          attachmentData.name = attachment.getName() || path.basename(filename);
-          attachmentsData.push(attachmentData);
+            attachmentData.name = attachment.getName() || path.basename(filename);
+            attachmentsData.push(attachmentData);
+          } catch (ex) {
+            this.error(`Error reading attachment ${filename}: ${ex}`);
+          }
         });
       }
 
