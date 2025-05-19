@@ -49,11 +49,17 @@ qx.Class.define("zx.io.api.server.ConnectionManager", {
      * They cannot be access solely by their API name in the request's header.
      *
      * @param {(new () => zx.io.api.server.AbstractServerApi) | zx.io.api.server.AbstractServerApi} api API class or instance
-     * @param {String?} path Optional path to register the API under
+     * @param {String?} path Optional path to register the API under. Must start with a forward slash.
      */
     registerApi(api, path) {
       if (!(api instanceof qx.core.Object)) {
         api = new api();
+      }
+
+      if (qx.core.Environment.get("qx.debug")) {
+        if (path && !path.match(/^\//)) {
+          throw new Error(`Path must start with a forward slash, got: ${path}`);
+        }
       }
 
       let apiName = api.getApiName();
