@@ -76,7 +76,7 @@ qx.Class.define("zx.io.api.transport.nodeworker.NodeWorkerServerTransport", {
         let breakout = zx.utils.Uri.breakoutUri(uri);
         request.setPath(breakout.path);
       }
-      let response = new zx.io.api.server.Response();
+      let response = new zx.io.api.server.Response(request);
       await zx.io.api.server.ConnectionManager.getInstance().receiveMessage(request, response);
       let json = response.toNativeObject();
       this.__postMessage(json);
