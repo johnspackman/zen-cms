@@ -59,6 +59,9 @@ qx.Class.define("zx.io.api.transport.http.FastifyServerTransport", {
         true //deep clone
       );
       let path = zx.utils.Uri.breakoutUri(req.originalUrl).path.replace(RE_ROUTE, "");
+      if (path.indexOf("?") > -1) {
+        path = path.substring(0, path.indexOf("?"));
+      }
       data.path = path;
       data.restMethod = req.method; // TODO: we should only set this if we get a RESTful request; RPC should have no method
 
