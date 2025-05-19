@@ -84,7 +84,7 @@ qx.Class.define("zx.io.api.transport.iframe.IframeServerTransport", {
       */
 
       let request = new zx.io.api.server.Request(this, json.messagePayload);
-      let response = new zx.io.api.server.Response();
+      let response = new zx.io.api.server.Response(request);
       let connectionManager = zx.io.api.server.ConnectionManager.getInstance();
       await connectionManager.receiveMessage(request, response);
       this.postMessage(response.toNativeObject());

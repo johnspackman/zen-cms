@@ -39,6 +39,7 @@ qx.Class.define("zx.io.api.server.Request", {
     this.setPath(data.path ?? null);
     this.setType(data.type ?? "callMethod");
     this.initPathArgs({});
+    this.initQuery({});
 
     let sessionUuid = this.getHeader("Session-Uuid");
     if (sessionUuid) {

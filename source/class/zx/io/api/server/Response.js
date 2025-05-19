@@ -24,12 +24,27 @@
  */
 qx.Class.define("zx.io.api.server.Response", {
   extend: qx.core.Object,
-  construct() {
+  /**
+   *
+   * @param {zx.io.api.server.Request?} request
+   */
+  construct(request = null) {
     super();
     this.__data = [];
     this.setHeaders({});
+    this.setRequest(request);
   },
   properties: {
+    /**
+     * @readonly
+     * The request that this response is for.
+     * Null if this response is not for a request (e.g. a server push)
+     */
+    request: {
+      check: "zx.io.api.server.Request",
+      init: null,
+      nullable: true
+    },
     /**
      * public readonly
      * @type {zx.io.api.IHeaders}
@@ -81,12 +96,23 @@ qx.Class.define("zx.io.api.server.Response", {
     },
 
     /**
-     * @returns {zx.io.api.IResponseJson}
+     * @returns {zx.io.api.IResponseJson | Object} A native object representing the data of this response
+     
      */
     toNativeObject() {
-      return {
-        data: this.__data
-      };
+      //If the request is from REST (i.e. not from a client API),
+      // we will only have one data item, so we return that directly
+      // If the request is from a client API, we return an object with a data property
+      // containing the data items
+      // This is because the client API can have multiple data items
+      // (e.g. publications), while REST requests can only have one data item
+      if (this.getRequest() && !this.getRequest().isFromClientApi()) {
+        return this.__data[0];
+      } else {
+        return {
+          data: this.__data
+        };
+      }
     }
   }
 });

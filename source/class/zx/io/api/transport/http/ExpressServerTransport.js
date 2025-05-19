@@ -48,7 +48,7 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
         data.restMethod = req.method;
 
         let request = new zx.io.api.server.Request(this, data).set({ restMethod: req.method });
-        let response = new zx.io.api.server.Response();
+        let response = new zx.io.api.server.Response(request);
         await zx.io.api.server.ConnectionManager.getInstance().receiveMessage(request, response);
 
         if (response.getError()) {

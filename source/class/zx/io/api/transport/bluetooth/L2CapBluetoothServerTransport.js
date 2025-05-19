@@ -79,7 +79,7 @@ qx.Class.define("zx.io.api.transport.bluetooth.L2CapBluetoothServerTransport", {
 
       let data = zx.utils.Json.parseJson(msg);
       let request = new zx.io.api.server.Request(this, data);
-      let response = new zx.io.api.server.Response();
+      let response = new zx.io.api.server.Response(request);
       let cm = zx.io.api.server.ConnectionManager.getInstance();
       await cm.receiveMessage(request, response);
       let responseStr = zx.utils.Json.stringifyJson(response.toNativeObject());
