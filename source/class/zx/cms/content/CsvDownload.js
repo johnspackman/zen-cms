@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 qx.Class.define("zx.cms.content.CsvDownload", {
   extend: zx.io.persistence.Object,
@@ -83,7 +83,14 @@ qx.Class.define("zx.cms.content.CsvDownload", {
         throw new Error("Cannot find class " + this.getCsvGenerator());
       }
       let generator = new clazz();
-      return generator.generateCsv(query);
+      let result = await generator.generateCsv(query);
+      if (typeof generator.getDownloadFilename == "function") {
+        let filename = generator.getDownloadFilename();
+        if (filename) {
+          this.setDownloadFilename(filename);
+        }
+      }
+      return result;
     }
   }
 });
