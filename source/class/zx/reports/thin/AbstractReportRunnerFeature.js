@@ -101,8 +101,11 @@ qx.Class.define("zx.reports.thin.AbstractReportRunnerFeature", {
     async onReady() {
       await qx.core.Init.getApplication().waitForReady();
       this.__serverApiDiscovery = zx.io.api.ApiUtils.createServerApi(zx.reports.api.IReportDiscovery, this);
-      let serverTransport = zx.io.api.transport.iframe.IframeServerTransport.getInstance();
-      serverTransport.sendReady();
+      let iframeTransport = zx.io.api.transport.iframe.IframeServerTransport.getInstance();
+      iframeTransport.sendReady();
+      let pptrTransport = zx.thin.puppeteer.PuppeteerServerTransport.getInstance();
+      pptrTransport.makeReady();
+
       let connectionManager = zx.io.api.server.ConnectionManager.getInstance();
       connectionManager.registerApi(this.__serverApiDiscovery, "/reports/discovery");
 
