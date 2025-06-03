@@ -87,7 +87,7 @@ qx.Class.define("zx.io.api.ApiUtils", {
     /**
      * Returns a new Client API instance for a given interface
      *
-     * @param {*} apiInterface
+     * @param {*} apiInterface Qooxdoo interface that defines the API
      * @returns {zx.io.api.client.AbstractClientApi}
      */
     createClientApi(apiInterface, ...args) {

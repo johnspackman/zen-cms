@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 qx.Class.define("zx.server.puppeteer.PuppeteerWorkController", {
   extend: qx.core.Object,
@@ -37,17 +37,25 @@ qx.Class.define("zx.server.puppeteer.PuppeteerWorkController", {
   },
 
   members: {
-    /** @type{zx.server.work.IWorker} the worker we're operating for */
+    /** @type {zx.server.work.IWorker} the worker we're operating for */
     __worker: null,
 
-    /** @type{zx.server.puppeteer.PuppeteerClientTransport} the client transport for talking to APIs in Chromium */
+    /** @type {zx.server.puppeteer.PuppeteerClientTransport} the client transport for talking to APIs in Chromium */
     __transport: null,
 
-    /** @type{Object<String, zx.io.api.client.AbstractClientApi} Client APIs */
+    /** @type {Object<String, zx.io.api.client.AbstractClientApi} Client APIs */
     __clientApis: null,
 
-    /** @type{zx.server.puppeteer.PuppeteerClient} the PuppeteerClient for the page we are controlling */
+    /** @type {zx.server.puppeteer.PuppeteerClient} the PuppeteerClient for the page we are controlling */
     __puppeteerClient: null,
+
+    /**
+     *
+     * @returns {zx.server.puppeteer.PuppeteerClientTransport}
+     */
+    getTransport() {
+      return this.__transport;
+    },
 
     /**
      * Finds a Client API for a given interface
@@ -122,8 +130,8 @@ qx.Class.define("zx.server.puppeteer.PuppeteerWorkController", {
         throw ex;
       }
 
+      this.__transport = new zx.server.puppeteer.PuppeteerClientTransport(puppeteerClient.getPage());
       if (Object.keys(this.__clientApis).length) {
-        this.__transport = new zx.server.puppeteer.PuppeteerClientTransport(puppeteerClient.getPage());
         for (let apiName in this.__clientApis) {
           let ifc = qx.Interface.getByName(apiName);
           let api = zx.io.api.ApiUtils.createClientApi(ifc, this.__transport);
