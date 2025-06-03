@@ -88,7 +88,13 @@ qx.Class.define("zx.io.api.transport.iframe.IframeClientTransport", {
         if (qx.core.Environment.get("qx.debug")) {
           this.debug("Remote iframe server is ready");
         }
-        this.__promiseReady.resolve();
+        if (this.__resolved) {
+          console.warn("IframeClientTransport already resolved, ignoring ready message");
+          debugger;
+        } else {
+          this.__resolved = true;
+          this.__promiseReady.resolve();
+        }
         return;
       } else {
         this.error("Unrecognised message: " + JSON.stringify(json));
