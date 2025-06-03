@@ -480,7 +480,6 @@ qx.Class.define("zx.reports.CollatingIterator", {
      * @returns {GroupExecutionState[]}
      */
     getExecutionContext() {
-      console.log("debug: internal context is: " + this.__executionContext);
       return this.__executionContext;
     },
 
