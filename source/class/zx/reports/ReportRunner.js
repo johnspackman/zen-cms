@@ -151,6 +151,7 @@ qx.Class.define("zx.reports.ReportRunner", {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      return strData;
     },
 
     /**

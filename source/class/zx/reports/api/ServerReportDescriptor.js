@@ -82,7 +82,7 @@ qx.Class.define("zx.reports.api.ServerReportDescriptor", {
       if (format === "html") {
         this.__reportRunner.run();
       } else if (format === "csv") {
-        this.__reportRunner.runCsv();
+        return this.__reportRunner.runCsv();
       } else {
         throw new Error("Unsupported format: " + format);
       }
