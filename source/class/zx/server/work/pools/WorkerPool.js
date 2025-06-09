@@ -37,7 +37,8 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
     super();
 
     if (!workdir) {
-      workdir = zx.server.Config.resolveTemp("worker-pools/" + this.classname);
+      const DF = new qx.util.format.DateFormat("yyyy-MM-dd");
+      workdir = zx.server.Config.resolveTemp("worker-pools/" + DF.format(new Date()) + "/" + this.classname);
     }
     this.setWorkDir(workdir);
 
