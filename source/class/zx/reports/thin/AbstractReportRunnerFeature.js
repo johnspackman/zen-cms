@@ -22,6 +22,7 @@
  *
  * @use(zx.utils.BigNumber)
  * @ignore(BigNumber)
+ * @ignore(URLSearchParams)
  */
 qx.Class.define("zx.reports.thin.AbstractReportRunnerFeature", {
   extend: zx.thin.ui.container.Composite,
@@ -130,11 +131,12 @@ qx.Class.define("zx.reports.thin.AbstractReportRunnerFeature", {
     /**
      * Provide a default set of report parameters to be used when the widget is first created;
      * to be optionally overridden by subclasses
+     * By default, this will return the URL parameters of the current page
      *
      * @returns {Object} default report parameters
      */
     _getDefaultReportParams() {
-      return null;
+      return Object.fromEntries(new URLSearchParams(window.location.search));
     },
 
     /**
