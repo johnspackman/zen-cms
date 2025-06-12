@@ -56,13 +56,14 @@ qx.Class.define("zx.cms.content.CsvDownload", {
      * @Override
      */
     async generate(request, reply) {
+      let data = await this._generateCsv(request.query);
+
       reply.header("Content-Type", this.getContentType());
       let filename = this.getDownloadFilename();
       if (filename) {
         reply.header("Content-Disposition", `attachment; filename="${filename}"`);
       }
 
-      let data = await this._generateCsv(request.query);
       if (data instanceof qx.html.Node) {
         data = data.serialize();
       } else if (data && !(typeof data == "string")) {
