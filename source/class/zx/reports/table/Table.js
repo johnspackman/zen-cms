@@ -34,7 +34,7 @@ qx.Class.define("zx.reports.table.Table", {
     /**
      * @override
      */
-    async executeWrap(row, content) {
+    async executeWrapBody(row, content) {
       return [
         <table>
           <thead>

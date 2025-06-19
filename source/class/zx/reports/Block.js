@@ -57,6 +57,13 @@ qx.Class.define("zx.reports.Block", {
       init: null,
       nullable: true,
       check: "Function"
+    },
+
+    /** Function called to wrap content */
+    wrapBody: {
+      init: null,
+      nullable: true,
+      check: "Function"
     }
   },
 
@@ -156,6 +163,25 @@ qx.Class.define("zx.reports.Block", {
       let wrap = this.getWrap();
       if (wrap) {
         let tmp = await wrap(row, content);
+        if (!qx.lang.Type.isArray(tmp)) {
+          tmp = [tmp];
+        }
+        content = tmp;
+      }
+      return content;
+    },
+
+    /**
+     * Provides the an opportunity to wrap the content for a row, but inside the before and after blocks
+     *
+     * @param {*} row the current row from the datasource
+     * @param {qx.html.Element[]} content the content previously compiled for this group for the row
+     * @returns
+     */
+    async executeWrapBody(row, content) {
+      let wrapBody = this.getWrapBody();
+      if (wrapBody) {
+        let tmp = await wrapBody(row, content);
         if (!qx.lang.Type.isArray(tmp)) {
           tmp = [tmp];
         }

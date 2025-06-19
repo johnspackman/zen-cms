@@ -420,6 +420,7 @@ qx.Class.define("zx.reports.CollatingIterator", {
           this.assertTrue(!groupData.children || !groupData.rows, "GroupData cannot have both children and rows");
         }
 
+        let allChildContent = [];
         if (groupData.children) {
           for (let childData of groupData.children) {
             context.childIndex++;
@@ -427,7 +428,7 @@ qx.Class.define("zx.reports.CollatingIterator", {
             let childContent = await executeGroupData(childData);
             if (childContent) {
               for (let html of childContent) {
-                groupContent.push(html);
+                allChildContent.push(html);
               }
             }
           }
@@ -436,8 +437,15 @@ qx.Class.define("zx.reports.CollatingIterator", {
           for (let row of groupData.rows) {
             context.childIndex++;
             context.row = row;
-            groupContent.push(await groupData.groupInfo.group.executeRow(row));
+            allChildContent.push(await groupData.groupInfo.group.executeRow(row));
           }
+        }
+
+        if (groupData.groupInfo) {
+          allChildContent = await group.executeWrapBody(groupData.row, allChildContent);
+        }
+        for (let html of allChildContent) {
+          groupContent.push(html);
         }
 
         groupContent.push(await group.executeAfter(groupData.row));
