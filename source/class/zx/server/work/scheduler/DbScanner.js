@@ -19,6 +19,7 @@
  * Scans the database of tasks `zx.server.work.scheduler.ScheduledTask` for work to be done
  * and adds it to the QueueScheduler
  */
+const cron = require("cron");
 qx.Class.define("zx.server.work.scheduler.DbScanner", {
   extend: qx.core.Object,
   include: [zx.utils.mongo.MMongoClient],
@@ -135,10 +136,9 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
         }
 
         if (taskJson.cronExpression) {
+          let cronJob = null;
           if (!this.__registeredCronTasks[taskJson._uuid]) {
             this.debug("Found new CRON task: " + taskJson._uuid);
-            const cron = require("cron");
-            let cronJob = null;
             try {
               cronJob = new cron.CronJob(
                 taskJson.cronExpression,
@@ -151,6 +151,18 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
               continue;
             }
             this.__registeredCronTasks[taskJson._uuid] = cronJob;
+          }
+
+          cronJob = this.__registeredCronTasks[taskJson._uuid];
+
+          //get the interval of the CRON job (approximate for monthly jobs, but that's ok)
+          let [d1, d2] = cronJob.nextDates(2);
+          let interval = d2.ts - d1.ts;
+          let previousRun = d1.ts - interval;
+
+          //if the task has started but before the interval has passed, and has run successfully, then we put it on hold
+          if (taskJson.dateStarted && taskJson.failCount === 0 && taskJson.dateStarted.getTime() > previousRun) {
+            this.__cronTasksOnHold.push(taskJson._uuid);
           }
 
           if (!this.__cronTasksOnHold.includes(taskJson._uuid)) {
