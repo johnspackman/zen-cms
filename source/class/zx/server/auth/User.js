@@ -34,6 +34,7 @@ qx.Class.define("zx.server.auth.User", {
   construct(virtualUser) {
     super();
     this.__virtualUser = !!virtualUser;
+    this.initApiTokens(new zx.data.Map());
     this.set({
       permissions: new zx.data.IndexedArray().set({
         keyGenerator: perm => perm.getShortCode()
@@ -101,6 +102,20 @@ qx.Class.define("zx.server.auth.User", {
       nullable: true,
       check: "zx.data.Map",
       event: "changeState",
+      "@": [zx.io.persistence.anno.Property.DEFAULT, zx.io.remote.anno.Property.PROTECTED]
+    },
+
+    /**
+     * @type {zx.data.Map<string, string>}
+     * Its keys are the names of the ZX apis that this user is authorized to use,
+     * and the values are the tokens that can be used to access those APIs,
+     * which are UUIDs.
+     */
+    apiTokens: {
+      check: "zx.data.Map",
+      deferredInit: true,
+      event: "changeApiTokens",
+      nullable: false,
       "@": [zx.io.persistence.anno.Property.DEFAULT, zx.io.remote.anno.Property.PROTECTED]
     }
   },

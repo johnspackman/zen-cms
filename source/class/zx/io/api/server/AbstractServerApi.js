@@ -36,6 +36,17 @@ qx.Class.define("zx.io.api.server.AbstractServerApi", {
     this.__restsByPath = {};
   },
 
+  properties: {
+    /**
+     * Whether this API is public (i.e. anyone can access it)
+     */
+    public: {
+      init: true,
+      check: "Boolean",
+      event: "changePublic"
+    }
+  },
+
   members: {
     /**
      * A map of publication names.

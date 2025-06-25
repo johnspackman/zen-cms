@@ -335,6 +335,11 @@ qx.Class.define("zx.cli.commands.UserCommand", {
       );
 
       cmd.addSubcommand(sub);
+
+      /*
+       * Add API token
+       */
+      cmd.addSubcommand(new zx.server.auth.CreateApiTokenCommand());
       return cmd;
     }
   }

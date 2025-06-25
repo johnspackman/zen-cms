@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Represents a session
@@ -29,6 +29,7 @@ qx.Class.define("zx.server.Session", {
    */
   construct(manager, loadedSessionData) {
     super();
+    this.initAuthenticatedApis(new qx.data.Array());
     this.__values = new zx.data.Map();
     this.__manager = manager;
     if (loadedSessionData) {
@@ -41,6 +42,16 @@ qx.Class.define("zx.server.Session", {
   },
 
   properties: {
+    /**
+     * @type {qx.data.Array<string>}
+     * The list of ZX API names that this session is allowed to use.
+     */
+    authenticatedApis: {
+      check: "qx.data.Array",
+      deferredInit: true,
+      event: "changeAuthenticatedApis",
+      nullable: false
+    },
     /** When the session will expire */
     expires: {
       init: null,

@@ -30,6 +30,17 @@ qx.Class.define("zx.io.api.server.ConnectionManager", {
     this.__apisByName = {};
     this.__apisByPath = {};
   },
+
+  properties: {
+    /**
+     * An authentication provider which checks if we are authorized to use private APIs.
+     */
+    authProvider: {
+      check: "zx.io.api.server.IAuthProvider",
+      nullable: true,
+      event: "changeAuthProvider"
+    }
+  },
   members: {
     /**
      * @type {{[apiName: string]: zx.io.api.server.AbstractServerApi}}
@@ -124,6 +135,12 @@ qx.Class.define("zx.io.api.server.ConnectionManager", {
       }
 
       if (api) {
+        //check if we are allowed to use this API
+        let authProvider = this.getAuthProvider();
+        if (!api.isPublic() && authProvider && !(await authProvider.canUseApi(api.getApiName()))) {
+          throw new Error(`Permission denied`);
+        }
+
         //Call the API
         await api.receiveMessage(request, response);
       } else if (request.getType() !== "poll") {
