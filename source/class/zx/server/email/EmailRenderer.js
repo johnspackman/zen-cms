@@ -23,15 +23,15 @@ qx.Class.define("zx.server.email.EmailRenderer", {
     /**
      * @param {zx.server.work.Worker} worker
      * @param {string} url  URL of the webpage with the email content
-     * @param {object} clientConfig  Configuration for the instance of `zx.server.puppeteer.PuppeteerClient`
+     * @param {Object} clientProperties Configuration for the instance of `zx.server.puppeteer.PuppeteerClient`
      * @returns {Promise<zx.server.email.Message[]>} Array of messages to send
      */
-    async run(worker, url, clientConfig) {
+    async run(worker, url, clientProperties) {
       let messages = [];
 
       await zx.server.puppeteer.CapturePage.execute(worker, {
         url,
-        clientConfig,
+        clientProperties,
         async onPageReady({ data, ctlr }) {
           let {
             htmlBody,
