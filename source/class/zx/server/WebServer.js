@@ -30,6 +30,7 @@ const { AsyncLocalStorage } = require("async_hooks");
  */
 qx.Class.define("zx.server.WebServer", {
   extend: zx.server.Standalone,
+  implement: [zx.io.api.server.IAuthProvider],
 
   properties: {
     /** Port to listen on */
@@ -868,9 +869,14 @@ qx.Class.define("zx.server.WebServer", {
             }
             user.login(request);
 
+            let session = request.session;
+
             // This causes the session to be cached in memopry
-            request.session.addUse();
+            session.addUse();
             currentUser = user;
+
+            session.getAuthenticatedApis().removeAll();
+            session.getAuthenticatedApis().replace(user.getApiTokens().getKeys().copy());
           }
         }
 
@@ -1017,6 +1023,8 @@ qx.Class.define("zx.server.WebServer", {
      * Called to initialise APIs
      */
     async _initApis(app) {
+      let cm = zx.io.api.server.ConnectionManager.getInstance();
+      cm.setAuthProvider(this);
       this._apiTransport = new zx.io.api.transport.http.FastifyServerTransport(app, cb => this.wrapMiddleware(cb));
     },
 
@@ -1106,6 +1114,15 @@ qx.Class.define("zx.server.WebServer", {
       if (this.isDebug()) {
         console.log(msg);
       }
+    },
+
+    /**@override */
+    async canUseApi(apiName) {
+      let session = zx.server.WebServer.getCurrentRequest()?.session;
+      if (!session) {
+        return false;
+      }
+      return session.getAuthenticatedApis().includes(apiName);
     }
   },
 

@@ -259,7 +259,7 @@ qx.Class.define("zx.server.Standalone", {
     /**
      * Returns the user discovery instance
      *
-     * @return {zx.server.auth.UserDiscovery  }
+     * @return {zx.server.auth.UserDiscovery}
      */
     getUserDiscovery() {
       return this.__userDiscovery;
