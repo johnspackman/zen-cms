@@ -8,7 +8,7 @@ qx.Class.define("zx.reports.api.ServerReportDescriptor", {
     this.setName(title);
     this.setFormats(formats);
     this.__reportRunner = reportRunner;
-    this.__createDatasourceFn = createDatasource;
+    this.__createDatasourceFn = createDatasource ?? this._createDataSource.bind(this);
     this.__serverApi = zx.io.api.ApiUtils.createServerApi(zx.reports.api.IReportExecutor, this);
   },
 
@@ -57,6 +57,17 @@ qx.Class.define("zx.reports.api.ServerReportDescriptor", {
     __serverApi: null,
 
     /**
+     *
+     * @returns {zx.reports.ReportRunner}
+     */
+    _getReportRunner() {
+      if (!this.__reportRunner) {
+        this.__reportRunner = this._createReportRunner();
+      }
+      return this.__reportRunner;
+    },
+
+    /**
      * Apply for `params` property
      */
     async _applyParams(value, oldValue) {
@@ -68,7 +79,7 @@ qx.Class.define("zx.reports.api.ServerReportDescriptor", {
     },
 
     setRootElement(rootElement) {
-      this.__reportRunner.setRootElement(rootElement);
+      this._getReportRunner().setRootElement(rootElement);
     },
 
     /**
@@ -78,11 +89,12 @@ qx.Class.define("zx.reports.api.ServerReportDescriptor", {
       if (!this.getFormats().includes(format)) {
         throw new Error("Invalid format: " + format);
       }
-      this.__reportRunner.getIterator().setDatasource(this.__datasource);
+      let reportRunner = this._getReportRunner();
+      reportRunner.getIterator().setDatasource(this.__datasource);
       if (format === "html") {
-        this.__reportRunner.run();
+        reportRunner.run();
       } else if (format === "csv") {
-        return this.__reportRunner.runCsv();
+        return reportRunner.runCsv();
       } else {
         throw new Error("Unsupported format: " + format);
       }
@@ -114,6 +126,22 @@ qx.Class.define("zx.reports.api.ServerReportDescriptor", {
      */
     setGroupFilters(groupFilters) {
       this.__reportRunner.getIterator().setGroupFilters(groupFilters);
+    },
+
+    /**
+     * @returns {zx.reports.ReportRunner}
+     */
+    _createReportRunner() {
+      throw new Error(this.classname + " was neither initialized with a report runner nor implements the _createReportRunner method.");
+    },
+
+    /**
+     *
+     * @param {Object} params
+     * @return {Promise<zx.reports.datasource.IDataSource>}
+     */
+    _createDataSource(params) {
+      throw new Error(this.classname + " was neither initialized with a create datasource function nor implements the _createDataSource method.");
     }
   }
 });
