@@ -34,17 +34,6 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
     this.__queueScheduler = queueScheduler;
 
     /**
-     * @type {qx.data.Array<String>} Array of UUIDs of zx.server.work.scheduler.ScheduledTask
-     * which are waiting until their CRON expression is ready to run
-     */
-    this.__cronTasksOnHold = new qx.data.Array();
-
-    /**
-     * @type {Object<String, cron.CronJob>} Map of CRON task UUIDs to their cron jobs
-     */
-    this.__registeredCronTasks = {};
-
-    /**
      * All tasks which have been queued on the scheduler and are waiting to be completed
      * Maps the work JSON UUID to the task JSON (zx.server.work.scheduler.ScheduledTask)
      */
@@ -135,50 +124,9 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
           }
         }
 
-        if (taskJson.cronExpression) {
-          let cronJob = null;
-          if (!this.__registeredCronTasks[taskJson._uuid]) {
-            this.debug("Found new CRON task: " + taskJson._uuid);
-            try {
-              cronJob = new cron.CronJob(
-                taskJson.cronExpression,
-                () => this.__cronTasksOnHold.remove(taskJson._uuid),
-                null, // onComplete
-                true
-              );
-            } catch (ex) {
-              this.error(`Error creating CRON task ${taskJson._uuid} (${taskJson.cronExpression}): ${ex}`);
-              continue;
-            }
-            this.__registeredCronTasks[taskJson._uuid] = cronJob;
-          }
-
-          cronJob = this.__registeredCronTasks[taskJson._uuid];
-
-          //get the interval of the CRON job (approximate for monthly jobs, but that's ok)
-          let [d1, d2] = cronJob.nextDates(2);
-          let interval = d2.ts - d1.ts;
-          let previousRun = d1.ts - interval;
-
-          //if the task has started but before the interval has passed, and has run successfully, then we put it on hold
-          if (taskJson.dateStarted && taskJson.failCount === 0 && taskJson.dateStarted.getTime() > previousRun) {
-            this.__cronTasksOnHold.push(taskJson._uuid);
-          }
-
-          if (!this.__cronTasksOnHold.includes(taskJson._uuid)) {
-            this.debug(`Scheduling CRON task ${taskJson._uuid}`);
-            this.__runningTasks[workJson.uuid] = taskJson;
-            this.__cronTasksOnHold.push(taskJson._uuid);
-            this.__queueScheduler.pushWork(workJson);
-          } else {
-            this.debug(`Ignoring CRON task ${taskJson._uuid} because it's too early to run it yet.`);
-          }
-        } else {
-          //not cron
-          this.__runningTasks[workJson.uuid] = taskJson;
-          this.debug(`Found immediate task ${workJson.uuid} in database: ${taskJson.title}`);
-          this.__queueScheduler.pushWork(workJson);
-        }
+        this.__runningTasks[workJson.uuid] = taskJson;
+        this.debug(`Found task ${workJson.uuid} in database: ${taskJson.title}`);
+        this.__queueScheduler.pushWork(workJson);
       }
     },
 
@@ -224,7 +172,6 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
 
       if (workResultJson.response.exception) {
         debugger;
-        this.__cronTasksOnHold.remove(taskJson._uuid); //if a CRON task has failed, we want it to run immediately again
         update.failCount = (taskJson.failCount || 0) + 1;
         zx.server.email.AlertEmail.getInstance().alert(
           `A task has failed`,
@@ -232,6 +179,18 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
           Work JSON output:
           ${workResultJson.log}`
         );
+      }
+
+      if (taskJson.cronExpression && !workResultJson.response.exception) {
+        cronJob = new cron.CronJob(
+          taskJson.cronExpression,
+          () => {}, // onTick
+          null, // onComplete
+          true
+        );
+        let nextDate = cronJob.nextDate();
+        update.earliestStartDate = nextDate.toJSDate();
+        cronJob.stop();
       }
 
       if (!taskJson.cronExpression && !workResultJson.response.exception) {
