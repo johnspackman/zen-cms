@@ -131,7 +131,7 @@ qx.Class.define("zx.server.auth.User", {
       if (this.__virtualUser) {
         this.error("Refusing to save a virtual user " + this);
       } else {
-        super.save();
+        await super.save();
       }
     },
 
@@ -142,7 +142,7 @@ qx.Class.define("zx.server.auth.User", {
       if (this.__virtualUser) {
         this.error("Refusing to delete a virtual user " + this);
       } else {
-        super.deleteFromDatabase();
+        await super.deleteFromDatabase();
       }
     },
 

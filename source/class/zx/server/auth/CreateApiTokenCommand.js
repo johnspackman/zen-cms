@@ -7,7 +7,8 @@ qx.Class.define("zx.server.auth.CreateApiTokenCommand", {
       new zx.cli.Flag("username").set({
         shortCode: "u",
         description: "Username",
-        type: "string"
+        type: "string",
+        required: true
       })
     );
 
@@ -15,12 +16,12 @@ qx.Class.define("zx.server.auth.CreateApiTokenCommand", {
       new zx.cli.Flag("api-name").set({
         shortCode: "n",
         description: "Name of the ZX API",
-        type: "string"
+        type: "string",
+        required: true
       })
     );
   },
-  properties: {},
-  objects: {},
+
   members: {
     /**@override */
     async run() {
@@ -33,13 +34,17 @@ qx.Class.define("zx.server.auth.CreateApiTokenCommand", {
         console.error(`No user found with email ${username}`);
         return 1;
       }
-      if (user.getApiTokens().get(apiName)) {
-        console.log(`User ${username} already has an API token for API ${apiName}`);
-        return 0;
+      let apiToken = user.getApiTokens().get(apiName);
+      if (apiToken) {
+        console.log(`User ${username} already has an API token for API ${apiName} - API token is ${apiToken}`);
+      } else {
+        apiToken = qx.util.Uuid.createUuidV4();
+        user.getApiTokens().put(apiToken);
+        console.log(`Creating API token for user ${username} and API ${apiName} - API token is ${apiToken}`);
       }
 
-      user.getApiTokens().put(apiName, qx.util.Uuid.createUuidV4());
       await user.save();
+      await server.stop();
     }
   }
 });
