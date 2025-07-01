@@ -1152,7 +1152,7 @@ qx.Class.define("zx.server.WebServer", {
       if (!(instance instanceof zx.server.WebServer)) {
         return null;
       }
-      return instance.getRequestContext().response;
+      return instance.getRequestContext().reply;
     },
 
     /**
