@@ -25,7 +25,10 @@ qx.Interface.define("zx.io.api.IResponseJson", {
   members: {
     /**
      * An array of data for the response, which can be returns of method calls,
-     * or subscrption acknowledgements
+     * or subscrption acknowledgements.
+     * 
+     * If this response is for a client API request, data will contains IResponseData objects,
+     * otherwise, if it's for a REST request, it can contain data of any type.
      *
      * @interface IResponseData
      * @property {zx.io.api.IHeaders} headers
@@ -52,7 +55,7 @@ qx.Interface.define("zx.io.api.IResponseJson", {
      * @interface IShutdown @extends IResponseData
      * @property {"shutdown"} type
 
-     * @type {IResponseData[]}
+     * @type {(IResponseData | *)[]}
      */
     data: []
   }

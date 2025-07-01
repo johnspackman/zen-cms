@@ -54,12 +54,11 @@ qx.Class.define("zx.io.api.server.Response", {
     },
 
     /**
-     * Any error message that occurred while processing the request
+     * Follows HTTP conventions, so 200 is OK, 404 is Not Found, etc.
      */
-    error: {
-      check: "String",
-      init: null,
-      nullable: true
+    statusCode: {
+      check: "Number",
+      init: 200
     }
   },
   members: {

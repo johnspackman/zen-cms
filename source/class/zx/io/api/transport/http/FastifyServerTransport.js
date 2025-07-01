@@ -69,12 +69,7 @@ qx.Class.define("zx.io.api.transport.http.FastifyServerTransport", {
       let response = new zx.io.api.server.Response(request);
       await zx.io.api.server.ConnectionManager.getInstance().receiveMessage(request, response);
 
-      if (response.getError()) {
-        res.status(500).send(response.getError());
-        return;
-      }
-
-      res.status(200);
+      res.status(response.getStatusCode());
       res.send(response.toNativeObject());
     },
 

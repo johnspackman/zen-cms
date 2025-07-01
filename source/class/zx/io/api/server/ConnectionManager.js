@@ -138,7 +138,9 @@ qx.Class.define("zx.io.api.server.ConnectionManager", {
         //check if we are allowed to use this API
         let authProvider = this.getAuthProvider();
         if (!api.isPublic() && authProvider && !(await authProvider.canUseApi(api.getApiName()))) {
-          throw new Error(`Permission denied`);
+          response.addData(`You are not authorized to use this API: ${api.getApiName()}`);
+          response.setStatusCode(401);
+          return;
         }
 
         //Call the API
