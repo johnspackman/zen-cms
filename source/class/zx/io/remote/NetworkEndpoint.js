@@ -709,14 +709,38 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
             args[i] = obj;
           }
 
-          let result = await object[packet.methodName].apply(object, args);
+          let result = undefined;
+          let exception = undefined;
+          try {
+            result = await object[packet.methodName].apply(object, args);
+          } catch (e) {
+            this.error(`Error calling remote method ${packet.methodName} on ${object.toUuid()}: ${e.message}`);
+            exception = e;
+          }
 
           let resultPacket = {
             originPacketId: packet.packetId,
             type: "return",
-            methodName: packet.methodName, // methodName only really needed for debugging
-            result: await this._serializeReturnValue(result)
+            methodName: packet.methodName // methodName only really needed for debugging
           };
+          if (exception) {
+            resultPacket.exception = {
+              message: exception.message
+            };
+            if (qx.core.Environment.get("qx.debug")) {
+              resultPacket.exception.stack = exception.stack;
+            } else {
+              // Delete actual stack traces in production
+              let str = exception.stack || "";
+              let pos = str.indexOf("\n");
+              if (pos > -1) {
+                str = str.substring(0, pos);
+              }
+              resultPacket.exception.stack = str;
+            }
+          } else {
+            resultPacket.result = await this._serializeReturnValue(result);
+          }
 
           this._queuePacket(resultPacket);
 
@@ -743,12 +767,18 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
             return;
           }
 
-          let result = this._deserializeReturnValue(packet.result);
-
-          if (result === undefined) {
-            promise.resolve();
+          if (packet.exception) {
+            let error = new Error(packet.exception.message);
+            error.stack = packet.exception.stack;
+            promise.reject(error);
           } else {
-            promise.resolve(result);
+            let result = this._deserializeReturnValue(packet.result);
+
+            if (result === undefined) {
+              promise.resolve();
+            } else {
+              promise.resolve(result);
+            }
           }
 
           // Upload
