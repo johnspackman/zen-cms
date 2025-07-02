@@ -1118,11 +1118,38 @@ qx.Class.define("zx.server.WebServer", {
 
     /**@override */
     async canUseApi(apiName) {
-      let session = zx.server.WebServer.getCurrentRequest()?.session;
-      if (!session) {
+      //if we have a session, check if the API is authenticated
+      let request = zx.server.WebServer.getCurrentRequest();
+      let session = request.session;
+      if (session && session.getAuthenticatedApis().includes(apiName)) {
+        return true;
+      }
+
+      //try to get the user from basic auth header
+      let auth = request.headers["authorization"];
+      if (!auth || !auth.startsWith("Basic ")) {
         return false;
       }
-      return session.getAuthenticatedApis().includes(apiName);
+
+      let encoded = auth.substring("Basic ".length);
+      let decoded = atob(encoded);
+      let pos = decoded.indexOf(":");
+      if (pos < 0) {
+        this.error("Invalid Basic Auth header: " + auth);
+        return false;
+      }
+      let username = decoded.substring(0, pos).trim();
+      let password = decoded.substring(pos + 1).trim();
+
+      let user = await this.getUserDiscovery().getUserFromEmail(username);
+
+      if (!user) {
+        this.error("Cannot find user with email " + username);
+        return false;
+      }
+
+      // Check if the user has the API token
+      return user.getApiTokens().get(apiName) === password;
     }
   },
 
@@ -1152,7 +1179,7 @@ qx.Class.define("zx.server.WebServer", {
       if (!(instance instanceof zx.server.WebServer)) {
         return null;
       }
-      return instance.getRequestContext().response;
+      return instance.getRequestContext().reply;
     },
 
     /**

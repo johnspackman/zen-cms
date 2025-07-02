@@ -405,10 +405,11 @@ qx.Class.define("zx.server.puppeteer.PuppeteerClient", {
      * Prints a PDF
      *
      * @param {String} outputTo filename to print to
-     * @returns
+     * @param {Object} options options to pass to the PDF generation
+     * @returns {Promise<void>}
      */
-    async printToPdf(outputTo) {
-      return await this._page.pdf({ path: outputTo, format: "A4" });
+    async printToPdf(outputTo, options = {}) {
+      return await this._page.pdf({ path: outputTo, ...options });
     },
 
     /**

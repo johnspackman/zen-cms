@@ -172,20 +172,26 @@ qx.Class.define("zx.io.api.server.AbstractServerApi", {
         }
       }
 
-      let returnData;
-      if (handler) {
-        returnData = await handler.call(this, request, response);
-      } else {
-        //If no REST handle found, try to call the method directly, with request and response as arguments
+      if (!handler) {
         if (!this[requestMethodPath]) {
           throw new Error(`Unable to find REST-suitable method in api ${this.getApiName()}, request path: ${request.getPath()}`);
         }
 
-        returnData = await this[requestMethodPath](request, response);
+        //If no REST handle found, try to call the method directly, with request and response as arguments
+        handler = this[requestMethodPath];
+      }
+
+      let returnData;
+      try {
+        returnData = await handler.call(this, request, response);
+      } catch (e) {
+        this.error(`Error calling method ${requestMethodPath} in API ${this.getApiName()}: ${e}`);
+        response.setStatusCode(500);
+        response.addData(e.toString());
       }
 
       //If the method returned something, add it to the response
-      if (returnData) {
+      if (returnData !== undefined) {
         response.addData(returnData);
       }
     },
@@ -204,6 +210,7 @@ qx.Class.define("zx.io.api.server.AbstractServerApi", {
       try {
         result = await this[requestMethodPath](...request.getBody().methodArgs);
       } catch (e) {
+        response.setStatusCode(500);
         error = e;
         this.error(`Error calling method ${requestMethodPath} in API ${this.getApiName()}: ${e}`);
       }
