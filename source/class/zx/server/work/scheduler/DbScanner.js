@@ -182,7 +182,7 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
       }
 
       if (taskJson.cronExpression && !workResultJson.response.exception) {
-        cronJob = new cron.CronJob(
+        let cronJob = new cron.CronJob(
           taskJson.cronExpression,
           () => {}, // onTick
           null, // onComplete

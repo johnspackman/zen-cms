@@ -39,7 +39,7 @@ qx.Class.define("zx.server.auth.CreateApiTokenCommand", {
         console.log(`User ${username} already has an API token for API ${apiName} - API token is ${apiToken}`);
       } else {
         apiToken = qx.util.Uuid.createUuidV4();
-        user.getApiTokens().put(apiToken);
+        user.getApiTokens().put(apiName, apiToken);
         console.log(`Creating API token for user ${username} and API ${apiName} - API token is ${apiToken}`);
       }
 

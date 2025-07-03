@@ -49,6 +49,9 @@ qx.Class.define("zx.io.persistence.DatabaseController", {
     /** @type{Object} map of dirty UUIDs */
     __dirtyObjectUuids: null,
 
+    /** @type{Promise} promise which will resolve when the dirty objects have finished saving */
+    __dirtySaveCompleted: null,
+
     /** @type{zx.io.persistence.Watcher} the object watcher */
     __watcher: null,
 
@@ -61,6 +64,10 @@ qx.Class.define("zx.io.persistence.DatabaseController", {
     async stop() {
       this.__stopping = true;
       await this.__debounceSaveDirty.join();
+      let promise = this.__dirtySaveCompleted;
+      if (promise) {
+        await promise;
+      }
       await this.removeAllEndpoints();
     },
 
@@ -79,9 +86,14 @@ qx.Class.define("zx.io.persistence.DatabaseController", {
     async __onObjectChanged(evt) {
       let obj = evt.getData();
       let uuid = obj.toUuid();
-      this.__dirtyObjectUuids[uuid] = true;
       if (!this.__stopping) {
+        if (!this.__dirtySaveCompleted) {
+          this.__dirtySaveCompleted = new qx.Promise();
+        }
+        this.__dirtyObjectUuids[uuid] = true;
         await this.__debounceSaveDirty.run();
+      } else {
+        this.error("Object changed after shutdown: " + obj);
       }
     },
 
@@ -90,12 +102,24 @@ qx.Class.define("zx.io.persistence.DatabaseController", {
      */
     _saveDirty() {
       let objects = Object.keys(this.__dirtyObjectUuids).map(uuid => this._getKnownObject(uuid));
+      let endpoints = this.getEndpoints();
       objects.forEach(obj => this.__watcher.setObjectChanged(obj, false));
       this.__dirtyObjectUuids = {};
-      let endpoints = this.getEndpoints();
-      objects.forEach(obj => endpoints.forEach(endpoint => endpoint.put(obj)));
-      let status = this.__watcher.getStatusData();
-      status.dirtyQueueLastSavedAt = new Date();
+
+      const doIt = async (objects, endpoints) => {
+        for (let obj of objects) {
+          for (let endpoint of endpoints) {
+            await endpoint.put(obj);
+          }
+        }
+        let status = this.__watcher.getStatusData();
+        status.dirtyQueueLastSavedAt = new Date();
+        let promise = this.__dirtySaveCompleted;
+        this.__dirtySaveCompleted = null;
+        promise.resolve();
+      };
+
+      return doIt(objects, endpoints);
     }
   }
 });
