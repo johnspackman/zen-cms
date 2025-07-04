@@ -323,7 +323,7 @@ qx.Class.define("zx.server.WebServer", {
       }
 
       let databaseConfig = this._config.database.mongo;
-      let manager = (this.__sessionManager = new zx.server.SessionManager(databaseConfig.uri, databaseConfig.databaseName, "sessions"));
+      let manager = (this.__sessionManager = new zx.server.SessionManager(databaseConfig.uri, databaseConfig.databaseName, "zx.server.WebServer.sessions"));
       manager.set({
         secret: sessionConfig.secret || "yHbUWDFyEKikhuXgqzkgjxj7gBwZ6Ahm",
         cookieName: "zx.cms.sessionId",
