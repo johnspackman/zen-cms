@@ -26,9 +26,12 @@ qx.Class.define("zx.reports.accumulators.BigNumberSumAccumulator", {
    *
    * @param {string} columnName
    */
-  construct(columnName) {
+  construct(columnName, negate) {
     super();
     this.__valueAccessor = zx.reports.Utils.compileGetter(columnName);
+    if (negate !== undefined) {
+      this.setNegate(negate);
+    }
   },
 
   properties: {
@@ -36,6 +39,12 @@ qx.Class.define("zx.reports.accumulators.BigNumberSumAccumulator", {
       init: new BigNumber(0),
       check: "BigNumber",
       event: "changeSum"
+    },
+
+    negate: {
+      check: "Boolean",
+      init: false,
+      event: "changeNegate"
     }
   },
 
@@ -55,6 +64,9 @@ qx.Class.define("zx.reports.accumulators.BigNumberSumAccumulator", {
      */
     update(ds) {
       let value = this.__valueAccessor(ds);
+      if (this.isNegate()) {
+        value = value.negated();
+      }
       this.setSum(this.getSum().plus(value));
     }
   }
