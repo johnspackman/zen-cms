@@ -19,6 +19,29 @@
  * A CollatingIterator iterates over a data source, and collates the data into the groups defined by a Report;
  * this assumes that it can read the entire data source in order to provide the necessary grouping, and therefore
  * can expose the grouped data in a way that user interface can navigate it (eg expanding a tree of data)
+ *
+ * @interface GroupData
+ * @property {Object} row - the row that started this group
+ * @property {String} title - the title of the group
+ * @property {String} alias - the alias of the group
+ * @property {String} valueUuid - the value's uuid
+ * @property {GroupData[]} children - the child groups of this group
+ * @property {Object[]?} rows - the rows in this group (only applicable for the bottom level)
+ *
+ * @interface GroupInfo
+ * @property {zx.reports.Group} group - the group
+ * @property {Function} sortMethod - the sort method
+ * @property {Function} getTitle - the title accessor
+ * @property {Function} getValue - the value accessor
+ * @property {Function} getValueUuid - the value uuid accessor
+ * @property {Function} getExtraData - the extra data accessor
+ *
+ * @interface GroupExecutionState
+ * @property {Number} childIndex - the index of the current child in `groupData.children`
+ * @property {GroupData} childData - the current child data. Same as `groupData.children[childIndex]`
+ * @property {GroupData} groupData - the current group data
+ *
+ * @typedef {(GroupFilterFunc | string | null)} GroupFilter
  */
 qx.Class.define("zx.reports.CollatingIterator", {
   extend: qx.core.Object,
@@ -44,14 +67,23 @@ qx.Class.define("zx.reports.CollatingIterator", {
      */
     __executionContext: null,
 
-    /** @type{zx.reports.datasource.IDataSource} */
+    /** @type {zx.reports.datasource.IDataSource} */
     __datasource: null,
 
-    /** @type{zx.reports.Report} */
+    /** @type {zx.reports.Report} */
     __report: null,
 
+    /**
+     * @type {GroupInfo[]}
+     */
     __groupInfos: null,
+
+    /** @type {GroupData} */
     __rootData: null,
+
+    /**
+     * @type {GroupFilter[]}
+     */
     __groupFilters: null,
 
     /**
@@ -70,14 +102,6 @@ qx.Class.define("zx.reports.CollatingIterator", {
 
     /**
      * Compiles a flat lookup of the groups, property accessors and sort method
-     *
-     * @typedef {Object} GroupInfo
-     * @property {zx.reports.Group} group - the group
-     * @property {Function} sortMethod - the sort method
-     * @property {Function} getTitle - the title accessor
-     * @property {Function} getValue - the value accessor
-     * @property {Function} getValueUuid - the value uuid accessor
-     * @property {Function} getExtraData - the extra data accessor
      *
      * @returns {GroupInfo[]}
      */
@@ -219,13 +243,6 @@ qx.Class.define("zx.reports.CollatingIterator", {
      * the datasource, which allows the group values (eg Customer Names, or Invoice Months) to be iterated
      * and sorted
      *
-     * @typedef {Object} GroupData
-     * @property {Object} row - the row that started this group
-     * @property {String} title - the title of the group
-     * @property {String} alias - the alias of the group
-     * @property {String} valueUuid - the value's uuid
-     * @property {GroupData[]} children - the child groups of this group
-     * @property {Object[]?} rows - the rows in this group (only applicable for the bottom level)
      *
      * @param {GroupInfo[]} groupInfos - produced by `_flattenGroups`
      * @returns {GroupData} the root
@@ -348,7 +365,7 @@ qx.Class.define("zx.reports.CollatingIterator", {
 
     /**
      * @typedef {(groupValue: any, groupValueUuid: string, row: Object) => boolean} GroupFilterFunc
-     * @param {(GroupFilterFunc | string | null)[]}
+     * @param {GroupFilter[]}
      */
     setGroupFilters(groupFilters) {
       if (qx.core.Environment.get("qx.debug")) {
@@ -481,10 +498,6 @@ qx.Class.define("zx.reports.CollatingIterator", {
      * the current children that we are executing.
      *
      * NOTE: currently doesn't work when we are executing CSV (returns null).
-     * @typedef {Object} GroupExecutionState
-     * @property {Number} childIndex - the index of the current child in `groupData.children`
-     * @property {GroupData} childData - the current child data. Same as `groupData.children[childIndex]`
-     * @property {GroupData} groupData - the current group data
      * @returns {GroupExecutionState[]}
      */
     getExecutionContext() {

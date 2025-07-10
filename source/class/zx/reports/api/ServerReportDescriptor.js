@@ -86,6 +86,7 @@ qx.Class.define("zx.reports.api.ServerReportDescriptor", {
      * @Override
      */
     execute(format) {
+      // window.myReportDescriptor = this; // for debugging purposes
       if (!this.getFormats().includes(format)) {
         throw new Error("Invalid format: " + format);
       }
