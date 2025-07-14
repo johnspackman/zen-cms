@@ -87,6 +87,8 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
         }
       ]);
 
+      let earliestsStartUpdate = [];
+
       while (await cursor.hasNext()) {
         let taskJson = await cursor.next();
         let workJson = taskJson.workJson;
@@ -112,7 +114,21 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
           this.debug(`Ignoring task ${taskJson._uuid} because it is still running.`);
           continue;
         }
-        if (taskJson.earliestStartDate && taskJson.earliestStartDate.getTime() > new Date().getTime()) {
+
+        //If task is CRON task but it's earliest start date is later than its next CRON tick (i.e. when CRON has changed),
+        //adjust earliest start date to next tick
+        let earliestStartDate = taskJson.earliestStartDate;
+        if (taskJson.cronExpression && earliestStartDate) {
+          let nextTick = this.__getNextCronDate(taskJson.cronExpression);
+          if (nextTick.getTime() < earliestStartDate.getTime()) {
+            earliestStartDate = new Date(Math.min(earliestStartDate.getTime(), nextTick.getTime()));
+            earliestsStartUpdate.push({ _id: taskJson._id, earliestStartDate });
+          }
+        }
+
+        taskJson.earliestStartDate = earliestStartDate;
+
+        if (earliestStartDate && earliestStartDate.getTime() > new Date().getTime()) {
           this.debug(`Ignoring task ${taskJson._uuid} because it is not ready to run yet`);
           continue;
         }
@@ -127,6 +143,18 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
         this.__runningTasks[workJson.uuid] = taskJson;
         this.debug(`Found task ${workJson.uuid} in database: ${taskJson.title}`);
         this.__queueScheduler.pushWork(workJson);
+      }
+
+      for (let { _id, earliestStartDate } of earliestsStartUpdate) {
+        await this.updateOne(
+          zx.server.work.scheduler.ScheduledTask,
+          { _id: _id },
+          {
+            $set: {
+              earliestStartDate: earliestStartDate
+            }
+          }
+        );
       }
     },
 
@@ -182,15 +210,7 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
       }
 
       if (taskJson.cronExpression && !workResultJson.response.exception) {
-        let cronJob = new cron.CronJob(
-          taskJson.cronExpression,
-          () => {}, // onTick
-          null, // onComplete
-          true
-        );
-        let nextDate = cronJob.nextDate();
-        update.earliestStartDate = nextDate.toJSDate();
-        cronJob.stop();
+        update.earliestStartDate = this.__getNextCronDate(taskJson.cronExpression);
       }
 
       if (!taskJson.cronExpression && !workResultJson.response.exception) {
@@ -207,6 +227,23 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
           $set: update
         }
       );
+    },
+
+    /**
+     *
+     * @param {string} cronExpression
+     * @returns {Date} The next datetime that the cron expression will run
+     */
+    __getNextCronDate(cronExpression) {
+      let cronJob = new cron.CronJob(
+        cronExpression,
+        () => {}, // onTick
+        null, // onComplete
+        true
+      );
+      let nextDate = cronJob.nextDate();
+      cronJob.stop();
+      return nextDate.toJSDate();
     }
   }
 });

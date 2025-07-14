@@ -78,7 +78,7 @@ qx.Class.define("zx.server.email.FlushQueue", {
       let collection = zx.server.Standalone.getInstance().getDb().getCollection("zx.server.work.scheduler.ScheduledTask");
       let json = await collection.findOne(query);
       if (!json) {
-        await collection.insert({
+        await collection.insertOne({
           _uuid: qx.util.Uuid.createUuidV4(),
           enabled: true,
           cronExpression: "*/20 * * * * *",
