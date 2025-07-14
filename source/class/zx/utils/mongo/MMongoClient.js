@@ -76,9 +76,15 @@ qx.Mixin.define("zx.utils.mongo.MMongoClient", {
      * @param {import("mongodb").Filter<MongoDocument>} query
      * @returns {Promise<import("mongodb").WithId<unknown>>}
      */
-    async findOne(clazz, query) {
+    async findOne(clazz, query, ...args) {
       this._debugMongo(clazz, query);
-      return await zx.server.Standalone.getInstance().getDb().findOne(clazz, query);
+      if (typeof clazz !== "string") {
+        clazz = clazz.classname;
+      }
+      return zx.server.Standalone.getInstance()
+        .getDb()
+        .getCollection(clazz)
+        .findOne(query, ...args);
     },
 
     /**
@@ -142,13 +148,13 @@ qx.Mixin.define("zx.utils.mongo.MMongoClient", {
      *
      * @param {String|qx.Class} clazz
      * @param {MongoDocument[]} query
-     * @returns {Promise<import("mongodb").AggregationCursor>}
+     * @returns {import("mongodb").AggregationCursor}
      */
-    async aggregate(clazz, query) {
+    aggregate(clazz, query) {
       this._debugMongo(clazz, query);
       /**@type {import("mongodb").Collection}*/
       let collection = zx.server.Standalone.getInstance().getDb().getCollection(clazz);
-      return await collection.aggregate(query);
+      return collection.aggregate(query);
     },
 
     /**
