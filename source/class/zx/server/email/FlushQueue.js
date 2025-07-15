@@ -84,7 +84,8 @@ qx.Class.define("zx.server.email.FlushQueue", {
           cronExpression: "*/20 * * * * *",
           workJson: {
             workClassname: "zx.server.email.FlushQueue"
-          }
+          },
+          ...query
         });
       }
     }
