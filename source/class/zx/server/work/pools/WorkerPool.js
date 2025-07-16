@@ -31,7 +31,7 @@ const fs = require("fs");
  */
 qx.Class.define("zx.server.work.pools.WorkerPool", {
   extend: qx.core.Object,
-  implement: [zx.utils.IPoolFactory],
+  implement: [zx.utils.IPoolFactory, zx.server.work.pools.IWorkerPoolApi],
 
   construct(workdir) {
     super();
@@ -45,8 +45,9 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
     this.__runningWorkTrackers = {};
     this.__workResultQueue = [];
 
-    let api = new zx.server.work.pools.WorkerPoolServerApi(this);
-    zx.io.api.server.ConnectionManager.getInstance().registerApi(api, "/workers/pool");
+    this.__apiPath = "/workers/pools/" + this.toUuid();
+    this.__serverApi = zx.io.api.ApiUtils.createServerApi(zx.server.work.pools.IWorkerPoolApi, this);
+    zx.io.api.server.ConnectionManager.getInstance().registerApi(this.__serverApi, this.__apiPath);
   },
 
   properties: {
@@ -112,14 +113,14 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
       check: "String"
     },
 
-    /** @type{String[]?} array of mounts, in the form "aliasName:hostPath" */
+    /** @type {String[]?} array of mounts, in the form "aliasName:hostPath" */
     dataMounts: {
       init: null,
       nullable: true,
       check: "Array"
     },
 
-    /** @type{String[]?} array of mounts, in the form "sourcePath:containerPath", all paths must be absolute */
+    /** @type {String[]?} array of mounts, in the form "sourcePath:containerPath", all paths must be absolute */
     dockerMounts: {
       init: null,
       nullable: true,
@@ -179,17 +180,41 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
   },
 
   members: {
-    /** @type{zx.server.work.WorkResult[]} queue of WorkResults to send back to the scheduler */
+    /**
+     * API path where this worker pool can be accessed
+     */
+    __apiPath: "",
+
+    /** @type {zx.server.work.WorkResult[]} queue of WorkResults to send back to the scheduler */
     __workResultQueue: null,
 
-    /** @type{Object<String,zx.server.work.WorkTracker>} WorkTrackers that are currently running Work, indexed by work UUID */
+    /** @type {Object<String,zx.server.work.WorkTracker>} WorkTrackers that are currently running Work, indexed by work UUID */
     __runningWorkTrackers: null,
 
-    /** @type{Promise} mutex for `__pushQueuedResultsToScheduler` */
+    /** @type {Promise} mutex for `__pushQueuedResultsToScheduler` */
     __pushQueuedResultsToSchedulerPromise: null,
 
     __pollTimer: null,
     __pushTimer: null,
+
+    /**
+     * @type {zx.server.work.pools.IWorkerPoolApi}
+     */
+    __serverApi: null,
+
+    /**
+     * @returns {zx.server.work.pools.IWorkerPoolApi}
+     */
+    getServerApi() {
+      return this.__serverApi;
+    },
+
+    /**
+     * @returns {string}
+     */
+    getApiPath() {
+      return this.__apiPath;
+    },
 
     /**
      * Instruct the pool to start creating workers and polling for work
@@ -218,7 +243,6 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
         recurring: false,
         duration: this.getPushInterval()
       });
-
       this.__pushTimer.startTimer();
       this.__pollTimer.startTimer();
     },
@@ -352,7 +376,7 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
       if (this.getQxObject("pool").available()) {
         let jsonWork = null;
         try {
-          jsonWork = await this.getSchedulerApi().pollForWork();
+          jsonWork = await this.getSchedulerApi().pollForWork({ id: this.classname, uuid: this.toUuid() });
         } catch (e) {
           this.debug(`failed to poll for work: ${e}`);
         }
@@ -411,8 +435,7 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
     },
 
     /**
-     *
-     * @param {string} uuid
+     * @override
      */
     async killWork(uuid) {
       if (!this.__runningWorkTrackers[uuid]) {
@@ -422,12 +445,14 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
       delete this.__runningWorkTrackers[uuid];
     },
 
-    /**
-     *
-     * @returns {Object} Information about all the current work that is running
-     */
+    /**@override */
     getDescriptionJson() {
-      return Object.values(this.__runningWorkTrackers).map(workerTracker => workerTracker.getWorkResult().getDescriptionJson());
+      return {
+        uuid: this.toUuid(),
+        classname: this.classname,
+        apiPath: this.getApiPath(),
+        runningWorkerTrackers: Object.values(this.__runningWorkTrackers).map(workerTracker => workerTracker.getDescriptionJson())
+      };
     },
 
     /**
@@ -442,7 +467,7 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
         throw new Error("No work with that UUID");
       }
 
-      return workerTracker.getWorkResult().getDescriptionJson();
+      return workerTracker.getWorkResult().serializeForScheduler();
     }
   }
 });

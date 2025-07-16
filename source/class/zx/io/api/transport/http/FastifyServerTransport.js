@@ -1,22 +1,20 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    Patryk Malinowski (@p9malino26)
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
-
-
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    Patryk Malinowski (@p9malino26)
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Implementation of server transport for Fastify.js
@@ -62,6 +60,11 @@ qx.Class.define("zx.io.api.transport.http.FastifyServerTransport", {
       if (path.indexOf("?") > -1) {
         path = path.substring(0, path.indexOf("?"));
       }
+
+      if (typeof data === "string") {
+        data = zx.utils.Json.parseJson(data);
+      }
+
       data.path = path;
       data.restMethod = req.method; // TODO: we should only set this if we get a RESTful request; RPC should have no method
 

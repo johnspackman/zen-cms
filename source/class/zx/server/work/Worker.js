@@ -17,9 +17,17 @@
 
 const path = require("node:path");
 
+/**
+ * Represents an entity that can execute a piece of work.
+ * This can be a JavaScript worker, NodeJS worker, or a docker container,
+ * or a local process
+ *
+ * @template ReturnValue The data type of the return value from the work
+ * @implements {zx.server.work.IWorkerApi<ReturnValue>}
+ */
 qx.Class.define("zx.server.work.Worker", {
   extend: qx.core.Object,
-  implement: [zx.server.work.IWorker],
+  implement: [zx.server.work.IWorkerApi],
 
   construct() {
     super();
@@ -44,7 +52,7 @@ qx.Class.define("zx.server.work.Worker", {
       check: "String"
     },
 
-    /** @type{String[]?} array of mounts, in the form "alias:path" */
+    /** @type {String[]?} array of mounts, in the form "alias:path" */
     dataMounts: {
       init: null,
       nullable: true,
@@ -54,10 +62,17 @@ qx.Class.define("zx.server.work.Worker", {
   },
 
   members: {
+    /**@override */
+    _publications: {
+      log: true,
+      ping: true,
+      complete: true
+    },
+
     __workJson: null,
     __chromium: null,
 
-    /** @type{Object<String,String>} list of paths for each data mount alias (ie decoded version of the `dataMounts` property) */
+    /** @type {Object<String,String>} list of paths for each data mount alias (ie decoded version of the `dataMounts` property) */
     __dataMountPaths: null,
 
     /**
@@ -70,7 +85,9 @@ qx.Class.define("zx.server.work.Worker", {
     },
 
     /**
-     * @Override
+     * Returns the JSON for the currently running work
+     *
+     * @returns {zx.server.work.IWork.WorkJson}
      */
     getWorkJson() {
       return this.__workJson;

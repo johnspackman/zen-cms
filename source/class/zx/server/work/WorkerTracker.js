@@ -24,6 +24,12 @@ const path = require("path");
  * via the WorkerClientApi.  Instances of this class are used to track everything about that
  * Worker, including storing the logs and status ready to be passed back to the Scheduler
  * when the Worker is complete.
+ *
+ * @typedef DescriptionJson
+ * @property {string} uuid
+ * @property {string} status
+ * @property {zx.server.work.WorkResult.Description?} workResult
+ * @property {Date?} lastActivity
  */
 qx.Class.define("zx.server.work.WorkerTracker", {
   extend: qx.core.Object,
@@ -64,28 +70,33 @@ qx.Class.define("zx.server.work.WorkerTracker", {
      */
     __watchDog: null,
 
-    /** @type{zx.server.work.pools.WorkerPool} the pool this belong to */
+    /**
+     * @type {Date?} the last time that the worker showed activity
+     */
+    __lastActivity: null,
+
+    /** @type {zx.server.work.pools.WorkerPool} the pool this belong to */
     __workerPool: null,
 
-    /** @type{zx.server.work.IWorkerApi} connection to the actual worker */
+    /** @type {zx.server.work.IWorkerApi} connection to the actual worker */
     __workerClientApi: null,
 
-    /** @type{*?} the currently running work */
+    /** @type {*?} the currently running work */
     __jsonWork: null,
 
-    /** @type{zx.server.work.WorkResult} the output of the currently running (or just stopped) work */
+    /** @type {zx.server.work.WorkResult} the output of the currently running (or just stopped) work */
     __workResult: null,
 
-    /** @type{zx.utils.IncrementalLogWriter} where to log the container console output */
+    /** @type {zx.utils.IncrementalLogWriter} where to log the container console output */
     _containerConsoleLog: null,
 
-    /** @type{zx.utils.Timeout} timer used to watch the container to see if it disappears */
+    /** @type {zx.utils.Timeout} timer used to watch the container to see if it disappears */
     _containerWatcher: null,
 
-    /** @type{Integer} the port that the node process will be listening to; this can be for API calls or it's the puppeteer server in docker */
+    /** @type {Integer} the port that the node process will be listening to; this can be for API calls or it's the puppeteer server in docker */
     _nodeHttpPort: null,
 
-    /** @type{Promise} promise that resolves when the currently queued getDockerContainer method completes (ie a mutex) */
+    /** @type {Promise} promise that resolves when the currently queued getDockerContainer method completes (ie a mutex) */
     __createDockerContainerPromise: null,
 
     /**
@@ -103,12 +114,14 @@ qx.Class.define("zx.server.work.WorkerTracker", {
           this.error(data.message);
         }
         this.__watchDog.run();
+        this.__lastActivity = new Date();
       });
       await this.__workerClientApi.subscribe("ping", () => {
         if (this.getStatus() !== "running") {
           return;
         }
         this.__watchDog.run();
+        this.__lastActivity = new Date();
       });
     },
 
@@ -200,6 +213,7 @@ qx.Class.define("zx.server.work.WorkerTracker", {
 
     /**
      * Called when the work is complete
+     * @param {zx.server.work.IWorkerApi.WorkResponse} response
      */
     async _onWorkComplete(response) {
       if (this.getStatus() != "running") {
@@ -237,7 +251,7 @@ qx.Class.define("zx.server.work.WorkerTracker", {
 
     async __closeWorkResult(response) {
       let workResult = this.__workResult;
-      workResult.response = response;
+      workResult.setResponse(response);
       await workResult.close();
     },
 
@@ -245,6 +259,7 @@ qx.Class.define("zx.server.work.WorkerTracker", {
       this.__jsonWork = null;
       this.__watchDog.dispose();
       this.__watchDog = null;
+      this.__lastActivity = null;
     },
 
     getWorkResult() {
@@ -571,6 +586,19 @@ qx.Class.define("zx.server.work.WorkerTracker", {
      */
     toString() {
       return `NodeProcessWorkerTracker:${this._nodeHttpPort}[this.toHashCode()]`;
+    },
+
+    /**
+     *
+     * @returns {DescriptionJson}
+     */
+    getDescriptionJson() {
+      return {
+        uuid: this.toUuid(),
+        status: this.getStatus(),
+        workResult: this.__workResult?.serializeForScheduler() ?? null,
+        lastActivity: this.__lastActivity
+      };
     }
   }
 });

@@ -41,7 +41,7 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
   },
 
   members: {
-    /** @type{zx.server.work.scheduler.QueueScheduler} */
+    /** @type {zx.server.work.scheduler.QueueScheduler} */
     __queueScheduler: null,
 
     __pollDatabasePromise: null,
