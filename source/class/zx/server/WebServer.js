@@ -623,6 +623,8 @@ qx.Class.define("zx.server.WebServer", {
       await pool.cleanupOldContainers();
 
       let workScheduler = new zx.server.work.scheduler.QueueScheduler("temp/scheduler/");
+      workScheduler.addPool(pool.getDescriptionJson());
+
       let dbScanner = new zx.server.work.scheduler.DbScanner(workScheduler);
       await fs.promises.rm(pool.getWorkDir(), { force: true, recursive: true });
       await fs.promises.rm(workScheduler.getWorkDir(), { force: true, recursive: true });

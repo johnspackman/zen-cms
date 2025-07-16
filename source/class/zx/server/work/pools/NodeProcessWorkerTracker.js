@@ -44,23 +44,23 @@ qx.Class.define("zx.server.work.pools.NodeProcessWorkerTracker", {
   },
 
   members: {
-    /** @type{child_process} the child process */
+    /** @type {child_process} the child process */
     __nodeProcess: null,
 
-    /** @type{Integer} the port that the node process will be listening to for debugging */
+    /** @type {Integer} the port that the node process will be listening to for debugging */
     __nodeDebugPort: null,
 
-    /** @type{zx.io.api.transport.AbstractClientTransport} the transport used for API calls */
+    /** @type {zx.io.api.transport.AbstractClientTransport} the transport used for API calls */
     __apiClientTransport: null,
 
-    /** @type{zx.utils.IncrementalLogWriter} where to log the process console output */
+    /** @type {zx.utils.IncrementalLogWriter} where to log the process console output */
     __processConsoleLog: null,
 
-    /** @type{Integer} port that the node server in the container is available from, when the Worker node process runs on the host */
+    /** @type {Integer} port that the node server in the container is available from, when the Worker node process runs on the host */
     __containerNodePort: null,
 
     /**
-     * Called when starting the WorkerTracker.
+     * @override
      */
     async initialize() {
       let workerPool = this.getWorkerPool();

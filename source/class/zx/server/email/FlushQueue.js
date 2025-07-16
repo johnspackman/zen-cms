@@ -85,6 +85,7 @@ qx.Class.define("zx.server.email.FlushQueue", {
           workJson: {
             workClassname: "zx.server.email.FlushQueue"
           },
+          title: "Flush Email Queue",
           ...query
         });
       }

@@ -25,7 +25,6 @@ const path = require("path");
  * @property {zx.server.work.IWork.WorkJson} workJson the work to do
  * @property {Promise} promise the promise which resolves when the work is done
  *
- *
  * @use(zx.io.api.client.AbstractClientApi)
  */
 qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
@@ -37,6 +36,8 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
     this.__queue = [];
     this.__running = {};
     this.__workDir = workDir;
+
+    this.__poolsByUuid = {};
     this.__serverApi = zx.io.api.ApiUtils.createServerApi(zx.server.work.scheduler.ISchedulerApi, this);
   },
 
@@ -60,6 +61,12 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
   },
 
   members: {
+    /**
+     * @type {Object<String, zx.server.work.pools.IWorkerPoolApi.PoolInfo>}
+     * A map of pools that this scheduler is aware of, indexed by pool UUID
+     */
+    __poolsByUuid: null,
+
     /** @type {String?} the directory to store work results */
     __workDir: null,
 
@@ -77,6 +84,14 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
 
     /** @type {zx.server.work.scheduler.ISchedulerApi} a server API that can be used to call this scheduler */
     __serverApi: null,
+
+    /**
+     * Registers a pool with this scheduler.
+     * @param {zx.server.work.pools.IWorkerPoolApi.PoolInfo} pool
+     */
+    addPool(pool) {
+      this.__poolsByUuid[pool.uuid] = pool;
+    },
 
     /**
      * Starts the scheduler
@@ -157,12 +172,13 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
     /**
      * @Override
      */
-    async pollForWork() {
+    async pollForWork(poolInfo) {
       if (this.__queue.length === 0) {
         this.fireEvent("noWork");
         return null;
       }
       let info = this.__queue.shift();
+      info.pool = poolInfo;
       this.__running[info.workJson.uuid] = info;
       await this.fireDataEventAsync("workStarted", info.workJson);
       return info.workJson;
@@ -186,6 +202,12 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
         await zx.server.work.WorkResult.deserializeFromScheduler(workDir, workResultData);
       }
       if (info) {
+        //Store result in the database
+        let colResults = zx.server.Standalone.getInstance().getDb().getCollection("zx.server.work.scheduler.QueueScheduler.WorkResult");
+        workResultData.pool = info.pool;
+        colResults.insertOne(workResultData);
+
+        await this.__cleanOldWorkResults();
         await this.fireDataEventAsync("workCompleted", workResultData);
       }
     },
@@ -215,6 +237,110 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
      */
     getRunningSize() {
       return Object.keys(this.__running).length;
+    },
+
+    /**@override @interface zx.server.work.scheduler.ISchedulerApi */
+    getPools() {
+      return Object.values(this.__poolsByUuid);
+    },
+
+    /**@override @interface zx.server.work.scheduler.ISchedulerApi */
+    async getPastWorkResults(search) {
+      let match = {};
+
+      if (search.text) {
+        match["$or"] = [
+          { "workJson.uuid": { $regex: search.text, $options: "i" } },
+          { "workJson.title": { $regex: search.text, $options: "i" } },
+          { "workJson.description": { $regex: search.text, $options: "i" } },
+          { "workJson.workClassname": { $regex: search.text, $options: "i" } }
+        ];
+      }
+
+      if (search.pool) {
+        if (search.pool.id) {
+          match["pool.id"] = search.pool.id;
+        }
+        if (search.pool.uuid) {
+          match["pool.uuid"] = search.pool.uuid;
+        }
+      }
+
+      let out = await zx.server.Standalone.getInstance()
+        .getDb()
+        .getCollection("zx.server.work.scheduler.QueueScheduler.WorkResult")
+        .aggregate([
+          {
+            $match: match
+          },
+          {
+            $sort: {
+              "workStatus.started": -1
+            }
+          },
+          {
+            $limit: 100
+          }
+        ])
+        .toArray();
+
+      return out;
+    },
+
+    async __cleanOldWorkResults() {
+      let colResults = zx.server.Standalone.getInstance().getDb().getCollection("zx.server.work.scheduler.QueueScheduler.WorkResult");
+      //Remove results in the database which are too old
+      const MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+      const MAX_RESULTS_PER_WORK = 10;
+      await colResults.deleteMany({ "workStatus.started": { $lt: new Date(Date.now() - MAX_AGE) } });
+
+      //Ensure there are no more than `MAX_RESULTS_PER_WORK` results per work JSON UUID
+      let resultsByWorkUuidCursor = colResults.aggregate([
+        {
+          $sort: {
+            "workStatus.started": -1
+          }
+        },
+        {
+          $group: {
+            _id: "$workJson.uuid",
+            results: {
+              $push: {
+                id: "$_id"
+              }
+            }
+          }
+        }
+      ]);
+
+      let toDelete = [];
+
+      for await (let resultsForWork of resultsByWorkUuidCursor) {
+        while (resultsForWork.results.length > MAX_RESULTS_PER_WORK) {
+          let resultToDelete = resultsForWork.results.pop();
+          toDelete.push(resultToDelete.id);
+        }
+      }
+
+      await colResults.deleteMany({ _id: { $in: toDelete } });
+    },
+
+    /**
+     * @override
+     */
+    async getQueuedWork() {
+      return this.__queue.map(entry => ({
+        workJson: entry.workJson
+      }));
+    },
+
+    /**
+     * @override
+     */
+    async getRunningWork() {
+      return Object.values(this.__running).map(entry => ({
+        workJson: entry.workJson
+      }));
     }
   }
 });

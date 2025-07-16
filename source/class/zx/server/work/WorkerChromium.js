@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Provides a Chromium instance running in a Docker container, where it obtains the Chromium
@@ -36,13 +36,13 @@ qx.Class.define("zx.server.work.WorkerChromium", {
   },
 
   members: {
-    /** @type{String} the HTTP url for the Chromium */
+    /** @type {String} the HTTP url for the Chromium */
     __chromiumUrl: null,
 
-    /** @type{String} the websocket endpoint (loaded from the `__chromiumUrl`) */
+    /** @type {String} the websocket endpoint (loaded from the `__chromiumUrl`) */
     __endpoint: null,
 
-    /** @type{*} the JSON returned from teh chromium url /json/version */
+    /** @type {*} the JSON returned from teh chromium url /json/version */
     __chromiumJson: null,
 
     /**

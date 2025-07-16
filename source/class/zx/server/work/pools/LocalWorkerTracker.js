@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 qx.Class.define("zx.server.work.pools.LocalWorkerTracker", {
   extend: zx.server.work.WorkerTracker,
@@ -24,10 +24,10 @@ qx.Class.define("zx.server.work.pools.LocalWorkerTracker", {
   },
 
   members: {
-    /** @type{zx.server.work.IWorker} */
+    /** @type {zx.server.work.Worker} */
     __worker: null,
 
-    /** @type{zx.server.work.IWorkerApi} */
+    /** @type {zx.server.work.IWorkerApi} */
     __workerServerApi: null,
 
     /**

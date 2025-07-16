@@ -17,6 +17,13 @@
 
 /**
  * Interface for the Worker API
+ *
+ * @template ReturnValue The data type of the return value from the work
+ *
+ * @typedef WorkResponse
+ * @property {ReturnValue} returnValue - The return value of the work, if successful
+ * @property {string?} exception - The exception message if the work failed
+ * @property {string?} exceptionStack - The stack trace of the exception, if `exception` is set
  */
 qx.Interface.define("zx.server.work.IWorkerApi", {
   members: {
@@ -51,7 +58,7 @@ qx.Interface.define("zx.server.work.IWorkerApi", {
     /**
      * Executes the piece of work
      * @param {zx.server.work.IWork} work The piece of work to execute
-     * @returns {Promise<string>} A promise that resolves with the result of the work
+     * @returns {Promise<WorkResponse>} A promise that resolves with the result of the work
      */
     run(work) {},
 
