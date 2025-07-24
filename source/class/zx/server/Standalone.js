@@ -486,7 +486,7 @@ qx.Class.define("zx.server.Standalone", {
     /**
      * Returns the database instance
      *
-     * @return{zx.io.persistence.db.Database}
+     * @return {zx.io.persistence.db.Database}
      */
     getDb() {
       if (!this._db) {

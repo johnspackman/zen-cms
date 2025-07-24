@@ -42,9 +42,6 @@ qx.Class.define("zx.io.api.server.Session", {
     this.__transport = transport;
     this.__subscriptions = {};
     this.__publicationsQueue = new qx.data.Array();
-    if (qx.core.Environment.get("qx.debug")) {
-      this.debug(`New Server API Session created: ${this.classname} [${this.toUuid()}]`);
-    }
   },
 
   properties: {
@@ -181,11 +178,8 @@ qx.Class.define("zx.io.api.server.Session", {
       };
 
       this.__publicationsQueue.push(message);
-      this.debug(this.toUuid(), "added publication, all publications:", this.__publicationsQueue.toArray());
       if (this.__transport.supportsServerPush()) {
         zx.io.api.server.ConnectionManager.getInstance().flushPublicationsQueue(this);
-      } else if (qx.core.Environment.get("qx.debug")) {
-        this.debug(`Transport ${this.__transport.classname} does not support server push. Publications will be queued until they can piggyback on a client-initiated message.`);
       }
     },
 
