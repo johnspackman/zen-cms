@@ -45,7 +45,7 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
     this.__runningWorkTrackers = {};
     this.__workResultQueue = [];
 
-    this.__apiPath = "/workers/pools/" + this.toUuid();
+    this.__apiPath = "/workers/pools/" + this.classname;
     this.__serverApi = zx.io.api.ApiUtils.createServerApi(zx.server.work.pools.IWorkerPoolApi, this);
     zx.io.api.server.ConnectionManager.getInstance().registerApi(this.__serverApi, this.__apiPath);
   },
