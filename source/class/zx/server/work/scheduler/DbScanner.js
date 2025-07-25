@@ -102,7 +102,7 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
         }
 
         if (!workJson.title) {
-          workJson.title = "Task: " + taskJson.title;
+          workJson.title = taskJson.title;
         }
 
         if (!workJson.description) {
