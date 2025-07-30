@@ -22,7 +22,6 @@ const fs = require("fs");
  * API requests; this is typically run inside a Docker container, but could also be
  * run on a local machine for testing and development
  *
- * @use(zx.server.work.runtime.NodeWorkerService)
  */
 qx.Class.define("zx.cli.commands.demo.WorkerPoolsCommand", {
   extend: zx.cli.Command,

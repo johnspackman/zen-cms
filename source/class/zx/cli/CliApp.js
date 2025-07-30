@@ -25,6 +25,7 @@ const { isMainThread, workerData } = require("node:worker_threads");
  * @use(zx.cli.UserCommand)
  * @use(zx.test.cli.TestCommand)
  * @use(zx.utils.Readline)
+ * @use(zx.server.work.runtime.NodeWorkerService)
  * @asset(zx/cli/*)
  */
 qx.Class.define("zx.cli.CliApp", {
