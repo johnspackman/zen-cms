@@ -95,7 +95,7 @@ qx.Class.define("zx.utils.ChildProcess", {
           if (code === 0) {
             resolve(result);
           } else {
-            reject(result);
+            reject(new Error(result.error || result.output || "Unknown error. Exit code: " + code));
           }
         });
         proc.on("error", err => {

@@ -1,5 +1,5 @@
 # .gitignore template for skeleton-based apps
-compiled/
+compiled*/
 node_modules/
 test/persistence/website-db/_uuids/
 qx_packages
