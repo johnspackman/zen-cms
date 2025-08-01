@@ -187,19 +187,12 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
       let workUuid = workResultJson.workJson.uuid;
       let taskJson = this.__runningTasks[workUuid];
 
-      if (!taskJson) {
-        this.warn("should not call here! Scheduler reported task as finished which actually wasn't running.");
-        debugger;
-        return;
-      }
-
       let update = {
         dateCompleted: new Date(),
         failCount: 0
       };
 
       if (workResultJson.response.exception) {
-        debugger;
         update.failCount = (taskJson.failCount || 0) + 1;
         zx.server.email.AlertEmail.getInstance().alert(
           `A task has failed`,
