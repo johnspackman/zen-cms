@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * This mixin provides a simple logging mechanism.
@@ -58,6 +58,30 @@ qx.Mixin.define("zx.utils.MConsoleLog", {
         this[copyLogOutputTo](str);
       }
       this.fireDataEvent("log", { message: str });
+    },
+
+    /**@override */
+    info(str, ...args) {
+      super.info(str, ...args);
+      this.log(str);
+    },
+
+    /**@override */
+    debug(str, ...args) {
+      super.debug(str, ...args);
+      this.log(str);
+    },
+
+    /**@override */
+    warn(str, ...args) {
+      super.warn(str, ...args);
+      this.log(str);
+    },
+
+    /**@override */
+    error(str, ...args) {
+      super.error(str, ...args);
+      this.log(str);
     },
 
     /**
