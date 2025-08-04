@@ -28,6 +28,12 @@ qx.Class.define("zx.reports.api.ServerReportDescriptor", {
       event: "changeName"
     },
 
+    hidden: {
+      init: false,
+      check: "Boolean",
+      event: "changeHidden"
+    },
+
     formats: {
       check: "Array",
       event: "changeFormats"

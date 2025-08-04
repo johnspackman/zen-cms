@@ -68,8 +68,8 @@ qx.Class.define("zx.utils.Json", {
 
     /**
      * Encodes a value to a string, specially encoding dates and BigNumbers
-     * 
-     * @param {*} value 
+     *
+     * @param {*} value
      * @returns {string}
      */
     encodeJsonValue(value) {
@@ -87,7 +87,7 @@ qx.Class.define("zx.utils.Json", {
 
     /**
      * Decodes a value from a string, specially decoding dates and BigNumbers
-     * @param {string} value 
+     * @param {string} value
      * @returns {*}
      */
     decodeJsonValue(value) {
@@ -99,17 +99,8 @@ qx.Class.define("zx.utils.Json", {
         let [constructorName, argumentStr] = str.split("(");
         switch (constructorName) {
           case "Date":
-            return new Date(argumentStr);
-          // the above should work in all browsers/versions w/ babel transpile. Original implementation kept below for reference/posterity:
-          /*
-                  let dt = zx.utils.Dates.parseISO(argumentStr);
-                  if (qx.core.Environment.get("qx.debug")) {
-                    if (dt && zx.utils.Dates.formatISO(dt) !== argumentStr) {
-                      qx.log.Logger.error("date parsing (iso), str=" + str + ", strDt=" + argumentStr + ", dt=" + dt + ", iso=" + zx.utils.Dates.formatISO(dt));
-                    }
-                  }
-                  return dt;
-                  */
+            let dt = zx.utils.Dates.parseISO(argumentStr);
+            return dt;
 
           case "BigNumber":
             return new BigNumber(argumentStr);

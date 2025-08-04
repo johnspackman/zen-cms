@@ -59,7 +59,8 @@ qx.Class.define("zx.reports.thin.AbstractReportRunnerFeature", {
     async getAvailableReports() {
       return Object.values(this.__reportDescriptors).map(descriptor => ({
         id: descriptor.getId(),
-        name: descriptor.getName()
+        name: descriptor.getName(),
+        hidden: descriptor.isHidden()
       }));
     },
 

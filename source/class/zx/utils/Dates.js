@@ -269,19 +269,6 @@ qx.Class.define("zx.utils.Dates", {
      * @return Date the date, or null if str was null
      */
     parseISO(str) {
-      // return  str ? new Date(str) : null; // should work in all browsers/versions w/ babel transpile
-      /*
-      if (!str)
-      return null;
-      var dt = this.__DFISO.parse(str);
-      if (dt instanceof Date) {
-      // Convert to UTC
-      var newDt = new Date(Date.UTC(dt.getYear() + 1900, dt.getMonth(), dt.getDate(), dt.getHours(), dt.getMinutes(), dt.getSeconds()));
-      newDt.setMilliseconds(dt.getMilliseconds());
-      dt = newDt;
-      }
-      return dt;
-      */
       if (!str) {
         return null;
       }
@@ -304,6 +291,13 @@ qx.Class.define("zx.utils.Dates", {
 
         return null;
       }
+      /*
+      Becaused Javascript is so unbelievably broken, all timezone information is ignored.
+      When we work on the server, we tell node that the timezone is UTC+0, and when we work on the browser,
+      we delete timezone information so that it is treated as UTC+0.
+
+      This means that in summer time, the date is correct *provided that you ignore the time zone*
+
       var offset = dt.getTimezoneOffset();
       if (offset != 0) {
         dt = new Date(year, month, day, hours, minutes - offset, seconds, millis);
@@ -314,6 +308,7 @@ qx.Class.define("zx.utils.Dates", {
           return null;
         }
       }
+      */
       return dt;
     },
 
