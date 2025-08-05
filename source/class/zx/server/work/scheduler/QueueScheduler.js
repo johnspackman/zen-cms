@@ -289,10 +289,8 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
 
     async __cleanOldWorkResults() {
       let colResults = zx.server.Standalone.getInstance().getDb().getCollection("zx.server.work.scheduler.QueueScheduler.WorkResult");
-      //Remove results in the database which are too old
-      const MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+
       const MAX_RESULTS_PER_WORK = 10;
-      await colResults.deleteMany({ "workStatus.started": { $lt: new Date(Date.now() - MAX_AGE) } });
 
       //Ensure there are no more than `MAX_RESULTS_PER_WORK` results per work JSON UUID
       let resultsByWorkUuidCursor = colResults.aggregate([
