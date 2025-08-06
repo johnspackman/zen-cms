@@ -37,7 +37,7 @@ qx.Class.define("zx.server.work.ui.SchedulerMgr", {
       return new zx.server.work.ui.SchedulersView(this.__transport);
     },
     tasksView() {
-      return new zx.server.work.ui.tasksview.TasksView(this.__transport);
+      return new zx.server.work.ui.TasksView(this.__transport);
     }
   },
   members: {

@@ -1,7 +1,7 @@
 /**
  * A table showing work results, which can either be currently running or completed in the past.
  */
-qx.Class.define("zx.server.work.ui.tasksview.TasksTable", {
+qx.Class.define("zx.server.work.ui.TasksTable", {
   extend: qx.ui.core.Widget,
   construct() {
     super();

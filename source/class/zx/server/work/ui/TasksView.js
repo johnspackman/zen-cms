@@ -1,4 +1,4 @@
-qx.Class.define("zx.server.work.ui.tasksview.TasksView", {
+qx.Class.define("zx.server.work.ui.TasksView", {
   extend: qx.ui.core.Widget,
   /**
    *
@@ -33,7 +33,7 @@ qx.Class.define("zx.server.work.ui.tasksview.TasksView", {
       return searchField;
     },
     tblTasks() {
-      let table = new zx.server.work.ui.tasksview.TasksTable().set({ minHeight: 400 });
+      let table = new zx.server.work.ui.TasksTable().set({ minHeight: 400 });
       table.getDatagrid().bind("selection[0]", this.getQxObject("edTask"), "value");
       table.getDatagrid().bind("selection[0]", this.getQxObject("edTask"), "visibility", {
         converter: sel => (sel ? "visible" : "excluded")
@@ -41,7 +41,7 @@ qx.Class.define("zx.server.work.ui.tasksview.TasksView", {
       return table;
     },
     edTask() {
-      return new zx.server.work.ui.tasksview.TaskEditor();
+      return new zx.server.work.ui.TaskEditor();
     }
   },
   members: {

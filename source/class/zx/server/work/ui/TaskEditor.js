@@ -1,4 +1,4 @@
-qx.Class.define("zx.server.work.ui.tasksview.TaskEditor", {
+qx.Class.define("zx.server.work.ui.TaskEditor", {
   extend: qx.ui.core.Widget,
   construct() {
     super();
