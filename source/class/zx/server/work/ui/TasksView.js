@@ -14,23 +14,35 @@ qx.Class.define("zx.server.work.ui.TasksView", {
     let comp = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
     scroll.add(comp);
 
-    comp.add(this.getQxObject("edtSearch"));
+    comp.add(this.getQxObject("compEdtSearch"));
     comp.add(this.getQxObject("tblTasks"));
     comp.add(this.getQxObject("edTask"), { flex: 1 });
   },
   properties: {},
   objects: {
+    compEdtSearch() {
+      let comp = new qx.ui.container.Composite(new qx.ui.layout.HBox(5));
+      comp.add(this.getQxObject("edtSearch"), { flex: 1 });
+      comp.add(this.getQxObject("cbxShowRunning"));
+      return comp;
+    },
     edtSearch() {
       let searchField = new zx.ui.form.SearchField();
       searchField.addListener("search", async evt => {
         let api = this.__api;
         let table = this.getQxObject("tblTasks");
         table.resetModel();
-        let tasksJson = await api.searchTasks({ title: evt.getData() });
+        let tasksJson = await api.searchTasks({ title: evt.getData(), runningOnly: this.getQxObject("cbxShowRunning").getValue() });
         let tasks = new qx.data.Array(tasksJson.map(task => zx.server.work.ui.model.ScheduledTask.get(api, task)));
         table.setModel(tasks);
       });
+      searchField.linkWidget(this.getQxObject("cbxShowRunning"));
       return searchField;
+    },
+    cbxShowRunning() {
+      let cbx = new qx.ui.form.CheckBox("Show Running Only");
+      cbx.setValue(true);
+      return cbx;
     },
     tblTasks() {
       let table = new zx.server.work.ui.TasksTable().set({ minHeight: 400 });

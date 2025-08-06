@@ -277,7 +277,8 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
       if (query.uuid) {
         match._uuid = query.uuid;
       }
-      let out = await collection.find(match, { limit: 20 }).toArray();
+
+      let out = await collection.find(match).toArray();
 
       let runningWork = this.__queueScheduler.getRunningWork().map(work => work.workJson.uuid);
       out.forEach(task => {
@@ -286,6 +287,13 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
         task.uuid = task._uuid;
         task.status = isRunning ? "running" : isQueued ? "queued" : "idle";
       });
+
+      if (query.runningOnly) {
+        out = out.filter(task => task.status !== "idle");
+      }
+
+      //limit to 20 results
+      out = out.splice(0, 20);
       return out;
     },
     /**@override interface zx.server.work.scheduler.ITasksApi */
@@ -296,7 +304,8 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
         {
           $set: {
             enabled: true,
-            earliestStartDate: new Date()
+            earliestStartDate: new Date(),
+            failCount: 0
           }
         }
       );

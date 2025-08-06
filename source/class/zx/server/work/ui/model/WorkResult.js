@@ -125,20 +125,6 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
     }
   },
   members: {
-    /**
-     * @type {zx.server.work.ui.model.WorkerTracker?}
-     */
-    __tracker: null,
-
-    /**
-     *
-     * Getter for pseudo-property `tracker`
-     * @returns {zx.server.work.ui.model.WorkerTracker?}
-     */
-    getTracker() {
-      return this.__tracker;
-    },
-
     _updateDerivedProps() {
       this.setSuccess(this.getCompleted() ? !this.getExceptionStack() : null);
     },
@@ -164,7 +150,7 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
         throw new Error("Work already killed by user");
       }
       this.setUserKilled(true);
-      await this.getTracker().getPool().getApi().killWork(this.toUuid());
+      await this.getTracker().getPool().getApi().killWork(this.getWorkJson().uuid);
     }
   }
 });

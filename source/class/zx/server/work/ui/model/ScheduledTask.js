@@ -80,7 +80,7 @@ qx.Class.define("zx.server.work.ui.model.ScheduledTask", {
         this.getWorkResults().unshift(current);
       }
       for (let resultJson of past) {
-        let result = zx.server.work.ui.model.WorkResult.get(resultJson);
+        let result = zx.server.work.ui.model.WorkResult.get(resultJson).set({ tracker: null });
         if (!this.getWorkResults().includes(result)) {
           this.getWorkResults().push(result);
         }
@@ -93,7 +93,7 @@ qx.Class.define("zx.server.work.ui.model.ScheduledTask", {
     __update(json) {
       this.setStatus(json.status);
       this.setTitle(json.title);
-      this.setDescription(json.description);
+      this.setDescription(json.description ?? null);
       this.setWorkJson(json.workJson);
       this.setSuccess(json.status == "idle" ? !json.failCount : null);
     }

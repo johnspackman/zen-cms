@@ -16,6 +16,7 @@ qx.Class.define("zx.server.work.ui.TaskEditor", {
 
     this._setLayout(new qx.ui.layout.VBox(10));
     this._add(this.getQxObject("toolbar"));
+    this._add(this.getQxObject("compInfo"));
     this._add(new qx.ui.basic.Label("Executions:"));
     this._add(this.getQxObject("edtWorkResults"));
 
@@ -34,6 +35,30 @@ qx.Class.define("zx.server.work.ui.TaskEditor", {
   },
 
   objects: {
+    compInfo() {
+      let comp = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+      comp.add(new qx.ui.basic.Label("Title:"));
+      comp.add(this.getQxObject("edtTitle"));
+      this.bind("value.title", this.getQxObject("edtTitle"), "value");
+      comp.add(new qx.ui.basic.Label("Description:"));
+      comp.add(this.getQxObject("edtDescription"));
+      this.bind("value.description", this.getQxObject("edtDescription"), "value");
+      comp.add(new qx.ui.basic.Label("Work JSON:"));
+      comp.add(this.getQxObject("edtWorkJson"));
+      this.bind("value.workJson", this.getQxObject("edtWorkJson"), "value", {
+        converter: value => (value ? zx.utils.Json.stringifyJson(value, null, 2) : null)
+      });
+      return comp;
+    },
+    edtTitle() {
+      return new qx.ui.form.TextField().set({ readOnly: true });
+    },
+    edtDescription() {
+      return new qx.ui.form.TextArea().set({ readOnly: true, maxWidth: 400, minHeight: 150 });
+    },
+    edtWorkJson() {
+      return new qx.ui.form.TextArea().set({ readOnly: true, maxWidth: 400, minHeight: 150, wrap: false });
+    },
     toolbar() {
       let tb = new qx.ui.toolbar.ToolBar();
       tb.add(this.getQxObject("btnQueue"));
@@ -102,9 +127,11 @@ qx.Class.define("zx.server.work.ui.TaskEditor", {
     __updateUi() {
       let selection = this.getQxObject("ctlrWorkResults").getSelection().getItem(0);
       if (selection) {
+        this.getQxObject("compInfo").setVisibility("excluded");
         this.getQxObject("compEdWorkResult").setVisibility("visible");
         this.getQxObject("edWorkResult").setValue(selection);
       } else {
+        this.getQxObject("compInfo").setVisibility("visible");
         this.getQxObject("compEdWorkResult").setVisibility("excluded");
         this.getQxObject("edWorkResult").setValue(null);
       }
