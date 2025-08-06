@@ -32,6 +32,7 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
   construct(queueScheduler) {
     super();
     this.__queueScheduler = queueScheduler;
+    this.__serverApi = zx.io.api.ApiUtils.createServerApi(zx.server.work.scheduler.ITasksApi, this);
 
     /**
      * All tasks which have been queued on the scheduler and are waiting to be completed
@@ -44,7 +45,20 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
     /** @type {zx.server.work.scheduler.QueueScheduler} */
     __queueScheduler: null,
 
+    /**
+     * @type {zx.server.work.scheduler.ITasksApi}
+     */
+    __serverApi: null,
+
     __pollDatabasePromise: null,
+
+    /**
+     *
+     * @returns {zx.server.work.scheduler.ITasksApi}
+     */
+    getServerApi() {
+      return this.__serverApi;
+    },
 
     /**
      * Starts the scanner
@@ -98,7 +112,7 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
         }
 
         if (!workJson.uuid) {
-          workJson.uuid = taskJson._uuid + "-work-task";
+          workJson.uuid = this.constructor.toWorkJsonUuid(taskJson._uuid);
         }
 
         if (!workJson.title) {
@@ -237,6 +251,67 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
       let nextDate = cronJob.nextDate();
       cronJob.stop();
       return nextDate.toJSDate();
+    },
+
+    /** @override interface zx.server.work.scheduler.ITasksApi */
+    async getPastWorkResults(taskUuid) {
+      let out = await this.__queueScheduler.getPastWorkResults({ workUuid: this.constructor.toWorkJsonUuid(taskUuid) });
+      return out;
+    },
+
+    /** @override interface zx.server.work.scheduler.ITasksApi */
+    async getRunningWorkResult(taskUuid) {
+      let out = await this.__queueScheduler.getRunningWorkResult(this.constructor.toWorkJsonUuid(taskUuid));
+      return out;
+    },
+
+    /**
+     * @override interface zx.server.work.scheduler.ITasksApi
+     */
+    async searchTasks(query) {
+      let collection = zx.server.Standalone.getInstance().getDb().getCollection("zx.server.work.scheduler.ScheduledTask");
+      let match = {};
+      if (query.title) {
+        match.title = { $regex: query.title, $options: "i" };
+      }
+      if (query.uuid) {
+        match._uuid = query.uuid;
+      }
+      let out = await collection.find(match, { limit: 20 }).toArray();
+
+      let runningWork = this.__queueScheduler.getRunningWork().map(work => work.workJson.uuid);
+      out.forEach(task => {
+        let isQueued = !!this.__runningTasks[this.constructor.toWorkJsonUuid(task._uuid)];
+        let isRunning = runningWork.includes(this.constructor.toWorkJsonUuid(task._uuid));
+        task.uuid = task._uuid;
+        task.status = isRunning ? "running" : isQueued ? "queued" : "idle";
+      });
+      return out;
+    },
+    /**@override interface zx.server.work.scheduler.ITasksApi */
+    async queueTask(uuid) {
+      let collection = zx.server.Standalone.getInstance().getDb().getCollection("zx.server.work.scheduler.ScheduledTask");
+      let ret = await collection.updateOne(
+        { _uuid: uuid },
+        {
+          $set: {
+            enabled: true,
+            earliestStartDate: new Date()
+          }
+        }
+      );
+      return ret;
+    }
+  },
+
+  statics: {
+    /**
+     * Maps a UUID of zx.server.work.scheduler.ScheduledTask to a work JSON UUID
+     * @param {string} taskUuid
+     * @returns {string}
+     */
+    toWorkJsonUuid(taskUuid) {
+      return taskUuid + "-work-task";
     }
   }
 });

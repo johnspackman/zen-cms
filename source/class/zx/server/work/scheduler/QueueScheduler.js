@@ -23,6 +23,7 @@ const path = require("path");
  *
  * @typedef WorkQueueEntry
  * @property {zx.server.work.IWork.WorkJson} workJson the work to do
+ * @property {{id: string, uuid: string}} pool
  * @property {Promise} promise the promise which resolves when the work is done
  *
  * @use(zx.io.api.client.AbstractClientApi)
@@ -257,6 +258,10 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
         ];
       }
 
+      if (search.workUuid) {
+        match["workJson.uuid"] = search.workUuid;
+      }
+
       if (search.pool) {
         if (search.pool.id) {
           match["pool.id"] = search.pool.id;
@@ -324,6 +329,32 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
     },
 
     /**
+     * Tries to see if a work with the given UUID is running in any of the pools,
+     * and if so, returns the work result for that work.
+     *
+     * NOTE: ATM, this only works when the scheduler and and pool are running in the same process and thread!
+     *
+     * @param {string} workUuid
+     * @returns {Promise<zx.server.work.WorkResult.WorkResultJson|null>} the work result for the given work UUID if that work is running, or null if it is not
+     */
+    async getRunningWorkResult(workUuid) {
+      let running = this.__running[workUuid];
+      if (!running) {
+        return null;
+      }
+      let poolInfo = this.__poolsByUuid[running.pool.uuid];
+      let transport = zx.io.api.ApiUtils.getClientTransport();
+      let api = zx.io.api.ApiUtils.createClientApi(zx.server.work.pools.IWorkerPoolApi, transport, poolInfo.apiPath);
+      let poolDescription = await api.getDescriptionJson();
+      api.dispose();
+      let tracker = poolDescription.runningWorkerTrackers.find(tracker => tracker.workResult.workJson.uuid === workUuid);
+      if (!tracker) {
+        return null;
+      }
+      return tracker.workResult ?? null;
+    },
+
+    /**
      * @override
      */
     async getQueuedWork() {
@@ -335,9 +366,10 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
     /**
      * @override
      */
-    async getRunningWork() {
+    getRunningWork() {
       return Object.values(this.__running).map(entry => ({
-        workJson: entry.workJson
+        workJson: entry.workJson,
+        pool: entry.pool
       }));
     }
   }

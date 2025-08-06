@@ -11,7 +11,6 @@ qx.Class.define("zx.server.work.ui.model.WorkerTracker", {
   construct(pool, trackerJson) {
     super();
     this.__pool = pool;
-    this.initWorkResult(new zx.server.work.ui.model.WorkResult(this, trackerJson.workResult));
     this.update(trackerJson);
   },
 
@@ -35,7 +34,8 @@ qx.Class.define("zx.server.work.ui.model.WorkerTracker", {
     workResult: {
       check: "zx.server.work.ui.model.WorkResult",
       event: "changeWorkResult",
-      deferredInit: true
+      init: null,
+      nullable: true
     }
   },
   members: {
@@ -57,12 +57,19 @@ qx.Class.define("zx.server.work.ui.model.WorkerTracker", {
     update(trackerJson) {
       this.setStatus(trackerJson.status);
       this.setLastActivity(trackerJson.lastActivity ?? null);
-      this.getWorkResult().update(trackerJson.workResult);
+      if (trackerJson.workResult) {
+        this.setWorkResult(zx.server.work.ui.model.WorkResult.get(trackerJson.workResult).set({ tracker: this }));
+      } else {
+        if (this.getWorkResult()) {
+          this.getWorkResult().setTracker(null);
+        }
+        this.resetWorkResult();
+      }
     },
 
     __updateTitle() {
       let out = `Worker Tracker: ${this.toHashCode()}`;
-      if (this.getStatus() == "running") {
+      if (this.getStatus() == "running" && this.getWorkResult()) {
         out += ` Running: ${this.getWorkResult().getWorkJson().workClassname}`;
       }
       this.setTitle(out);
