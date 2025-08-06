@@ -41,6 +41,7 @@ db.getCollection("zx.server.email.Message").createIndex(
  */
 qx.Class.define("zx.server.email.Message", {
   extend: zx.server.Object,
+  include: [zx.utils.MConsoleLog],
   implement: [zx.io.persistence.IObjectNotifications],
 
   properties: {
@@ -228,13 +229,9 @@ qx.Class.define("zx.server.email.Message", {
     },
 
     /**
-     * @param {(message: string) => void} [log] Callback for logging
      * @returns {Promise<boolean>} If the email was successfully sent
      */
-    async sendEmail(log) {
-      if (log === undefined) {
-        log = console.log;
-      }
+    async sendEmail() {
       let htmlBody = this.getHtmlBody();
 
       let config = await zx.server.Config.getConfig();
@@ -244,46 +241,42 @@ qx.Class.define("zx.server.email.Message", {
 
       /** @type {Array<Record<keyof any, any>>} */
       let attachmentsData = [{ data: htmlBody, alternative: true }];
-      log("Before getting attachments");
+      this.debug("Before getting attachments");
       if (this.getAttachments()) {
         let mime = (await import("mime")).default;
         this.getAttachments().forEach(attachment => {
           let filename = attachment.getPath();
-          try {
-            if (!fs.existsSync(filename)) {
-              this.error(`Attachment ${filename} does not exist`);
-              return;
-            }
-            let stream = fs.createReadStream(filename);
-            let attachmentData = {};
-            if (stream) {
-              attachmentData.stream = stream;
-            } else {
-              attachmentData.path = filename;
-            }
+          if (!fs.existsSync(filename)) {
+            this.error(`Attachment ${filename} does not exist`);
+            return;
+          }
+          let stream = fs.createReadStream(filename);
+          let attachmentData = {};
+          if (stream) {
+            attachmentData.stream = stream;
+          } else {
+            attachmentData.path = filename;
+          }
 
-            if (attachment.getContentType()) {
-              attachmentData.type = attachment.getContentType();
-            } else {
-              let fileExt = path.extname(filename);
-              if (fileExt.startsWith(".")) {
-                fileExt = fileExt.substring(1);
-                let mimeType = mime.getType(fileExt);
-                if (mimeType) {
-                  attachmentData.type = mimeType;
-                }
+          if (attachment.getContentType()) {
+            attachmentData.type = attachment.getContentType();
+          } else {
+            let fileExt = path.extname(filename);
+            if (fileExt.startsWith(".")) {
+              fileExt = fileExt.substring(1);
+              let mimeType = mime.getType(fileExt);
+              if (mimeType) {
+                attachmentData.type = mimeType;
               }
             }
-
-            attachmentData.name = attachment.getName() || path.basename(filename);
-            attachmentsData.push(attachmentData);
-          } catch (ex) {
-            this.error(`Error reading attachment ${filename}: ${ex}`);
           }
+
+          attachmentData.name = attachment.getName() || path.basename(filename);
+          attachmentsData.push(attachmentData);
         });
       }
 
-      log("Before getting creating emailJsMessage");
+      this.debug("Before getting creating emailJsMessage");
 
       let emailConfig = {
         to: this.getTo(),
@@ -303,11 +296,11 @@ qx.Class.define("zx.server.email.Message", {
       let error = false;
 
       try {
-        log("Before sending message via emailJs");
+        this.debug("Before sending message via emailJs");
         await client.sendAsync(emailJsMessage);
         this.setDateDelivered(new Date());
         await this.save();
-        log("After sending message via emailJs");
+        this.debug("After sending message via emailJs");
       } catch (err) {
         error = true;
         if (!(emailJsMessage instanceof zx.server.email.Message)) {
@@ -317,9 +310,8 @@ qx.Class.define("zx.server.email.Message", {
         this.error(`Error sending email with UUID: ${this.toUuid()}. Stack: ${err?.stack ?? "(no stack trace)"}`);
         this.setLastErrorMessage(err ? err.message : "Unknown error when sending email");
         await this.save();
+        throw err;
       }
-
-      return !error;
     }
   }
 });

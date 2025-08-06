@@ -84,6 +84,10 @@ qx.Mixin.define("zx.utils.MConsoleLog", {
       this.log(str);
     },
 
+    clearLog() {
+      this.__logOutput = [];
+    },
+
     /**
      * Returns the logged output as one string
      *
