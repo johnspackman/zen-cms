@@ -271,8 +271,13 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
     async searchTasks(query) {
       let collection = zx.server.Standalone.getInstance().getDb().getCollection("zx.server.work.scheduler.ScheduledTask");
       let match = {};
-      if (query.title) {
-        match.title = { $regex: query.title, $options: "i" };
+      if (query.text) {
+        let rgxText = { $regex: query.text, $options: "i" };
+        match.$or = {
+          title: rgxText,
+          wellKnownId: rgxText,
+          description: rgxText
+        };
       }
       if (query.uuid) {
         match._uuid = query.uuid;

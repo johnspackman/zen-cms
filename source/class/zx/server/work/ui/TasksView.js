@@ -32,7 +32,7 @@ qx.Class.define("zx.server.work.ui.TasksView", {
         let api = this.__api;
         let table = this.getQxObject("tblTasks");
         table.resetModel();
-        let tasksJson = await api.searchTasks({ title: evt.getData(), runningOnly: this.getQxObject("cbxShowRunning").getValue() });
+        let tasksJson = await api.searchTasks({ text: evt.getData(), runningOnly: this.getQxObject("cbxShowRunning").getValue() });
         let tasks = new qx.data.Array(tasksJson.map(task => zx.server.work.ui.model.ScheduledTask.get(api, task)));
         table.setModel(tasks);
       });

@@ -14,7 +14,7 @@ qx.Interface.define("zx.server.work.scheduler.ITasksApi", {
      * @returns {Promise<zx.server.work.scheduler.ScheduledTask.DescriptionJson[]>}
      *
      * @typedef Query
-     * @property {string?} title - The title of the task to search for
+     * @property {string?} text - Text search
      * @property {string?} uuid - The UUID of the task to search for
      * @property {boolean?} runningOnly - If true, includes only tasks which are either queued or running.
      */
