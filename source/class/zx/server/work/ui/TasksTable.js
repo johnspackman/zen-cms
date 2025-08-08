@@ -17,6 +17,7 @@ qx.Class.define("zx.server.work.ui.TasksTable", {
 
     columns() {
       let columns = new qxl.datagrid.column.Columns();
+      let df = new qx.util.format.DateFormat("yyyy/MM/dd HH:mm:ss");
 
       columns.addAll([
         new qxl.datagrid.column.TextColumn().set({
@@ -33,6 +34,18 @@ qx.Class.define("zx.server.work.ui.TasksTable", {
           bindingOptions: () => ({
             converter: status => qx.lang.String.firstUp(status)
           })
+        }),
+        new qxl.datagrid.column.DateColumn().set({
+          path: "dateStarted",
+          caption: "Last Started GMT",
+          minWidth: 150,
+          dateFormat: df
+        }),
+        new qxl.datagrid.column.DateColumn().set({
+          path: "dateCompleted",
+          caption: "Last Completed GMT",
+          minWidth: 150,
+          dateFormat: df
         }),
         new zx.server.work.ui.SuccessColumn().set({
           caption: "Success?",

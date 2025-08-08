@@ -39,6 +39,18 @@ qx.Class.define("zx.server.work.ui.model.ScheduledTask", {
       event: "changeWorkResults",
       deferredInit: true
     },
+    dateStarted: {
+      check: "Date",
+      event: "changeDateStarted",
+      nullable: true,
+      init: null
+    },
+    dateCompleted: {
+      check: "Date",
+      event: "changeDateCompleted",
+      nullable: true,
+      init: null
+    },
     runningWorkResult: {
       check: "zx.server.work.ui.model.WorkResult",
       event: "changeRunningWorkResult",
@@ -95,6 +107,8 @@ qx.Class.define("zx.server.work.ui.model.ScheduledTask", {
       this.setTitle(json.title);
       this.setDescription(json.description ?? null);
       this.setWorkJson(json.workJson);
+      this.setDateStarted(json.dateStarted ?? null);
+      this.setDateCompleted(json.dateCompleted ?? null);
       this.setSuccess(json.status == "idle" ? !json.failCount : null);
     }
   },

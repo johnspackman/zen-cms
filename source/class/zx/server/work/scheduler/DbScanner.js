@@ -283,7 +283,7 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
         match._uuid = query.uuid;
       }
 
-      let out = await collection.find(match).toArray();
+      let out = await collection.find(match, { sort: { dateCompleted: -1 } }).toArray();
 
       let runningWork = this.__queueScheduler.getRunningWork().map(work => work.workJson.uuid);
       out.forEach(task => {

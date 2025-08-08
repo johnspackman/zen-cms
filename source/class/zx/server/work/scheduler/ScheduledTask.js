@@ -21,6 +21,8 @@
  * @property {string} uuid
  * @property {string} title
  * @property {string} description
+ * @property {Date?} dateStarted
+ * @property {Date?} dateCompleted
  * @property {zx.server.work.IWork.WorkJson} workJson
  * @property {string} status
  */
