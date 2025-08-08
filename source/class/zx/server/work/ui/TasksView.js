@@ -8,6 +8,10 @@ qx.Class.define("zx.server.work.ui.TasksView", {
     super();
     this.__api = zx.io.api.ApiUtils.createClientApi(zx.server.work.scheduler.ITasksApi, transport, "/tasks");
 
+    let refreshTimer = new zx.utils.Timeout(2000, () => this.__refreshResults()).set({ recurring: true });
+    this.addListener("appear", () => refreshTimer.setEnabled(true));
+    this.addListener("disappear", () => refreshTimer.setEnabled(false));
+
     this._setLayout(new qx.ui.layout.Grow());
     let scroll = new qx.ui.container.Scroll();
     this._add(scroll);
@@ -29,12 +33,9 @@ qx.Class.define("zx.server.work.ui.TasksView", {
     edtSearch() {
       let searchField = new zx.ui.form.SearchField();
       searchField.addListener("search", async evt => {
-        let api = this.__api;
         let table = this.getQxObject("tblTasks");
         table.resetModel();
-        let tasksJson = await api.searchTasks({ text: evt.getData(), runningOnly: this.getQxObject("cbxShowRunning").getValue() });
-        let tasks = new qx.data.Array(tasksJson.map(task => zx.server.work.ui.model.ScheduledTask.get(api, task)));
-        table.setModel(tasks);
+        this.__refreshResults();
       });
       searchField.linkWidget(this.getQxObject("cbxShowRunning"));
       return searchField;
@@ -60,6 +61,20 @@ qx.Class.define("zx.server.work.ui.TasksView", {
     /**
      * @type {zx.server.work.scheduler.ITasksApi}
      */
-    __api: null
+    __api: null,
+
+    async __refreshResults() {
+      let api = this.__api;
+      let query = this.getQxObject("edtSearch").getValue();
+      let runningOnly = this.getQxObject("cbxShowRunning").getValue();
+      let tasksJson = await api.searchTasks({ text: query, runningOnly: runningOnly });
+      if (query !== this.getQxObject("edtSearch").getValue() || runningOnly !== this.getQxObject("cbxShowRunning").getValue()) {
+        //search was changed while we were waiting for the results
+        return;
+      }
+      let table = this.getQxObject("tblTasks");
+      let tasks = new qx.data.Array(tasksJson.map(task => zx.server.work.ui.model.ScheduledTask.get(api, task)));
+      table.setModel(tasks);
+    }
   }
 });

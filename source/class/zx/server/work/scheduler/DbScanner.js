@@ -294,11 +294,12 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
       });
 
       if (query.runningOnly) {
-        out = out.filter(task => task.status !== "idle");
+        out = out.filter(task => task.status !== "idle" || task.failCount > 0);
+      } else {
+        //limit to 20 results
+        out = out.splice(0, 20);
       }
 
-      //limit to 20 results
-      out = out.splice(0, 20);
       return out;
     },
     /**@override interface zx.server.work.scheduler.ITasksApi */

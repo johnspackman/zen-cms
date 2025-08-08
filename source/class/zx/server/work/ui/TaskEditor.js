@@ -12,15 +12,12 @@ qx.Class.define("zx.server.work.ui.TaskEditor", {
       }
     });
 
-    this.__refreshTimer = new zx.utils.Timeout(2000, () => this.getValue()?.refreshWorkResults()).set({ recurring: true });
-
-    this._setLayout(new qx.ui.layout.VBox(10));
-    this._add(this.getQxObject("toolbar"));
-    this._add(this.getQxObject("compInfo"));
-    this._add(new qx.ui.basic.Label("Executions:"));
-    this._add(this.getQxObject("edtWorkResults"));
-
-    this._add(this.getQxObject("compEdWorkResult"), { flex: 1 });
+    let refreshTimer = new zx.utils.Timeout(2000, () => this.getValue()?.refreshWorkResults()).set({ recurring: true });
+    this.__refreshTimer = refreshTimer;
+    this.addListener("appear", () => refreshTimer.setEnabled(true));
+    this.addListener("disappear", () => refreshTimer.setEnabled(false));
+    this._setLayout(new qx.ui.layout.Grow());
+    this._add(this.getQxObject("root"));
 
     this.__updateUi();
   },
@@ -35,6 +32,15 @@ qx.Class.define("zx.server.work.ui.TaskEditor", {
   },
 
   objects: {
+    root() {
+      let comp = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
+      comp.add(this.getQxObject("toolbar"));
+      comp.add(new qx.ui.basic.Label("Executions:"));
+      comp.add(this.getQxObject("edtWorkResults"));
+      comp.add(this.getQxObject("compInfo"));
+      comp.add(this.getQxObject("compEdWorkResult"), { flex: 1 });
+      return comp;
+    },
     compInfo() {
       let comp = new qx.ui.container.Composite(new qx.ui.layout.VBox());
       comp.add(new qx.ui.basic.Label("Title:"));
@@ -110,18 +116,11 @@ qx.Class.define("zx.server.work.ui.TaskEditor", {
     }
   },
   members: {
-    /**
-     * @type {zx.utils.Timeout}
-     */
-    __refreshTimer: null,
-
-    _applyValue(value, old) {
-      if (old) {
-        this.__refreshTimer.killTimer();
-      }
-      if (value) {
-        this.__refreshTimer.setEnabled(true);
-        this.__refreshTimer.trigger();
+    async _applyValue(value, old) {
+      this.setEnabled(false);
+      await this.__refreshTimer.trigger();
+      if (value === this.getValue()) {
+        this.setEnabled(true);
       }
     },
     __updateUi() {
