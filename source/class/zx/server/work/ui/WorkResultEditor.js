@@ -9,9 +9,6 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
 
     this._add(this.getQxObject("compRunningOnly"));
     this._add(this.getQxObject("toolbar"));
-    this._add(new qx.ui.basic.Label("Work Classname:"));
-    this._add(this.getQxObject("edtWorkClassname"));
-    this.bind("value.workClassname", this.getQxObject("edtWorkClassname"), "value");
     this._add(new qx.ui.basic.Label("Title:"));
     this._add(this.getQxObject("edtTitle"));
     this.bind("value.title", this.getQxObject("edtTitle"), "value");
@@ -138,9 +135,6 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
       return btn;
     },
     edtTitle() {
-      return new qx.ui.form.TextField().set({ readOnly: true });
-    },
-    edtWorkClassname() {
       return new qx.ui.form.TextField().set({ readOnly: true });
     },
     edtDescription() {

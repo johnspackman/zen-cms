@@ -1,19 +1,19 @@
 /**
  * Proxy object representing a work result.
  * A work result can either represent a work that is currently running or one that has completed in the past.
+ * Its uuid is workJson.uuid + "/" + UNIX timestamp of when the work started
  */
 qx.Class.define("zx.server.work.ui.model.WorkResult", {
   extend: qx.core.Object,
   /**
-   * @param {zx.server.work.ui.model.WorkerTracker?} tracker
+   * @private
    * @param {zx.server.work.WorkResult.WorkResultJson?} workResultJson
    */
-  construct(tracker, workResultJson) {
+  construct(workResultJson) {
     super();
-    this.__tracker = tracker;
-    this.setExplicitUuid(workResultJson.workJson.uuid);
+    this.setExplicitUuid(this.constructor.getUuid(workResultJson));
     if (workResultJson) {
-      this.update(workResultJson);
+      this.__update(workResultJson);
     }
   },
   properties: {
@@ -74,14 +74,14 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
       init: null,
       nullable: true
     },
-    /*
-    //pseudo-property
+
     //Only set when the work is running
     tracker: {
       check: "zx.server.work.ui.model.WorkerTracker",
+      event: "changeTracker",
+      init: null,
       nullable: true
-    }
-    */
+    },
     /**
      * If the task was killed by the user in the user by calling the `kill` method
      */
@@ -91,27 +91,40 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
       init: false
     }
   },
-  events: {
+  statics: {
     /**
-     * Event for pseudo-property `tracker`. Never fired because tracker is set only once.
+     * @type {Object<string, zx.server.work.ui.model.WorkResult>} Key is UUID, value is WorkResult instance
      */
-    changeTracker: "qx.event.type.Data"
-  },
-  members: {
-    /**
-     * @type {zx.server.work.ui.model.WorkerTracker?}
-     */
-    __tracker: null,
+    __instances: {},
 
     /**
      *
-     * Getter for pseudo-property `tracker`
-     * @returns {zx.server.work.ui.model.WorkerTracker?}
+     * @param {string|zx.server.work.WorkResult.WorkResultJson} json
+     * @returns {zx.server.work.ui.model.WorkResult}
      */
-    getTracker() {
-      return this.__tracker;
+    get(json) {
+      let uuid = typeof json === "string" ? json : this.getUuid(json);
+      let instance = this.__instances[uuid];
+      if (!instance) {
+        instance = new zx.server.work.ui.model.WorkResult(json);
+      } else {
+        instance.__update(json);
+      }
+
+      this.__instances[uuid] = instance;
+      return instance;
     },
 
+    /**
+     *
+     * @param {zx.server.work.WorkResult.WorkResultJson} workResultJson
+     * @returns {string} The UUID to assign to a work result based on its workJson
+     */
+    getUuid(workResultJson) {
+      return workResultJson.workJson.uuid + "/" + workResultJson.workStatus.started.getTime();
+    }
+  },
+  members: {
     _updateDerivedProps() {
       this.setSuccess(this.getCompleted() ? !this.getExceptionStack() : null);
     },
@@ -119,7 +132,7 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
      *
      * @param {zx.server.work.WorkResult.WorkResultJson} workResultJson
      */
-    update(workResultJson) {
+    __update(workResultJson) {
       this.set({
         title: workResultJson.workJson.title ?? null,
         description: workResultJson.workJson.description ?? null,
@@ -137,7 +150,7 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
         throw new Error("Work already killed by user");
       }
       this.setUserKilled(true);
-      await this.getTracker().getPool().getApi().killWork(this.toUuid());
+      await this.getTracker().getPool().getApi().killWork(this.getWorkJson().uuid);
     }
   }
 });

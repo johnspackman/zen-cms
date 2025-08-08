@@ -593,10 +593,16 @@ qx.Class.define("zx.server.work.WorkerTracker", {
      * @returns {DescriptionJson}
      */
     getDescriptionJson() {
+      let workResult = this.__workResult?.serializeForScheduler();
+      if (workResult && !workResult.workStatus) {
+        //we don't care about it if it has no work status, because we only care about work results that have started.
+        workResult = null;
+      }
+
       return {
         uuid: this.toUuid(),
         status: this.getStatus(),
-        workResult: this.__workResult?.serializeForScheduler() ?? null,
+        workResult,
         lastActivity: this.__lastActivity
       };
     }

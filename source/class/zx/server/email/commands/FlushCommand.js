@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Command to flush the email queue.
@@ -37,7 +37,7 @@ qx.Class.define("zx.server.email.commands.FlushCommand", {
     this.setRun(async ({ flags, args }) => {
       await new zx.server.Standalone().start();
 
-      let flushObj = new zx.server.email.FlushQueue().set({ copyLogOutputTo: "info" });
+      let flushObj = new zx.server.email.FlushQueue();
       await flushObj.run(flags["clear-queue"]);
       console.log("Done.");
       return 0;

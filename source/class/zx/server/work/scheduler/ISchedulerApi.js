@@ -22,6 +22,9 @@
  * @typedef QueuedWorkJson
  * @property {zx.server.work.IWork.WorkJson} workJson
  *
+ * @typedef RunningWorkJson @extends QueuedWorkJson
+ * @property {PoolInfo} pool - Information about the pool that is running this work
+ *
  */
 qx.Interface.define("zx.server.work.scheduler.ISchedulerApi", {
   events: {
@@ -55,8 +58,9 @@ qx.Interface.define("zx.server.work.scheduler.ISchedulerApi", {
      * @param {SearchData} search
      *
      * @typedef SearchData
-     * @property {string} text - the search string to filter tasks by
+     * @property {string?} text - the search string to filter tasks by
      * @property {{id: string?, uuid: string?}?} pool - the ID of the pool to filter tasks by, or `null` for all pools
+     * @property {string?} workUuid UUID of the work in the work JSON
      * @returns {Promise<zx.server.work.WorkResult.WorkResultJson[]>} A promise that resolves with an array of work results matching the search criteria
      
      */
@@ -68,7 +72,7 @@ qx.Interface.define("zx.server.work.scheduler.ISchedulerApi", {
     async getQueuedWork() {},
 
     /**
-     * @returns {Promise<QueuedWorkJson[]>}
+     * @returns {Promise<RunningWorkJson[]>}
      */
     async getRunningWork() {}
   }
