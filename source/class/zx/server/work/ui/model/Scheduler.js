@@ -96,7 +96,7 @@ qx.Class.define("zx.server.work.ui.model.Scheduler", {
      */
     async getPastWorkResults(query) {
       let resultsJson = await this.getApi().getPastWorkResults(query);
-      let results = resultsJson.map(result => new zx.server.work.ui.model.WorkResult(null, result));
+      let results = resultsJson.map(result => zx.server.work.ui.model.WorkResult.get(result));
       return results;
     },
 

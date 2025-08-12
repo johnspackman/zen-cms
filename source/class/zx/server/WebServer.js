@@ -625,11 +625,13 @@ qx.Class.define("zx.server.WebServer", {
       let workScheduler = new zx.server.work.scheduler.QueueScheduler("temp/scheduler/");
       workScheduler.addPool(pool.getDescriptionJson());
 
+      let cm = zx.io.api.server.ConnectionManager.getInstance();
       let dbScanner = new zx.server.work.scheduler.DbScanner(workScheduler);
+      cm.registerApi(dbScanner.getServerApi(), "/tasks");
       await fs.promises.rm(pool.getWorkDir(), { force: true, recursive: true });
       await fs.promises.rm(workScheduler.getWorkDir(), { force: true, recursive: true });
 
-      zx.io.api.server.ConnectionManager.getInstance().registerApi(workScheduler.getServerApi(), "/scheduler");
+      cm.registerApi(workScheduler.getServerApi(), "/scheduler");
 
       let schedulerClientApi = zx.io.api.ApiUtils.createClientApi(zx.server.work.scheduler.ISchedulerApi, zx.io.api.ApiUtils.getClientTransport(), "/scheduler");
       pool.setSchedulerApi(schedulerClientApi);

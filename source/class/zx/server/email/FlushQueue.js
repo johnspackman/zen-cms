@@ -36,21 +36,32 @@ qx.Class.define("zx.server.email.FlushQueue", {
       worker.appendWorkLog("Got emails cursor.");
 
       let sentUuids = [];
+
+      //we will set this to true if any email fails to send
+      let error = false;
+
       for await (let emailJson of emailsCursor) {
         let email = await zx.server.Standalone.getInstance()
           .findOneObjectByType(zx.server.email.Message, { _uuid: emailJson._uuid }, false)
           .catch(e => {
             worker.appendWorkLog(`Error getting email as ZX server Object ${emailJson._uuid}: ${e}. Skipping...`);
+            error = true;
             return null;
           });
+
         if (!email) continue;
         worker.appendWorkLog(`Before sending email ${email.toUuid()}.`);
-        let success = await email.sendEmail(msg => worker.appendWorkLog(msg));
-        worker.appendWorkLog(`After sending email ${email.toUuid()}.`);
-        if (success) {
-          worker.appendWorkLog(`Email ${email.toUuid()} sent successfully: ${success}`);
+        email.clearLog();
+        let listener = email.addListener("log", e => worker.appendWorkLog(e.getData().message));
+        try {
+          await email.sendEmail();
+          worker.appendWorkLog(`Email ${email.toUuid()} sent successfully`);
           sentUuids.push(email.toUuid());
+        } catch (e) {
+          error = true;
         }
+        email.removeListenerById(listener);
+        worker.appendWorkLog(`After sending email ${email.toUuid()}.`);
       }
 
       worker.appendWorkLog("Traversed email queue.");
@@ -59,6 +70,10 @@ qx.Class.define("zx.server.email.FlushQueue", {
         await server.deleteObjectsByType(zx.server.email.Message, { _id: { $in: sentUuids } });
       }
       worker.appendWorkLog("Email queue flushed");
+
+      if (error) {
+        throw new Error("Some emails failed to send, see logs for details");
+      }
     },
     /**@override*/
     async abort(worker) {}
