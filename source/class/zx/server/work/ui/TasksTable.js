@@ -24,7 +24,10 @@ qx.Class.define("zx.server.work.ui.TasksTable", {
           path: "title",
           caption: "Title",
           minWidth: 300,
-          flex: 1
+          flex: 1,
+          bindingOptions: () => ({
+            converter: status => status ?? "(untitled)"
+          })
         }),
         new qxl.datagrid.column.TextColumn().set({
           path: "status",

@@ -34,6 +34,8 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
     this.__queueScheduler = queueScheduler;
     this.__serverApi = zx.io.api.ApiUtils.createServerApi(zx.server.work.scheduler.ITasksApi, this);
 
+    this.__pollDatabaseTimer = new zx.utils.Timeout(2000, () => this.__pollDatabase()).set({recurring: true});
+
     /**
      * All tasks which have been queued on the scheduler and are waiting to be completed
      * Maps the work JSON UUID to the task JSON (zx.server.work.scheduler.ScheduledTask)
@@ -50,7 +52,11 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
      */
     __serverApi: null,
 
-    __pollDatabasePromise: null,
+    /**
+     * @type {zx.utils.Timeout}
+     * Timer for calling `this.__pollDatabase()` to check for new work
+     */
+    __pollDatabaseTimer: null,
 
     /**
      *
@@ -64,7 +70,7 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
      * Starts the scanner
      */
     async start() {
-      this.__queueScheduler.addListener("noWork", this.triggerDatabaseCheck, this);
+      this.__pollDatabaseTimer.setEnabled(true);
       this.__queueScheduler.addListener("workStarted", this.__onWorkStarted, this);
       this.__queueScheduler.addListener("workCompleted", this.__onWorkCompleted, this);
     },
@@ -73,20 +79,7 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
      * Stops the scanner
      */
     async stop() {
-      this.__queueScheduler.removeListener("noWork", this.triggerDatabaseCheck, this);
-    },
-
-    /**
-     * Causes the database to be checked for more work (if enabled)
-     */
-    triggerDatabaseCheck() {
-      if (this.__pollDatabasePromise) {
-        return;
-      }
-      this.__pollDatabasePromise = this.__pollDatabase();
-      this.__pollDatabasePromise.then(() => {
-        this.__pollDatabasePromise = null;
-      });
+      this.__pollDatabaseTimer.setEnabled(false);
     },
 
     /**
@@ -103,8 +96,7 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
 
       let earliestsStartUpdate = [];
 
-      while (await cursor.hasNext()) {
-        let taskJson = await cursor.next();
+      for await (let taskJson of cursor) {
         let workJson = taskJson.workJson;
 
         if (!taskJson._uuid) {
