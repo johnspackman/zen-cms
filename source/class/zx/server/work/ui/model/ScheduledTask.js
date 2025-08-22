@@ -104,7 +104,7 @@ qx.Class.define("zx.server.work.ui.model.ScheduledTask", {
      */
     __update(json) {
       this.setStatus(json.status);
-      this.setTitle(json.title);
+      this.setTitle(json.title ?? null);
       this.setDescription(json.description ?? null);
       this.setWorkJson(json.workJson);
       this.setDateStarted(json.dateStarted ?? null);
