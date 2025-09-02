@@ -195,6 +195,21 @@ qx.Mixin.define("zx.utils.mongo.MMongoClient", {
     },
 
     /**
+     * Simple wrapper for database `updateMany` with debug output
+     *
+     * @param {String|qx.Class} clazz
+     * @param {import("mongodb").Filter<MongoDocument>} query
+     * @param {import("mongodb").UpdateFilter<MongoDocument>|Partial<MongoDocument>} update
+     * @returns {Promise<import("mongodb").UpdateResult>}
+     */
+    async updateMany(clazz, query, update) {
+      this._debugMongo(clazz, query, update);
+      /**@type {import("mongodb").Collection}*/
+      let collection = zx.server.Standalone.getInstance().getDb().getCollection(clazz);
+      return await collection.updateMany(query, update);
+    },
+
+    /**
      * Shorthand for `set( field = first( field ) )`
      *
      * @example
