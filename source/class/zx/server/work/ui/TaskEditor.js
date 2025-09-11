@@ -94,7 +94,11 @@ qx.Class.define("zx.server.work.ui.TaskEditor", {
           }
         }
       });
-      this.bind("value.workResults", ctlr, "model");
+      let fa = new zx.utils.FilteredArray().set({
+        sortMethod: (a, b) => b.getStarted().getTime() - a.getStarted().getTime()
+      });
+      this.bind("value.workResults", fa, "model");
+      fa.bind("filtered", ctlr, "model");
       ctlr.addListener("changeSelection", this.__updateUi, this);
       return ctlr;
     },
