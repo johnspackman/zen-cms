@@ -4,14 +4,6 @@ qx.Class.define("zx.server.work.ui.TaskEditor", {
     super();
     this.getQxObject("ctlrWorkResults");
 
-    let ctlr = this.getQxObject("ctlrWorkResults");
-    zx.utils.Target.bindEvent(this, "value.workResults", "change", () => {
-      let first = ctlr.getModel().getItem(0);
-      if (first) {
-        ctlr.setSelection(new qx.data.Array([first]));
-      }
-    });
-
     let refreshTimer = new zx.utils.Timeout(2000, () => this.getValue()?.refreshWorkResults()).set({ recurring: true });
     this.__refreshTimer = refreshTimer;
     this.addListener("appear", () => refreshTimer.setEnabled(true));
