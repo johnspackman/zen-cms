@@ -229,7 +229,8 @@ qx.Class.define("zx.server.email.Message", {
     },
 
     /**
-     * @returns {Promise<boolean>} If the email was successfully sent
+     * @returns {Promise<void>} A promise that resolves when the email has been sent or failed to send
+     * @throws {Error} If the email cannot be sent
      */
     async sendEmail() {
       let htmlBody = this.getHtmlBody();
@@ -293,7 +294,6 @@ qx.Class.define("zx.server.email.Message", {
       let emailJsMessage = zx.server.email.EmailJS.createNewMessage(emailConfig);
 
       let client = zx.server.email.SMTPClient.getSmtpClientImpl();
-      let error = false;
 
       try {
         this.debug("Before sending message via emailJs");
@@ -302,7 +302,6 @@ qx.Class.define("zx.server.email.Message", {
         await this.save();
         this.debug("After sending message via emailJs");
       } catch (err) {
-        error = true;
         if (!(emailJsMessage instanceof zx.server.email.Message)) {
           let server = zx.server.Standalone.getInstance();
           emailJsMessage = await server.findOneObjectByType(zx.server.email.Message, { _uuid: this.toUuid() });

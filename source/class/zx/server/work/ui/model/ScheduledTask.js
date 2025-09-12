@@ -32,7 +32,8 @@ qx.Class.define("zx.server.work.ui.model.ScheduledTask", {
     },
     /**
      * @type {qx.data.Array<zx.server.work.ui.model.WorkResult>}
-     * Both past and currently-running work results for this task (if there is a current)
+     * Both past and currently-running work results for this task (if there is a current).
+     * There is no defined order for this array.
      */
     workResults: {
       check: "qx.data.Array",

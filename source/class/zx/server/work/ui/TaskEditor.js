@@ -4,14 +4,6 @@ qx.Class.define("zx.server.work.ui.TaskEditor", {
     super();
     this.getQxObject("ctlrWorkResults");
 
-    let ctlr = this.getQxObject("ctlrWorkResults");
-    zx.utils.Target.bindEvent(this, "value.workResults", "change", () => {
-      let first = ctlr.getModel().getItem(0);
-      if (first) {
-        ctlr.setSelection(new qx.data.Array([first]));
-      }
-    });
-
     let refreshTimer = new zx.utils.Timeout(2000, () => this.getValue()?.refreshWorkResults()).set({ recurring: true });
     this.__refreshTimer = refreshTimer;
     this.addListener("appear", () => refreshTimer.setEnabled(true));
@@ -102,7 +94,11 @@ qx.Class.define("zx.server.work.ui.TaskEditor", {
           }
         }
       });
-      this.bind("value.workResults", ctlr, "model");
+      let fa = new zx.utils.FilteredArray().set({
+        sortMethod: (a, b) => b.getStarted().getTime() - a.getStarted().getTime()
+      });
+      this.bind("value.workResults", fa, "model");
+      fa.bind("filtered", ctlr, "model");
       ctlr.addListener("changeSelection", this.__updateUi, this);
       return ctlr;
     },
