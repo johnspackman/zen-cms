@@ -199,9 +199,7 @@ qx.Class.define("zx.reports.Group", {
      * @override
      */
     async executeAsCsvRow(row) {
-      for (let id in this.__accumulators) {
-        this.__accumulators[id].update(row);
-      }
+      this.__updateAccumulatorsToRoot(row);
       let each = this.getEach();
       if (each) {
         return await each.executeAsCsvRow(row);

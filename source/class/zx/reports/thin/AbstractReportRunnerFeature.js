@@ -120,13 +120,20 @@ qx.Class.define("zx.reports.thin.AbstractReportRunnerFeature", {
         connectionManager.registerApi(reportDescriptor.getServerApi(), `/reports/executors/${reportDescriptor.getId()}`);
       }
 
-      let defaultReportId = new URL(window.location.href).searchParams.get("defaultReport");
+      let searchParams = new URLSearchParams(window.location.search);
+      let defaultReportId = searchParams.get("defaultReport");
       let reportDescriptor = defaultReportId ? this.__reportDescriptors[defaultReportId] : null;
       if (!reportDescriptor) {
         reportDescriptor = reportDescriptors[0];
       }
 
-      this.setActiveReportId(reportDescriptor.getId());
+      let format = searchParams.get("format");
+      if (format === "csv") {
+        await reportDescriptor.setParamsAsync(this.__reportParams);
+        await reportDescriptor.execute("csv");
+      } else {
+        await this.setActiveReportId(reportDescriptor.getId());
+      }
     },
 
     /**
