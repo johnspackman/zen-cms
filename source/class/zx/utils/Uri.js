@@ -32,10 +32,10 @@ qx.Class.define("zx.utils.Uri", {
      * path: /path/to/resource
      */
     breakoutUri(uri) {
-      const letter = "[a-zA-Z]";
-      const fqdn = `${letter}+(\.${letter}+)*`;
-      const hostname = `(?<fqdn>${fqdn})(:(?<port>\\d+))?`;
-      let regexStr = `((?<protocol>${letter}+):\\/\\/)?(?<hostname>${hostname})?(?<path>\\/.*)`;
+      const LETTER = "[a-zA-Z]";
+      const FQDN = `${LETTER}+(\.${LETTER}+)*`;
+      const HOSTNAME = `(?<fqdn>${FQDN})(:(?<port>\\d+))?`;
+      let regexStr = `((?<protocol>${LETTER}+):\\/\\/)?(?<hostname>${HOSTNAME})?(?<path>\\/.*)`;
       let regex = new RegExp(regexStr);
       let match = regex.exec(uri);
       return {
