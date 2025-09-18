@@ -13,17 +13,21 @@ qx.Class.define("zx.server.work.ui.TasksView", {
     this.addListener("disappear", () => refreshTimer.setEnabled(false));
 
     this._setLayout(new qx.ui.layout.Grow());
-    let scroll = new qx.ui.container.Scroll();
-    this._add(scroll);
-    let comp = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
-    scroll.add(comp);
-
-    comp.add(this.getQxObject("compEdtSearch"));
-    comp.add(this.getQxObject("tblTasks"));
-    comp.add(this.getQxObject("edTask"), { flex: 1 });
+    this._add(this.getQxObject("splitPane"));
   },
-  properties: {},
   objects: {
+    splitPane() {
+      let sp = new qx.ui.splitpane.Pane("horizontal");
+      sp.add(this.getQxObject("compTasks"), 1);
+      sp.add(this.getQxObject("edTask"), 0);
+      return sp;
+    },
+    compTasks() {
+      let comp = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
+      comp.add(this.getQxObject("compEdtSearch"));
+      comp.add(this.getQxObject("tblTasks"));
+      return comp;
+    },
     compEdtSearch() {
       let comp = new qx.ui.container.Composite(new qx.ui.layout.HBox(5));
       comp.add(this.getQxObject("edtSearch"), { flex: 1 });
@@ -36,6 +40,9 @@ qx.Class.define("zx.server.work.ui.TasksView", {
         let table = this.getQxObject("tblTasks");
         table.resetModel();
         this.__refreshResults();
+      });
+      searchField.bind("value", this.getQxObject("cbxShowRunning"), "enabled", {
+        converter: value => !(value && value.length > 0)
       });
       searchField.linkWidget(this.getQxObject("cbxShowRunning"));
       return searchField;
@@ -58,17 +65,19 @@ qx.Class.define("zx.server.work.ui.TasksView", {
     }
   },
   members: {
+    __refreshResultsId: 0,
     /**
      * @type {zx.server.work.scheduler.ITasksApi}
      */
     __api: null,
 
     async __refreshResults() {
+      let id = ++this.__refreshResultsId;
       let api = this.__api;
       let query = this.getQxObject("edtSearch").getValue();
-      let runningOnly = this.getQxObject("cbxShowRunning").getValue();
+      let runningOnly = query?.length ? false : this.getQxObject("cbxShowRunning").getValue();
       let tasksJson = await api.searchTasks({ text: query, runningOnly: runningOnly });
-      if (query !== this.getQxObject("edtSearch").getValue() || runningOnly !== this.getQxObject("cbxShowRunning").getValue()) {
+      if (id !== this.__refreshResultsId) {
         //search was changed while we were waiting for the results
         return;
       }
