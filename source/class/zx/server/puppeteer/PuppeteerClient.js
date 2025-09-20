@@ -265,7 +265,10 @@ qx.Class.define("zx.server.puppeteer.PuppeteerClient", {
         throw new Error(`Page navigation error: ${JSON.stringify(result, null, 2)}`);
       }
 
-      // javascript-obfuscator:disable
+      /*
+       * @preserve
+       * javascript-obfuscator:disable
+       */
 
       if (this.isUsesZxApi()) {
         //wait until page is ready to use Remote APIs
@@ -293,7 +296,10 @@ qx.Class.define("zx.server.puppeteer.PuppeteerClient", {
         this.__readyPromise = Promise.resolve();
       }
 
-      // javascript-obfuscator:disable
+      /*
+       * @preserve
+       * javascript-obfuscator:enable
+       */
       return result;
     },
 
