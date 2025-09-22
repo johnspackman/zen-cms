@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Transport used to communicate with a Puppeteer browser
@@ -77,9 +77,18 @@ qx.Class.define("zx.server.puppeteer.PuppeteerClientTransport", {
       let strMsg = zx.utils.Json.stringifyJson(msg);
       strMsg = MSG_PREFIX + strMsg + MSG_SUFFIX;
 
+      /*
+       * @preserve
+       * javascript-obfuscator:disable
+       */
       await this.__page.evaluate(strMsg => {
         window.postMessage(strMsg, "*");
       }, strMsg);
+
+      /*
+       * @preserve
+       * javascript-obfuscator:enable
+       */
     },
 
     shutdown() {
