@@ -34,7 +34,7 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
     this.__queueScheduler = queueScheduler;
     this.__serverApi = zx.io.api.ApiUtils.createServerApi(zx.server.work.scheduler.ITasksApi, this);
 
-    this.__pollDatabaseTimer = new zx.utils.Timeout(2000, () => this.__pollDatabase()).set({recurring: true});
+    this.__pollDatabaseTimer = new zx.utils.Timeout(2000, () => this.__pollDatabase()).set({ recurring: true });
 
     /**
      * All tasks which have been queued on the scheduler and are waiting to be completed
@@ -98,6 +98,8 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
 
       for await (let taskJson of cursor) {
         let workJson = taskJson.workJson;
+        let taskDescription = taskJson.wellKnownId || taskJson.title || workJson.title || null;
+        taskDescription = taskDescription ? `${taskDescription} (${taskJson._uuid})` : `${taskJson._uuid}`;
 
         if (!taskJson._uuid) {
           throw new Error("Task does not have a UUID.");
@@ -117,7 +119,7 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
 
         let taskIsRunning = Object.values(this.__runningTasks).find(task => task._uuid === taskJson._uuid);
         if (taskIsRunning) {
-          this.debug(`Ignoring task ${taskJson._uuid} because it is still running.`);
+          this.trace(`Ignoring task ${taskDescription} because it is still running.`);
           continue;
         }
 
@@ -135,19 +137,18 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
         taskJson.earliestStartDate = earliestStartDate;
 
         if (earliestStartDate && earliestStartDate.getTime() > new Date().getTime()) {
-          this.debug(`Ignoring task ${taskJson._uuid} because it is not ready to run yet`);
+          this.trace(`Ignoring task ${taskDescription} because it is not ready to run yet (earliest start date: ${earliestStartDate})`);
           continue;
         }
 
-        if (!qx.core.Environment.get("qx.debug")) {
-          if (taskJson.failCount >= zx.server.work.scheduler.ScheduledTask.MAX_FAIL_COUNT) {
-            this.debug(`Ignoring task ${taskJson._uuid} because it has failed too many times`);
-            continue;
-          }
+        if (taskJson.failCount >= zx.server.work.scheduler.ScheduledTask.MAX_FAIL_COUNT) {
+          this.debug(`Ignoring task ${taskDescription} because it has failed too many times`);
+          await this.updateOne(zx.server.work.scheduler.ScheduledTask, { _uuid: taskJson._uuid }, { $set: { enabled: false } });
+          continue;
         }
 
         this.__runningTasks[workJson.uuid] = taskJson;
-        this.debug(`Found task ${workJson.uuid} in database: ${taskJson.title}`);
+        this.debug(`Found task ${taskDescription} in database: ${taskJson.title}`);
         this.__queueScheduler.pushWork(workJson);
       }
 
@@ -215,9 +216,6 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
       if (!taskJson.cronExpression && !workResultJson.response.exception) {
         update.enabled = false;
       }
-      delete this.__runningTasks[workUuid];
-
-      this.debug(`Task ${taskJson._uuid} completed: ${taskJson.title}`);
 
       await this.updateOne(
         zx.server.work.scheduler.ScheduledTask,
@@ -226,6 +224,9 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
           $set: update
         }
       );
+
+      this.debug(`Task ${taskJson._uuid} completed: ${taskJson.title}`);
+      delete this.__runningTasks[workUuid];
     },
 
     /**
