@@ -80,6 +80,8 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
      */
     async stop() {
       this.__pollDatabaseTimer.setEnabled(false);
+      this.__queueScheduler.removeListener("workCompleted", this.__onWorkCompleted, this);
+      this.__queueScheduler.removeListener("workStarted", this.__onWorkStarted, this);
     },
 
     /**
@@ -173,6 +175,10 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
     async __onWorkStarted(evt) {
       let workJson = evt.getData();
       let taskJson = this.__runningTasks[workJson.uuid];
+      if (!taskJson) {
+        //this means that the scheduler is executing a task from another source, so we can safely ignore it
+        return;
+      }
       await this.updateOne(
         zx.server.work.scheduler.ScheduledTask,
         { _uuid: taskJson._uuid },
@@ -193,6 +199,12 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
       let workResultJson = evt.getData();
       let workUuid = workResultJson.workJson.uuid;
       let taskJson = this.__runningTasks[workUuid];
+
+      if (!taskJson) {
+        //If we cannot find a task matching the work UUID, it means that the task was scheduled by another source,
+        //so we can safely ignore it
+        return;
+      }
 
       let update = {
         dateCompleted: new Date(),

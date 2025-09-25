@@ -5,37 +5,8 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
   extend: qx.ui.core.Widget,
   construct() {
     super();
-    this._setLayout(new qx.ui.layout.VBox(5));
-
-    this._add(this.getQxObject("compRunningOnly"));
-    this._add(this.getQxObject("toolbar"));
-    this._add(new qx.ui.basic.Label("Title:"));
-    this._add(this.getQxObject("edtTitle"));
-    this.bind("value.title", this.getQxObject("edtTitle"), "value");
-    this._add(new qx.ui.basic.Label("Description:"));
-    this._add(this.getQxObject("edtDescription"));
-    this.bind("value.description", this.getQxObject("edtDescription"), "value");
-    this._add(new qx.ui.basic.Label("Work JSON:"));
-    this._add(this.getQxObject("edtWorkJson"));
-    this.bind("value.workJson", this.getQxObject("edtWorkJson"), "value", {
-      converter: value => (value ? zx.utils.Json.stringifyJson(value, null, 2) : null)
-    });
-    this._add(new qx.ui.basic.Label("Console Output:"));
-    this._add(this.getQxObject("edtConsoleOutput"), { flex: 1 });
-    this.bind("value.logOutput", this.getQxObject("edtConsoleOutput"), "value");
-
-    let labelException = new qx.ui.basic.Label("Exception:");
-    this._add(labelException);
-    this._add(this.getQxObject("edtExceptionStack"));
-    this.bind("value.exceptionStack", this.getQxObject("edtExceptionStack"), "value");
-    this.bind(
-      "value.exceptionStack",
-      new zx.utils.Target(value => {
-        labelException.setVisibility(value ? "visible" : "excluded");
-        this.getQxObject("edtExceptionStack").setVisibility(value ? "visible" : "excluded");
-        this.getQxObject("edtExceptionStack").setValue(value);
-      })
-    );
+    this._setLayout(new qx.ui.layout.Grow());
+    this._add(this.getQxObject("tabView"));
 
     this.bind("value.tracker", this.getQxObject("compRunningOnly"), "visibility", {
       converter: value => (value ? "visible" : "excluded")
@@ -59,6 +30,51 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
     }
   },
   objects: {
+    tabView() {
+      let tv = new qx.ui.tabview.TabView();
+      tv.add(this.getQxObject("pageDetails"));
+      tv.add(this.getQxObject("pageConsoleOutput"));
+      return tv;
+    },
+    pageDetails() {
+      let pg = new qx.ui.tabview.ScrollingPage("Details");
+      let comp = pg.getChildrenContainer();
+      comp.setLayout(new qx.ui.layout.VBox(5));
+      comp.add(this.getQxObject("compRunningOnly"));
+      comp.add(this.getQxObject("toolbar"));
+      comp.add(new qx.ui.basic.Label("Title:"));
+      comp.add(this.getQxObject("edtTitle"));
+      this.bind("value.title", this.getQxObject("edtTitle"), "value");
+      comp.add(new qx.ui.basic.Label("Description:"));
+      comp.add(this.getQxObject("edtDescription"));
+      this.bind("value.description", this.getQxObject("edtDescription"), "value");
+      comp.add(new qx.ui.basic.Label("Work JSON:"));
+      comp.add(this.getQxObject("edtWorkJson"));
+      this.bind("value.workJson", this.getQxObject("edtWorkJson"), "value", {
+        converter: value => (value ? zx.utils.Json.stringifyJson(value, null, 2) : null)
+      });
+      let labelException = new qx.ui.basic.Label("Exception:");
+      comp._add(labelException);
+      comp._add(this.getQxObject("edtExceptionStack"));
+      this.bind("value.exceptionStack", this.getQxObject("edtExceptionStack"), "value");
+      this.bind(
+        "value.exceptionStack",
+        new zx.utils.Target(value => {
+          labelException.setVisibility(value ? "visible" : "excluded");
+          this.getQxObject("edtExceptionStack").setVisibility(value ? "visible" : "excluded");
+          this.getQxObject("edtExceptionStack").setValue(value);
+        })
+      );
+      return pg;
+    },
+    pageConsoleOutput() {
+      let pg = new qx.ui.tabview.Page("Output");
+      pg.setLayout(new qx.ui.layout.VBox());
+      pg._add(this.getQxObject("edtConsoleOutput"), { flex: 1 });
+      this.bind("value.logOutput", this.getQxObject("edtConsoleOutput"), "value");
+
+      return pg;
+    },
     compRunningOnly() {
       let comp = new qx.ui.container.Composite(new qx.ui.layout.HBox(5).set({ alignY: "middle" })).set({ visibility: "excluded" });
       comp.add(new qx.ui.basic.Label("Last Activity:"));
@@ -138,16 +154,16 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
       return new qx.ui.form.TextField().set({ readOnly: true });
     },
     edtDescription() {
-      return new qx.ui.form.TextArea().set({ readOnly: true, maxWidth: 400, minHeight: 150 });
+      return new qx.ui.form.TextArea().set({ readOnly: true, minWidth: 400, minHeight: 150 });
     },
     edtWorkJson() {
-      return new qx.ui.form.TextArea().set({ readOnly: true, maxWidth: 400, minHeight: 150, wrap: false });
+      return new qx.ui.form.TextArea().set({ readOnly: true, minWidth: 400, minHeight: 150, wrap: false });
     },
     edtConsoleOutput() {
-      return new qx.ui.form.TextArea().set({ readOnly: true, maxWidth: 600, minHeight: 450 });
+      return new qx.ui.form.TextArea().set({ readOnly: true, minWidth: 600, minHeight: 450 });
     },
     edtExceptionStack() {
-      return new qx.ui.form.TextArea().set({ readOnly: true, maxWidth: 400, minHeight: 300 });
+      return new qx.ui.form.TextArea().set({ readOnly: true, minWidth: 400, minHeight: 300 });
     }
   },
 

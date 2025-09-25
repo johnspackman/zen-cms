@@ -23,4 +23,3 @@ qx.Class.define("zx.server.work.ui.SuccessColumn", {
     }
   }
 });
-//!!failcount, no suceess
