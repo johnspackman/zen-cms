@@ -8,6 +8,7 @@ qx.Interface.define("zx.server.work.scheduler.ITasksApi", {
      * @param {string} uuid
      */
     async queueTask(uuid) {},
+
     /**
      *
      * @param {Query} query
