@@ -143,7 +143,7 @@ qx.Class.define("zx.io.api.client.AbstractClientApi", {
       //reject pending subscriptions
       for (let [eventName, subData] of Object.entries(this.__subscriptions)) {
         if (subData.promise) {
-          subData.promise.reject(new Error(`Client API terminated - subscription ${this.classname}.${eventName}`));
+          subData.promise.reject(new zx.io.api.TerminationException(null, `Client API terminated - subscription ${this.classname}.${eventName}`));
         }
         this.__transport.unsubscribe();
       }
@@ -153,7 +153,7 @@ qx.Class.define("zx.io.api.client.AbstractClientApi", {
       for (let pending of Object.values(this.__pendingMethodCalls)) {
         let promise = pending.promise;
         pending.promise = null;
-        promise.reject(new Error(`Client API terminated - method ${this.classname}.${pending.methodName}`));
+        promise.reject(new zx.io.api.TerminationException(null, `Client API terminated - method ${this.classname}.${pending.methodName}`));
       }
       this.__pendingMethodCalls = {};
     },
