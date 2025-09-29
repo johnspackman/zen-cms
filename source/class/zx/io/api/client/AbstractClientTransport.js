@@ -66,7 +66,7 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
     },
 
     /**
-     * If enabled, this transport will poll to all subscribed hostnames
+     * If enabled, this transport will poll to the server
      * every set interval (property: pollInterval)
      */
     polling: {
