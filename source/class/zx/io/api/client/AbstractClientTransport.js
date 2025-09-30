@@ -32,7 +32,9 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
   construct(serverUri) {
     super();
 
-    this.__serverUri = serverUri;
+    if (serverUri) {
+      this.setServerUri(serverUri);
+    }
 
     this.__pollTimer = new zx.utils.Timeout(null, this.__poll, this).set({
       recurring: true,
@@ -55,6 +57,14 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
   },
 
   properties: {
+    serverUri: {
+      check: "String",
+      event: "changeServerUri",
+      apply: "_applyServerUri",
+      nullable: true,
+      init: null
+    },
+
     /**
      * Whether we should poll always i.e. even when there are no subscriptions,
      * just to test the connection.
@@ -102,12 +112,8 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
   },
 
   members: {
-    /** @type{Integer} number of consecutive times that we get an exception sending to the server */
+    /** @type {Integer} number of consecutive times that we get an exception sending to the server */
     __numberConsecutiveFailures: 0,
-
-    getServerUri() {
-      return this.__serverUri;
-    },
 
     /**
      * Timer used to poll all subscribed hostnames
@@ -124,6 +130,32 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
 
     /**@type {string | null}*/
     __sessionUuid: null,
+
+    /**
+     * @param {string?} value
+     * @param {string?} oldValue
+     */
+    _applyServerUri(value, oldValue) {
+      if (oldValue) {
+        this.reset(`Server URI changed from ${oldValue} to ${value}`);
+      }
+    },
+
+    /**
+     * Resets all state information for this transport and the APIs linked to this transport.
+     * All session UUIDs and subscriptions will be lost.
+     * @param {string?} reason
+     */
+    reset(reason) {
+      let data = { type: "reset", headers: {}, body: { reason: reason || "Unknown" } };
+
+      //this will cause all client APIs to reset their state
+      this.fireDataEvent("message", { data: [data] });
+      if (qx.core.Environment.get("qx.debug")) {
+        this.assertNull(this.__sessionUuid, "Session UUID expected to be null after reset");
+        this.assertEquals(0, this.__subscriptions, "Subscriptions expected to be 0 after reset");
+      }
+    },
 
     /**
      * Called EXCLUSIVELY in zx.io.api.client.AbstractClientApi when the API has subscribed to an event
@@ -185,12 +217,16 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
         return;
       }
 
+      if (!this.getServerUri()) {
+        return;
+      }
+
       if (!this.getPollAlways() && this.__subscriptions === 0) {
         return;
       }
       let requestJson = { headers: { "Session-Uuid": this.__sessionUuid }, type: "poll", body: {} };
       try {
-        await this.postMessage(this.__serverUri, requestJson);
+        await this.postMessage(this.getServerUri(), requestJson);
         this.__numberConsecutiveFailures = 0;
       } catch (e) {
         this.__numberConsecutiveFailures++;

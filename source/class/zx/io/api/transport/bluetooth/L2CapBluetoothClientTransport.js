@@ -68,8 +68,7 @@ qx.Class.define("zx.io.api.transport.bluetooth.L2CapBluetoothClientTransport", {
       socket.addListener("receivedData", this.__onData, this);
 
       socket.addListener("disconnected", () => {
-        let data = { type: "reset", headers: {}, body: { reason: "Bluetooth disconnected" } };
-        this.fireDataEvent("message", { data: [data] });
+        this.reset("Bluetooth connection closed");
       });
     }
   }
