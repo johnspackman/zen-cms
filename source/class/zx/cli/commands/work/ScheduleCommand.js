@@ -77,6 +77,6 @@ qx.Class.define("zx.cli.commands.work.ScheduleCommand", {
 
       let server = new zx.server.Standalone();
       await server.start();
-
+    }
   }
 });

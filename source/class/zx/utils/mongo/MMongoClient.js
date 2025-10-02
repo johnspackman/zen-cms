@@ -28,6 +28,37 @@ qx.Mixin.define("zx.utils.mongo.MMongoClient", {
     }
   },
 
+  statics: {
+    /**
+     * Unescapes a map key, e.g. `\\u002e` to `.`
+     *
+     * @param {String} key
+     * @returns {String}
+     */
+    unescapeMapKey(key) {
+      return key.replace(/\\u002e/g, ".");
+    },
+
+    /**
+     * Removes escaping from a JSON object, e.g. `\\u002e` to `.`  This is used where map keys have dots in them, which
+     * breaks MongoDB so we've escaped them in the Java writer.  We need to unescape them before using them in code.
+     *
+     * @param {*} json
+     * @returns {*}
+     */
+    unescapeMapKeys(json) {
+      if (json && qx.lang.Type.isObject(json) && !qx.lang.Type.isArray(json)) {
+        let result = {};
+        for (let key in json) {
+          let unescapedKey = zx.utils.mongo.MMongoClient.unescapeMapKey(key);
+          result[unescapedKey] = zx.utils.mongo.MMongoClient.unescapeMapKeys(json[key]);
+        }
+        return result;
+      }
+      return json;
+    }
+  },
+
   members: {
     /**
      * Outputs mongo query details if `debug` is true
@@ -81,10 +112,12 @@ qx.Mixin.define("zx.utils.mongo.MMongoClient", {
       if (typeof clazz !== "string") {
         clazz = clazz.classname;
       }
-      return zx.server.Standalone.getInstance()
+      let result = await zx.server.Standalone.getInstance()
         .getDb()
         .getCollection(clazz)
         .findOne(query, ...args);
+
+      return this.unescapeMapKeys(result);
     },
 
     /**
@@ -207,6 +240,10 @@ qx.Mixin.define("zx.utils.mongo.MMongoClient", {
       /**@type {import("mongodb").Collection}*/
       let collection = zx.server.Standalone.getInstance().getDb().getCollection(clazz);
       return await collection.updateMany(query, update);
+    },
+
+    unescapeMapKeys(json) {
+      return zx.utils.mongo.MMongoClient.unescapeMapKeys(json);
     },
 
     /**
