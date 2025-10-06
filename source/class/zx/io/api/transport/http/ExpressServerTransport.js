@@ -1,22 +1,20 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    Patryk Malinowski (@p9malino26)
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
-
-
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    Patryk Malinowski (@p9malino26)
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Implementation of server transport for Express.js
@@ -43,20 +41,16 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
     app.all(`${route}/**`, async (req, res) => {
       try {
         let data = qx.lang.Object.clone(req.body, true);
-        let path = zx.utils.Uri.breakoutUri(req.originalUrl).path.replace(RE_ROUTE, "");
+        let path = req.path.replace(RE_ROUTE, "");
         data.path = path;
         data.restMethod = req.method;
 
-        let request = new zx.io.api.server.Request(this, data).set({ restMethod: req.method });
+        let request = new zx.io.api.server.Request(this, data).set({ restMethod: req.method, query: req.query });
         let response = new zx.io.api.server.Response(request);
         await zx.io.api.server.ConnectionManager.getInstance().receiveMessage(request, response);
 
-        if (response.getError()) {
-          res.status(500).send(response.getError());
-          return;
-        }
-
-        res.send(zx.utils.Json.stringifyJson(response.toNativeObject(), null, 2));
+        res.status(response.getStatusCode());
+        res.send(response.toNativeObject());
       } catch (e) {
         this.error(e);
         res.status(500).send(e.message);
