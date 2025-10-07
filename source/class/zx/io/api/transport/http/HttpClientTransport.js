@@ -38,21 +38,39 @@ qx.Class.define("zx.io.api.transport.http.HttpClientTransport", {
     async postMessage(path, requestJson) {
       let url = zx.utils.Uri.join(this.getServerUri() ?? "", path ?? "");
 
+      if (this.getForwardTo()) {
+        requestJson.headers["Forward-To"] = this.getForwardTo();
+      }
+
       let responseText = await fetch(url, {
         method: "POST",
         body: zx.utils.Json.stringifyJson(requestJson),
         headers: { "Content-Type": "text/plain" }
-      })
-        .then(r => r.text())
-        .catch(err => {
-          //bring those into closure for debugging ease
-          path;
-          url;
-          throw err;
-        });
+      }).then(r => r.text());
 
       let data = zx.utils.Json.parseJson(responseText);
+      if (data.error) {
+        throw new Error(data.error);
+      }
       this.fireDataEvent("message", data);
+    },
+    /**
+     * @override
+     * @param {zx.io.api.server.Request} request
+     * @param {zx.io.api.server.Response} response
+     */
+    async sendRequest(request, response) {
+      let url = zx.utils.Uri.join(this.getServerUri() ?? "", request.getPath());
+
+      let httpResponse = await fetch(url, {
+        method: "POST",
+        body: zx.utils.Json.stringifyJson(request.toNativeObject()),
+        headers: { "Content-Type": "text/plain" }
+      });
+
+      let responseText = await httpResponse.text();
+      let data = zx.utils.Json.parseJson(responseText);
+      response.setData(data.data);
     }
   }
 });

@@ -220,6 +220,7 @@ qx.Class.define("zx.io.api.client.AbstractClientApi", {
           })
         )
         .catch(e => {
+          delete this.__subscriptions[eventName];
           promise.reject(e);
         });
 
@@ -274,6 +275,7 @@ qx.Class.define("zx.io.api.client.AbstractClientApi", {
           .then(() => this.__transport.postMessage(this.__path, request))
           .catch(e => {
             promise.reject(e);
+            delete this.__subscriptions[eventName];
           });
       } else {
         promise.resolve();

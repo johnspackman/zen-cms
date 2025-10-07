@@ -1,22 +1,20 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    Patryk Malinowski (@p9malino26)
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
-
-
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    Patryk Malinowski (@p9malino26)
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Model class representing a request to the server,
@@ -170,8 +168,43 @@ qx.Class.define("zx.io.api.server.Request", {
       return session;
     },
 
+    /**
+     *
+     * @param {string} key
+     * @returns {*}
+     */
     getHeader(key) {
       return this.getHeaders()[key];
+    },
+
+    /**
+     *
+     * @param {string} key
+     * @param {*} value
+     */
+    setHeader(key, value) {
+      this.getHeaders()[key] = value;
+    },
+
+    /**
+     *
+     * @param {string} key
+     */
+    removeHeader(key) {
+      delete this.getHeaders()[key];
+    },
+
+    /**
+     *
+     * @returns {zx.io.api.IRequestJson}
+     */
+    toNativeObject() {
+      return {
+        type: this.getType(),
+        path: this.getPath(),
+        headers: this.getHeaders(),
+        body: this.getBody()
+      };
     }
   }
 });

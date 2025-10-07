@@ -1,22 +1,20 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    Patryk Malinowski (@p9malino26)
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
-
-
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    Patryk Malinowski (@p9malino26)
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Model class representing a response to a request to the server,
@@ -27,11 +25,15 @@ qx.Class.define("zx.io.api.server.Response", {
   /**
    *
    * @param {zx.io.api.server.Request?} request
+   * @param {zx.io.api.IResponseJson} data Set this is if you are creating a response from a JSON object
    */
-  construct(request = null) {
+  construct(request = null, data) {
     super();
-    this.__data = [];
-    this.setHeaders({});
+    if (data) {
+      this.__data = data;
+    } else {
+      this.__data = [];
+    }
     this.setRequest(request);
   },
   properties: {
@@ -45,13 +47,6 @@ qx.Class.define("zx.io.api.server.Response", {
       init: null,
       nullable: true
     },
-    /**
-     * public readonly
-     * @type {zx.io.api.IHeaders}
-     */
-    headers: {
-      check: "Object"
-    },
 
     /**
      * Follows HTTP conventions, so 200 is OK, 404 is Not Found, etc.
@@ -59,6 +54,16 @@ qx.Class.define("zx.io.api.server.Response", {
     statusCode: {
       check: "Number",
       init: 200
+    },
+
+    /**
+     * General error.
+     * E.g. proxy exception, etc.
+     */
+    error: {
+      init: null,
+      nullable: true,
+      check: "String"
     }
   },
   members: {
@@ -77,21 +82,20 @@ qx.Class.define("zx.io.api.server.Response", {
     },
 
     /**
+     * Overwrites the internal data of this response.
+     * Use with caution!
+     * @param {zx.io.api.IResponseJson.IResponseData[]} data
+     */
+    setData(data) {
+      this.__data = data;
+    },
+
+    /**
      *
      * @param {zx.io.api.IResponseJson.IResponseData} data
      */
     addData(data) {
       this.__data.push(data);
-    },
-
-    addHeader(key, value) {
-      this.getHeaders()[key] = value;
-    },
-
-    addHeaders(headers) {
-      for (let key in headers) {
-        this.addHeader(key, headers[key]);
-      }
     },
 
     /**
@@ -109,7 +113,8 @@ qx.Class.define("zx.io.api.server.Response", {
         return this.__data[0];
       } else {
         return {
-          data: this.__data
+          data: this.__data,
+          error: this.getError()
         };
       }
     }

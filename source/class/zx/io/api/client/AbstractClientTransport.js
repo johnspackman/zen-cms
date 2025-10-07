@@ -108,6 +108,17 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
       init: null,
       nullable: true,
       check: "zx.io.api.crypto.IEncryptionMgr"
+    },
+
+    /**
+     * If set, this will set the "Forward-To" header on all requests sent by this transport.
+     * Note (2025-10-06) This is currently only supported by HttpClientTransport.
+     */
+    forwardTo: {
+      init: null,
+      nullable: true,
+      check: "String",
+      event: "changeForwardTo"
     }
   },
 
@@ -245,6 +256,22 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
      */
     _applyPollInterval(value) {
       this.__pollTimer.setDuration(value);
+    },
+
+    /**
+     * Processes a request and populates the response object.
+     *
+     * @param {zx.io.api.server.Request} request
+     * @param {zx.io.api.server.Response} response
+     *
+     * Note (2025-10-07): This currently work in HttpClientTransport only.
+     * Many other transports (e.g. WebSocket, Node Worker) do not have a default way of tracking responses for requests like HTTP does.
+     * AbstractClientApi implements this logic by tracking requests and responses by request IDs.
+     * It would be better if this logic were done in the transport instead of the API,
+     * but we don't want to go down the rabbit hole of changing the code at this point.
+     */
+    sendRequest(request, response) {
+      throw new Error(`${this.classname}.sendRequest is not supported by this transport.`);
     }
   },
 

@@ -39,22 +39,24 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
     const RE_ROUTE = new RegExp(`^${route}`);
 
     app.all(`${route}/**`, async (req, res) => {
+      let data = qx.lang.Object.clone(req.body, true);
+      let path = req.path.replace(RE_ROUTE, "");
+      data.path = path;
+      data.restMethod = req.method;
+
+      let request = new zx.io.api.server.Request(this, data).set({ restMethod: req.method, query: req.query });
+      let response = new zx.io.api.server.Response(request);
+
       try {
-        let data = qx.lang.Object.clone(req.body, true);
-        let path = req.path.replace(RE_ROUTE, "");
-        data.path = path;
-        data.restMethod = req.method;
-
-        let request = new zx.io.api.server.Request(this, data).set({ restMethod: req.method, query: req.query });
-        let response = new zx.io.api.server.Response(request);
         await zx.io.api.server.ConnectionManager.getInstance().receiveMessage(request, response);
-
-        res.status(response.getStatusCode());
-        res.send(response.toNativeObject());
       } catch (e) {
-        this.error(e);
-        res.status(500).send(e.message);
+        if (!response.getStatusCode()) {
+          response.setStatusCode(500);
+        }
+        response.setError(e.toString());
       }
+      res.status(response.getStatusCode());
+      res.send(response.toNativeObject());
     });
   },
 
