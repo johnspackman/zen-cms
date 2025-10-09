@@ -48,7 +48,7 @@ qx.Class.define("zx.server.files.DataFile", {
       "@": [zx.io.persistence.anno.Property.DEFAULT, zx.io.remote.anno.Property.DEFAULT, zx.server.anno.LastModified.DEFAULT, zx.utils.anno.Json.PUBLIC]
     },
 
-    /** Which object "owns" (ie uploaded) the file - a practice, a brand, or global etc */
+    /** Which object "owns" (ie uploaded) the file. This should be a business object in your application.*/
     owner: {
       init: null,
       nullable: true,
