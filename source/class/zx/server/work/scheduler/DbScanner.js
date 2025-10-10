@@ -300,6 +300,8 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
 
       if (query.runningOnly) {
         out = out.filter(task => task.status !== "idle" || task.failCount > 0);
+      } else if (query.maxResults != null && query.maxResults > 0) {
+        out = out.slice(0, query.maxResults);
       }
 
       return out;

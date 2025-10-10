@@ -15,10 +15,6 @@
 *
 * ************************************************************************ */
 
-/*
- * @use(visionmedia.leaflets.LeafletEmailWebpage)
- */
-
 /**
  * Command to manage the queueing and sending of emails.
  */
