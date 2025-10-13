@@ -69,8 +69,14 @@ qx.Class.define("zx.utils.Csv", {
      * Transforms a 2D array of values into a CSV string
      * @template ValueType
      * @param {ValueType[][]} table A 2D array of values
-     * @param {(row: number, col: number, value: ValueType) => ValueType} replacer A function that can be used to replace values
+     * @param {Replacer} replacer A function that can be used to replace values
      * @returns {string} The ouput CSV data
+     *
+     * @callback Replacer
+     * @param {number} row The row index
+     * @param {number} col The column index
+     * @param {ValueType} value The value to replace
+     * @returns {ValueType}
      */
     stringify(table, replacer) {
       replacer =
