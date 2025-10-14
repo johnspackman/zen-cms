@@ -18,6 +18,8 @@ qx.Interface.define("zx.server.work.scheduler.ITasksApi", {
      * @property {string?} text - Text search
      * @property {string?} uuid - The UUID of the task to search for
      * @property {boolean?} runningOnly - If true, includes only tasks which are either queued or running.
+     * @property {number?} maxResults - The maximum number of results to return. If not specified, all results are returned.
+     * If runningOnly is true, this will be ignored and all running tasks will be returned.
      */
     async searchTasks(query) {},
 

@@ -76,7 +76,7 @@ qx.Class.define("zx.server.work.ui.TasksView", {
       let api = this.__api;
       let query = this.getQxObject("edtSearch").getValue();
       let runningOnly = query?.length ? false : this.getQxObject("cbxShowRunning").getValue();
-      let tasksJson = await api.searchTasks({ text: query, runningOnly: runningOnly });
+      let tasksJson = await api.searchTasks({ text: query, runningOnly: runningOnly, maxResults: 200 });
       if (id !== this.__refreshResultsId) {
         //search was changed while we were waiting for the results
         return;
