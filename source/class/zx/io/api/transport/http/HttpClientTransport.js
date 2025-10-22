@@ -42,9 +42,14 @@ qx.Class.define("zx.io.api.transport.http.HttpClientTransport", {
         requestJson.headers["Forward-To"] = this.getForwardTo();
       }
 
+      if (this.getEncryptionMgr()) {
+        let body = zx.utils.Json.stringifyJson(requestJson.body);
+        requestJson.body = this.getEncryptionMgr().encryptData(body);
+      }
+      let output = zx.utils.Json.stringifyJson(requestJson);
       let responseText = await fetch(url, {
         method: "POST",
-        body: zx.utils.Json.stringifyJson(requestJson),
+        body: output,
         headers: { "Content-Type": "text/plain" }
       }).then(r => r.text());
 
@@ -52,6 +57,8 @@ qx.Class.define("zx.io.api.transport.http.HttpClientTransport", {
       if (data.error) {
         throw new Error(data.error);
       }
+      //If we decide to encrypt responses, we would put the decryption here
+      //but right now it's not required
       this.fireDataEvent("message", data);
     },
     /**
@@ -70,7 +77,10 @@ qx.Class.define("zx.io.api.transport.http.HttpClientTransport", {
 
       let responseText = await httpResponse.text();
       let data = zx.utils.Json.parseJson(responseText);
-      response.setData(data.data);
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      response.setError(data.error);
     }
   }
 });

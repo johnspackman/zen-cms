@@ -4,6 +4,8 @@
  *
  * Optionally, the cache can expire after a certain time.
  *
+ * @typedef {(input: InputData) => (Promise<OutputData> | OutputData)} Generator
+ *
  * @template InputData Type of the argument to the generator function
  * @template OutputData Type of the return value of the generator function
  *
@@ -16,15 +18,22 @@
  */
 qx.Class.define("zx.utils.AsyncMemoizer", {
   extend: qx.core.Object,
-  construct() {
+  /**
+   *
+   * @param {Generator?} generator
+   */
+  construct(generator) {
     super();
+    if (generator) {
+      this.setGenerator(generator);
+    }
     this.__cleanupTimer = new zx.utils.Timeout(0, () => this.__cleanupExpiredValues());
     this.bind("cleanupInterval", this.__cleanupTimer, "duration");
   },
   properties: {
     /**
      * The generator function that will be called to compute the value
-     * @type {(input: InputData) => (Promise<OutputData> || OutputData)}
+     * @type {Generator}
      */
     generator: {
       check: "Function",

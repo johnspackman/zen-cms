@@ -32,14 +32,44 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
    */
   construct(app, route = "/zx-api/") {
     super();
-
     //remove trailing forward slash if there is one
     route = route.replace(/\/$/, "");
+    this.__route = route;
 
-    const RE_ROUTE = new RegExp(`^${route}`);
+    app.all(`${route}/**`, this.__serveRequest.bind(this));
+  },
 
-    app.all(`${route}/**`, async (req, res) => {
+  members: {
+    /**
+     * @type {string}
+     */
+    __route: null,
+    postMessage() {},
+
+    /**@override */
+    supportsServerPush() {
+      return false;
+    },
+
+    /**
+     *
+     * @param {import("express").Request} req
+     * @param {import("express").Respone} res
+     * @returns
+     */
+    async __serveRequest(req, res) {
       let data = qx.lang.Object.clone(req.body, true);
+      if (this.getEncryptionMgr() && typeof data.body === "string") {
+        let body = this.getEncryptionMgr().decryptData(data.body);
+        try {
+          body = zx.utils.Json.parseJson(body);
+        } catch (e) {
+          res.status(400);
+          return res.send({ error: "Cannot decrypt JSON in request body" });
+        }
+        data.body = body;
+      }
+      const RE_ROUTE = new RegExp(`^${this.__route}`);
       let path = req.path.replace(RE_ROUTE, "");
       data.path = path;
       data.restMethod = req.method;
@@ -56,16 +86,9 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
         response.setError(e.toString());
       }
       res.status(response.getStatusCode());
+      //If we decide to encrypt responses, we would put it here
+      //but right now it's not required
       res.send(response.toNativeObject());
-    });
-  },
-
-  members: {
-    postMessage() {},
-
-    /**@override */
-    supportsServerPush() {
-      return false;
     }
   },
 

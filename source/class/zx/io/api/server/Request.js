@@ -97,7 +97,7 @@ qx.Class.define("zx.io.api.server.Request", {
     },
 
     /**
-     * @type {zx.io.api.IRequestJson.IBody}
+     * @type {zx.io.api.IRequestJson.IBody | string}
      * public readonly
      */
     body: {

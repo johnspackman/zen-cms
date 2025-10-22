@@ -1,22 +1,20 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    Patryk Malinowski (@p9malino26)
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
-
-
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    Patryk Malinowski (@p9malino26)
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Tagging interface for the POJO that will be sent as a request from a client transport to a server transport
@@ -34,7 +32,8 @@ qx.Interface.define("zx.io.api.IRequestJson", {
     path: "",
 
     /**
-     * NB: This object is empty when the request is a poll
+     * NB: This object is empty when the request is a poll.
+     * It's a string if we want to encrypt it.
      *
      * @interface ICallMethod @extends {IBody}
      * @property {any[]} methodArgs
@@ -44,7 +43,7 @@ qx.Interface.define("zx.io.api.IRequestJson", {
      *
      * @typedef {ICallMethod | ISubscribe | {}} IBody
      *
-     * @type {IBody}
+     * @type {IBody | string}
      */
     body: {},
 
