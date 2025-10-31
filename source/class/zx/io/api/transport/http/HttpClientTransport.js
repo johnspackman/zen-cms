@@ -80,7 +80,7 @@ qx.Class.define("zx.io.api.transport.http.HttpClientTransport", {
       if (data.error) {
         throw new Error(data.error);
       }
-      response.setError(data.error);
+      response.setData(data.data);
     }
   }
 });
