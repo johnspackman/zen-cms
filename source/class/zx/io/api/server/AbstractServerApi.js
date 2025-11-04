@@ -214,6 +214,10 @@ qx.Class.define("zx.io.api.server.AbstractServerApi", {
         error = e;
         this.error(`Error calling method ${requestMethodPath} in API ${this.getApiName()}: ${e}`);
       }
+      let errorResponse = null;
+      if (error) {
+        errorResponse = error.stack || error.toString();
+      }
       response.addData({
         type: "methodReturn",
         headers: {
@@ -221,7 +225,7 @@ qx.Class.define("zx.io.api.server.AbstractServerApi", {
         },
         body: {
           methodResult: result,
-          error: error?.toString() ?? null
+          error: errorResponse
         }
       });
     },
