@@ -103,6 +103,7 @@ qx.Class.define("zx.utils.AsyncMemoizer", {
         if (qx.Promise.isPromise(out)) {
           record.promise = out.then(onReady).catch(e => {
             this.__cache.delete(input); // Remove from cache if promise rejected
+            throw e;
           });
         } else {
           onReady(out);
