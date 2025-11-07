@@ -33,6 +33,7 @@ qx.Class.define("zx.io.api.server.Request", {
 
     this.setTransport(transport);
     this.setHeaders(data.headers ?? {});
+    this.setRawData(data);
     this.setBody(data.body ?? {});
     this.setPath(data.path ?? null);
     this.setType(data.type ?? "callMethod");
@@ -56,6 +57,15 @@ qx.Class.define("zx.io.api.server.Request", {
     type: {
       check: ["callMethod", "subscribe", "poll", "unsubscribe"],
       init: null
+    },
+    /**
+     * The raw data received from the transport
+     * Only valid when the request is a REST request
+     */
+    rawData: {
+      check: "Object",
+      init: null,
+      event: "changeData"
     },
     /**
      * public readonly.

@@ -71,10 +71,8 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
       }
       const RE_ROUTE = new RegExp(`^${this.__route}`);
       let path = req.path.replace(RE_ROUTE, "");
-      data.path = path;
-      data.restMethod = req.method;
 
-      let request = new zx.io.api.server.Request(this, data).set({ restMethod: req.method, query: req.query });
+      let request = new zx.io.api.server.Request(this, data).set({ path, restMethod: req.method, query: req.query });
       let response = new zx.io.api.server.Response(request);
 
       try {

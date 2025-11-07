@@ -65,10 +65,7 @@ qx.Class.define("zx.io.api.transport.http.FastifyServerTransport", {
         data = zx.utils.Json.parseJson(data);
       }
 
-      data.path = path;
-      data.restMethod = req.method; // TODO: we should only set this if we get a RESTful request; RPC should have no method
-
-      let request = new zx.io.api.server.Request(this, data).set({ restMethod: req.method, query: req.query });
+      let request = new zx.io.api.server.Request(this, data).set({ path, restMethod: req.method, query: req.query });
       let response = new zx.io.api.server.Response(request);
 
       try {
