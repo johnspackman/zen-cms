@@ -58,7 +58,7 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
      * @returns
      */
     async __serveRequest(req, res) {
-      let data = qx.lang.Object.clone(req.body, true);
+      let data = qx.lang.Object.clone(req.body, true) ?? {};
       if (this.getEncryptionMgr() && typeof data.body === "string") {
         let body = this.getEncryptionMgr().decryptData(data.body);
         try {
@@ -101,13 +101,14 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
      * ```
      */
     jsonMiddleware() {
-      const bodyParser = require("body-parser");
-
-      // TODO: test this middleware
       return (req, res, next) => {
-        bodyParser.text()(req, res, () => {
-          if (typeof req.body == "string") {
-            req.body = zx.utils.Json.parseJson(req.body);
+        let data = "";
+        req.on("data", chunk => (data += chunk));
+        req.on("end", () => {
+          try {
+            req.body = zx.utils.Json.parseJson(data);
+          } catch (err) {
+            return next(err);
           }
           next();
         });
