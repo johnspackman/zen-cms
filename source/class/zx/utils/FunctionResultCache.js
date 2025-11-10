@@ -1,6 +1,8 @@
 /**
  * This class is used to cache return values of synchronous or asynchronous functions,
  * indxed by their input argument.
+ * The generator function must take in a single arguments which is a string,
+ * and return a value or a promise that resolves to a value.
  *
  * Optionally, the cache can expire after a certain time.
  *
@@ -8,7 +10,6 @@
  * @param {String} input The input argument to the generator function
  * @returns {Promise<OutputData> | OutputData} The return value of the generator function, which can be a promise or a direct value
  *
- * @template String Type of the argument to the generator function
  * @template OutputData Type of the return value of the generator function
  *
  * @typedef {Object} ValueData
@@ -123,11 +124,11 @@ qx.Class.define("zx.utils.FunctionResultCache", {
     },
 
     /**
-     * Kicks the cache entry for the given input, updating its last active time.
+     * Resets the expiry timeout of a value given an input key.
      * This is useful to keep the entry alive if it is still in use.
      * @param {String} input
      */
-    kick(input) {
+    keepAlive(input) {
       let record = this.__cache.get(input);
       if (record) {
         record.lastActive = Date.now();

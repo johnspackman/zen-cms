@@ -17,7 +17,7 @@ qx.Class.define("zx.io.api.server.AbstractProxyManager", {
   },
   members: {
     /**
-     * @type {zx.utils.FunctionResultCache<string, zx.io.api.client.AbstractClientTransport>}
+     * @type {zx.utils.FunctionResultCache<zx.io.api.client.AbstractClientTransport>}
      * A cache that stores transports for hostnames.
      */
     __transportCache: null,
@@ -53,7 +53,7 @@ qx.Class.define("zx.io.api.server.AbstractProxyManager", {
         cache.remove(forwardTo); // Remove from cache if there was an error
         throw e;
       }
-      cache.kick(forwardTo); // To prevent the cache from expiring after timeout
+      cache.keepAlive(forwardTo); // To prevent the cache from expiring after timeout
       return true;
     },
 
