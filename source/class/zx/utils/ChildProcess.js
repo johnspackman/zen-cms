@@ -102,6 +102,17 @@ qx.Class.define("zx.utils.ChildProcess", {
           reject(err);
         });
       });
+    },
+    /**
+     *
+     * @param {string[]} cmd
+     * @returns {string}
+     */
+    async runAndCapture(cmd) {
+      let result = await zx.utils.ChildProcess.runCommand({
+        cmd: cmd
+      });
+      return result.output;
     }
   }
 });

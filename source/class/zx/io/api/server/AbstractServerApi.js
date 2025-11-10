@@ -32,7 +32,7 @@ qx.Class.define("zx.io.api.server.AbstractServerApi", {
    */
   construct(apiName) {
     super();
-    this.__apiName = apiName;
+    this.__apiName = apiName ?? this.classname;
     this.__restsByPath = {};
   },
 

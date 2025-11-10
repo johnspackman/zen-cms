@@ -39,6 +39,15 @@ qx.Class.define("zx.io.api.server.ConnectionManager", {
       check: "zx.io.api.server.IAuthProvider",
       nullable: true,
       event: "changeAuthProvider"
+    },
+    /**
+     * Optionally, set this property if you want to defer requests to a proxy manager.
+     * Useful for when you want to process some requests on a different process or machine.
+     */
+    proxyManager: {
+      check: "zx.io.api.server.AbstractProxyManager",
+      nullable: true,
+      event: "changeProxyManager"
     }
   },
   members: {
@@ -100,6 +109,12 @@ qx.Class.define("zx.io.api.server.ConnectionManager", {
      * @param {zx.io.api.server.Response} response
      */
     async receiveMessage(request, response) {
+      if (this.getProxyManager()) {
+        let processed = await this.getProxyManager().processRequest(request, response);
+        if (processed) {
+          return;
+        }
+      }
       let apiName = request.getHeader("Api-Name");
 
       if (!apiName) {

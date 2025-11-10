@@ -55,8 +55,15 @@ qx.Interface.define("zx.io.api.IResponseJson", {
      * @interface IShutdown @extends IResponseData
      * @property {"shutdown"} type
 
-     * @type {(IResponseData | *)[]}
+     * @type {(IResponseData)[]}
      */
-    data: []
+    data: [],
+
+    /**
+     * @type {string?}
+     * General error. This is much lower level than inside the server API method.
+     * Examples are: Proxy server exception, etc
+     */
+    error: ""
   }
 });

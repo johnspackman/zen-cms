@@ -1,22 +1,20 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    Patryk Malinowski (@p9malino26)
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
-
-
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    Patryk Malinowski (@p9malino26)
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Implementation of server transport for Express.js
@@ -34,42 +32,61 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
    */
   construct(app, route = "/zx-api/") {
     super();
-
     //remove trailing forward slash if there is one
     route = route.replace(/\/$/, "");
+    this.__route = route;
 
-    const RE_ROUTE = new RegExp(`^${route}`);
-
-    app.all(`${route}/**`, async (req, res) => {
-      try {
-        let data = qx.lang.Object.clone(req.body, true);
-        let path = zx.utils.Uri.breakoutUri(req.originalUrl).path.replace(RE_ROUTE, "");
-        data.path = path;
-        data.restMethod = req.method;
-
-        let request = new zx.io.api.server.Request(this, data).set({ restMethod: req.method });
-        let response = new zx.io.api.server.Response(request);
-        await zx.io.api.server.ConnectionManager.getInstance().receiveMessage(request, response);
-
-        if (response.getError()) {
-          res.status(500).send(response.getError());
-          return;
-        }
-
-        res.send(zx.utils.Json.stringifyJson(response.toNativeObject(), null, 2));
-      } catch (e) {
-        this.error(e);
-        res.status(500).send(e.message);
-      }
-    });
+    app.all(`${route}/**`, this.__serveRequest.bind(this));
   },
 
   members: {
+    /**
+     * @type {string}
+     */
+    __route: null,
     postMessage() {},
 
     /**@override */
     supportsServerPush() {
       return false;
+    },
+
+    /**
+     *
+     * @param {import("express").Request} req
+     * @param {import("express").Respone} res
+     * @returns
+     */
+    async __serveRequest(req, res) {
+      let data = qx.lang.Object.clone(req.body, true) ?? {};
+      if (this.getEncryptionMgr() && typeof data.body === "string") {
+        let body = this.getEncryptionMgr().decryptData(data.body);
+        try {
+          body = zx.utils.Json.parseJson(body);
+        } catch (e) {
+          res.status(400);
+          return res.send({ error: "Cannot decrypt JSON in request body" });
+        }
+        data.body = body;
+      }
+      const RE_ROUTE = new RegExp(`^${this.__route}`);
+      let path = req.path.replace(RE_ROUTE, "");
+
+      let request = new zx.io.api.server.Request(this, data).set({ path, restMethod: req.method, query: req.query });
+      let response = new zx.io.api.server.Response(request);
+
+      try {
+        await zx.io.api.server.ConnectionManager.getInstance().receiveMessage(request, response);
+      } catch (e) {
+        if (!response.getStatusCode()) {
+          response.setStatusCode(500);
+        }
+        response.setError(e.toString());
+      }
+      res.status(response.getStatusCode());
+      //If we decide to encrypt responses, we would put it here
+      //but right now it's not required
+      res.send(response.toNativeObject());
     }
   },
 
@@ -84,13 +101,14 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
      * ```
      */
     jsonMiddleware() {
-      const bodyParser = require("body-parser");
-
-      // TODO: test this middleware
       return (req, res, next) => {
-        bodyParser.text()(req, res, () => {
-          if (typeof req.body == "string") {
-            req.body = zx.utils.Json.parseJson(req.body);
+        let data = "";
+        req.on("data", chunk => (data += chunk));
+        req.on("end", () => {
+          try {
+            req.body = zx.utils.Json.parseJson(data);
+          } catch (err) {
+            return next(err);
           }
           next();
         });

@@ -145,7 +145,6 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
 
         if (taskJson.failCount >= zx.server.work.scheduler.ScheduledTask.MAX_FAIL_COUNT) {
           this.debug(`Ignoring task ${taskDescription} because it has failed too many times`);
-          await this.updateOne(zx.server.work.scheduler.ScheduledTask, { _uuid: taskJson._uuid }, { $set: { enabled: false } });
           continue;
         }
 
@@ -239,6 +238,8 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
 
       this.debug(`Task ${taskJson._uuid} completed: ${taskJson.title}`);
       delete this.__runningTasks[workUuid];
+
+      await this.__deleteOldTasks();
     },
 
     /**
@@ -321,6 +322,22 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
         }
       );
       return ret;
+    },
+
+    async __deleteOldTasks() {
+      let toDelete = [];
+      let col = zx.server.Standalone.getInstance().getDb().getCollection("zx.server.work.scheduler.ScheduledTask");
+      let cursor = col.find({ enabled: false, keepForDays: { $gt: 0 }, dateCompleted: { $exists: true, $ne: null } });
+      const DAY_MS = 24 * 60 * 60 * 1000; // milliseconds in a day
+      for await (let task of cursor) {
+        if (task.dateCompleted.getTime() < Date.now() - task.keepForDays * DAY_MS) {
+          toDelete.push(task._id);
+        }
+      }
+
+      if (toDelete.length) {
+        await col.deleteMany({ _id: { $in: toDelete } });
+      }
     }
   },
 

@@ -1,22 +1,20 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    Patryk Malinowski (@p9malino26)
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
-
-
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    Patryk Malinowski (@p9malino26)
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Basic implementation of the IClientTransport interface.
@@ -34,7 +32,9 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
   construct(serverUri) {
     super();
 
-    this.__serverUri = serverUri;
+    if (serverUri) {
+      this.setServerUri(serverUri);
+    }
 
     this.__pollTimer = new zx.utils.Timeout(null, this.__poll, this).set({
       recurring: true,
@@ -57,8 +57,26 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
   },
 
   properties: {
+    serverUri: {
+      check: "String",
+      event: "changeServerUri",
+      apply: "_applyServerUri",
+      nullable: true,
+      init: null
+    },
+
     /**
-     * If enabled, this transport will poll to all subscribed hostnames
+     * Whether we should poll always i.e. even when there are no subscriptions,
+     * just to test the connection.
+     */
+    pollAlways: {
+      init: false,
+      check: "Boolean",
+      event: "changePollAlways"
+    },
+
+    /**
+     * If enabled, this transport will poll to the server
      * every set interval (property: pollInterval)
      */
     polling: {
@@ -90,16 +108,23 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
       init: null,
       nullable: true,
       check: "zx.io.api.crypto.IEncryptionMgr"
+    },
+
+    /**
+     * If set, this will set the "Forward-To" header on all requests sent by this transport.
+     * Note (2025-10-06) This is currently only supported by HttpClientTransport.
+     */
+    forwardTo: {
+      init: null,
+      nullable: true,
+      check: "String",
+      event: "changeForwardTo"
     }
   },
 
   members: {
-    /** @type{Integer} number of consecutive times that we get an exception sending to the server */
+    /** @type {Integer} number of consecutive times that we get an exception sending to the server */
     __numberConsecutiveFailures: 0,
-
-    getServerUri() {
-      return this.__serverUri;
-    },
 
     /**
      * Timer used to poll all subscribed hostnames
@@ -118,6 +143,32 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
     __sessionUuid: null,
 
     /**
+     * @param {string?} value
+     * @param {string?} oldValue
+     */
+    _applyServerUri(value, oldValue) {
+      if (oldValue) {
+        this.reset(`Server URI changed from ${oldValue} to ${value}`);
+      }
+    },
+
+    /**
+     * Resets all state information for this transport and the APIs linked to this transport.
+     * All session UUIDs and subscriptions will be lost.
+     * @param {string?} reason
+     */
+    reset(reason) {
+      let data = { type: "reset", headers: {}, body: { reason: reason || "Unknown" } };
+
+      //this will cause all client APIs to reset their state
+      this.fireDataEvent("message", { data: [data] });
+      if (qx.core.Environment.get("qx.debug")) {
+        this.assertNull(this.__sessionUuid, "Session UUID expected to be null after reset");
+        this.assertEquals(0, this.__subscriptions, "Subscriptions expected to be 0 after reset");
+      }
+    },
+
+    /**
      * Called EXCLUSIVELY in zx.io.api.client.AbstractClientApi when the API has subscribed to an event
      * @param {string} sessionUuid
      */
@@ -132,6 +183,10 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
      */
     unsubscribe() {
       this.__subscriptions--;
+      if (this.__subscriptions == 0) {
+        this.__sessionUuid = null;
+      }
+
       if (qx.core.Environment.get("qx.debug")) {
         if (this.__subscriptions == -1) {
           console.warn("You have unsubscribed more times than you have subscribed. There is a bug in your code.");
@@ -166,19 +221,26 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
      * @returns {Promise<void>}
      */
     async __poll() {
-      if (!this.__serverUri || this.__subscriptions === 0) {
+      if (this.__numberConsecutiveFailures > zx.io.api.client.AbstractClientTransport.MAX_CONSECUTIVE_POLLING_FAILURES) {
+        this.error("Too many consecutive failures, stopping polling");
+        this.setPolling(false);
+        debugger;
+        return;
+      }
+
+      if (!this.getServerUri()) {
+        return;
+      }
+
+      if (!this.getPollAlways() && this.__subscriptions === 0) {
         return;
       }
       let requestJson = { headers: { "Session-Uuid": this.__sessionUuid }, type: "poll", body: {} };
       try {
-        await this.postMessage(this.__serverUri, requestJson);
+        await this.postMessage(this.getServerUri(), requestJson);
         this.__numberConsecutiveFailures = 0;
       } catch (e) {
         this.__numberConsecutiveFailures++;
-        if (this.__numberConsecutiveFailures > zx.io.api.client.AbstractClientTransport.MAX_CONSECUTIVE_POLLING_FAILURES) {
-          this.error("Too many consecutive failures, stopping polling");
-          this.setPolling(false);
-        }
       }
     },
 
@@ -194,6 +256,22 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
      */
     _applyPollInterval(value) {
       this.__pollTimer.setDuration(value);
+    },
+
+    /**
+     * Processes a request and populates the response object.
+     *
+     * @param {zx.io.api.server.Request} request
+     * @param {zx.io.api.server.Response} response
+     *
+     * Note (2025-10-07): This currently work in HttpClientTransport only.
+     * Many other transports (e.g. WebSocket, Node Worker) do not have a default way of tracking responses for requests like HTTP does.
+     * AbstractClientApi implements this logic by tracking requests and responses by request IDs.
+     * It would be better if this logic were done in the transport instead of the API,
+     * but we don't want to go down the rabbit hole of changing the code at this point.
+     */
+    sendRequest(request, response) {
+      throw new Error(`${this.classname}.sendRequest is not supported by this transport.`);
     }
   },
 
