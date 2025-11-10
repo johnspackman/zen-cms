@@ -10,14 +10,14 @@ qx.Class.define("zx.io.api.server.AbstractProxyManager", {
   construct() {
     super();
     const MINUTE = 60 * 1000;
-    this.__transportCache = new zx.utils.AsyncMemoizer().set({
+    this.__transportCache = new zx.utils.FunctionResultCache().set({
       generator: hostName => this._createTransportForHostname(hostName),
       expiryTime: 5 * MINUTE
     });
   },
   members: {
     /**
-     * @type {zx.utils.AsyncMemoizer<string, zx.io.api.client.AbstractClientTransport>}
+     * @type {zx.utils.FunctionResultCache<string, zx.io.api.client.AbstractClientTransport>}
      * A cache that stores transports for hostnames.
      */
     __transportCache: null,

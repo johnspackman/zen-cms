@@ -1,12 +1,14 @@
 /**
- * This class is used to memoize return values of asynchronous functions,
+ * This class is used to cache return values of synchronous or asynchronous functions,
  * indxed by their input argument.
  *
  * Optionally, the cache can expire after a certain time.
  *
- * @typedef {(input: InputData) => (Promise<OutputData> | OutputData)} Generator
+ * @callback Generator The generator function which we will run and then cache the result of.
+ * @param {String} input The input argument to the generator function
+ * @returns {Promise<OutputData> | OutputData} The return value of the generator function, which can be a promise or a direct value
  *
- * @template InputData Type of the argument to the generator function
+ * @template String Type of the argument to the generator function
  * @template OutputData Type of the return value of the generator function
  *
  * @typedef {Object} ValueData
@@ -16,7 +18,7 @@
  *  this is initially set to the time when the promise was resolved, not when the generator was initially called.
  *
  */
-qx.Class.define("zx.utils.AsyncMemoizer", {
+qx.Class.define("zx.utils.FunctionResultCache", {
   extend: qx.core.Object,
   /**
    *
@@ -62,7 +64,7 @@ qx.Class.define("zx.utils.AsyncMemoizer", {
   },
   members: {
     /**
-     * @type {Map<InputData, OutputData>}
+     * @type {Map<String, OutputData>}
      * We have to use a Map for this and not a POJO because otherwise we would only be limited to string-y keys.
      */
     __cache: new Map(),
@@ -76,7 +78,7 @@ qx.Class.define("zx.utils.AsyncMemoizer", {
      * Get the value for the given input, computing it if necessary.
      * If the value is being computed, it will return a promise that resolves to the value.
      *
-     * @param {InputData} input
+     * @param {String} input
      * @return {Promise<OutputData> | OutputData}
      */
     get(input) {
@@ -123,7 +125,7 @@ qx.Class.define("zx.utils.AsyncMemoizer", {
     /**
      * Kicks the cache entry for the given input, updating its last active time.
      * This is useful to keep the entry alive if it is still in use.
-     * @param {InputData} input
+     * @param {String} input
      */
     kick(input) {
       let record = this.__cache.get(input);
@@ -136,7 +138,7 @@ qx.Class.define("zx.utils.AsyncMemoizer", {
 
     /**
      * Removes the cache entry for the given input.
-     * @param {InputData} input
+     * @param {String} input
      */
     remove(input) {
       let record = this.__cache.get(input);
