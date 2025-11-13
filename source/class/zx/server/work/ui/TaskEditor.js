@@ -114,7 +114,8 @@ qx.Class.define("zx.server.work.ui.TaskEditor", {
   members: {
     async _applyValue(value, old) {
       this.setEnabled(false);
-      await this.__refreshTimer.trigger();
+      if (!value) return;
+      await value.refreshWorkResults();
       if (value === this.getValue()) {
         this.setEnabled(true);
       }

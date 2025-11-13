@@ -79,6 +79,7 @@ qx.Class.define("zx.server.work.ui.model.ScheduledTask", {
     async queue() {
       await this.__api.queueTask(this.toUuid());
     },
+
     async refreshWorkResults() {
       let api = this.__api;
       let thisJson = (await api.searchTasks({ uuid: this.toUuid() }))[0];
