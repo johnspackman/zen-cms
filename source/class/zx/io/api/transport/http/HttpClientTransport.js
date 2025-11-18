@@ -47,11 +47,14 @@ qx.Class.define("zx.io.api.transport.http.HttpClientTransport", {
         requestJson.body = this.getEncryptionMgr().encryptData(body);
       }
       let output = zx.utils.Json.stringifyJson(requestJson);
-      let responseText = await fetch(url, {
+      let httpResponse = await fetch(url, {
         method: "POST",
         body: output,
         headers: { "Content-Type": "text/plain" }
-      }).then(r => r.text());
+      }).catch(e => {
+        throw new Error("Error fetching " + url + ": " + e.message);
+      });
+      let responseText = await httpResponse.text();
 
       let data = zx.utils.Json.parseJson(responseText);
       if (data.error) {
@@ -73,12 +76,16 @@ qx.Class.define("zx.io.api.transport.http.HttpClientTransport", {
         method: "POST",
         body: zx.utils.Json.stringifyJson(request.toNativeObject()),
         headers: { "Content-Type": "text/plain" }
+      }).catch(e => {
+        request.setStatusCode(502);
+        throw new Error("Error fetching " + url + ": " + e.message);
       });
 
       let responseText = await httpResponse.text();
       let data = zx.utils.Json.parseJson(responseText);
       if (data.error) {
-        throw new Error(data.error);
+        response.setStatusCode(httpResponse.status);
+        throw new Error("gateway error: " + data.error);
       }
       response.setData(data.data);
     }
