@@ -65,6 +65,7 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
           body = zx.utils.Json.parseJson(body);
         } catch (e) {
           res.status(400);
+          this.error(`Cannot decrypt JSON in request body. Path: ${req.path}, stack: ${e.stack}`);
           return res.send({ error: "Cannot decrypt JSON in request body" });
         }
         data.body = body;
@@ -78,7 +79,8 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
       try {
         await zx.io.api.server.ConnectionManager.getInstance().receiveMessage(request, response);
       } catch (e) {
-        if (!response.getStatusCode()) {
+        this.error(`Error processing request for ${req.path}. Caused by: \n${e.stack}`);
+        if (response.getStatusCode() === 200) {
           response.setStatusCode(500);
         }
         response.setError(e.toString());

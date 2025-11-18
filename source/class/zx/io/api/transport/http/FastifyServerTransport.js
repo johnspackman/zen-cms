@@ -71,7 +71,7 @@ qx.Class.define("zx.io.api.transport.http.FastifyServerTransport", {
       try {
         await zx.io.api.server.ConnectionManager.getInstance().receiveMessage(request, response);
       } catch (e) {
-        if (!response.getStatusCode()) {
+        if (response.getStatusCode() === 200) {
           response.setStatusCode(500);
         }
         response.setError(e.toString());

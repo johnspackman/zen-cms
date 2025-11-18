@@ -37,19 +37,13 @@ qx.Class.define("zx.io.api.server.AbstractProxyManager", {
       let cache = this.__transportCache;
 
       let transport;
-      try {
-        transport = await cache.get(forwardTo);
-      } catch (e) {
-        cache.remove(forwardTo); // Remove from cache if there was an error
-        response.setStatusCode(502);
-        throw new Error(`Error creating transport for Forward-To: ${forwardTo}. ${e.toString()}`);
-      }
+
+      transport = await cache.get(forwardTo);
 
       request.removeHeader("Forward-To");
       try {
         await transport.sendRequest(request, response);
       } catch (e) {
-        response.setStatusCode(502);
         cache.remove(forwardTo); // Remove from cache if there was an error
         throw e;
       }
