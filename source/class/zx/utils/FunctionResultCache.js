@@ -88,6 +88,7 @@ qx.Class.define("zx.utils.FunctionResultCache", {
 
       if (!cache.has(input)) {
         let record = {};
+        this.__cache.set(input, record);
 
         /**
          *
@@ -108,12 +109,10 @@ qx.Class.define("zx.utils.FunctionResultCache", {
             this.__cache.delete(input); // Remove from cache if promise rejected
             throw e;
           });
+          return record.promise;
         } else {
-          onReady(out);
+          return onReady(out);
         }
-
-        this.__cache.set(input, record);
-        return out;
       } else {
         let record = this.__cache.get(input);
         if (record.value !== undefined) {
