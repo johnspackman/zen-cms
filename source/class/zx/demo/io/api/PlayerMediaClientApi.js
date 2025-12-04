@@ -12,7 +12,7 @@
  *
  *  Authors:
  *    John Spackman (john.spackman@zenesis.com, @johnspackman)
- *    Patryk Malinowski (@p9malino26)
+ *    Patryk Malinowski (@patryk-m-malinowski)
  *
  * ************************************************************************ */
 
