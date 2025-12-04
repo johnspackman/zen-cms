@@ -188,5 +188,12 @@ qx.Class.define("zx.server.work.scheduler.ScheduledTask", {
         }
       }
     }
+  },
+
+  statics: {
+    /**
+     * Maximum times a task can fail consecutively before it is not run
+     */
+    MAX_FAIL_COUNT: 5
   }
 });
