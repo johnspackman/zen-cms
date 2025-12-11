@@ -24,6 +24,7 @@ qx.Class.define("zx.io.api.transport.bluetooth.L2CapBluetoothServerTransport", {
    * @param {zx.io.api.transport.bluetooth.IL2CapSocket?} socket
    */
   construct(socket) {
+    super();
     if (socket) {
       this.setSocket(socket);
     }
