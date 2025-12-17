@@ -101,6 +101,7 @@ qx.Class.define("zx.cli.CliApp", {
       rootCmd.addSubcommand(zx.cli.commands.LicenseCommand.createCliCommand());
       rootCmd.addSubcommand(new zx.server.email.commands.EmailCommand());
       rootCmd.addSubcommand(new zx.cli.commands.WorkCommand());
+      rootCmd.addSubcommand(new zx.cli.commands.CmsCommand());
       if (qx.core.Environment.get("qx.debug")) {
         rootCmd.addSubcommand(new zx.cli.commands.DemoCommand());
       }

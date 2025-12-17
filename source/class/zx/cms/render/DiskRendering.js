@@ -16,6 +16,7 @@
  * ************************************************************************ */
 
 const fs = require("fs-extra");
+const path = require("path");
 
 /**
  * Allows rendering to disk
@@ -23,6 +24,12 @@ const fs = require("fs-extra");
 qx.Class.define("zx.cms.render.DiskRendering", {
   extend: zx.cms.render.AbstractRendering,
 
+  /**
+   *
+   * @param {string} filename path to output file to render page
+   * @param {Object<string, string>} query
+   * @param {Object<string, string>} headers
+   */
   construct(filename, query, headers) {
     super();
     this.__filename = filename;
@@ -32,11 +39,26 @@ qx.Class.define("zx.cms.render.DiskRendering", {
   },
 
   members: {
+    /**
+     * @type {string}
+     */
     __filename: null,
+    /**
+     * @type {Object<string, string>}
+     */
     __query: null,
+    /**
+     * @type {Object<string, string>}
+     */
     __headers: null,
     __statusCode: 200,
+    /**
+     * @type {string?}
+     */
     __statusMessage: null,
+    /**
+     * @type {Array<Promise>}
+     */
     __promises: [],
 
     /*
@@ -104,7 +126,7 @@ qx.Class.define("zx.cms.render.DiskRendering", {
      * serialization activity to be completed.
      */
     async waitForAll() {
-      await qx.Promise.all(this.__promises);
+      await Promise.all(this.__promises);
     }
   }
 });

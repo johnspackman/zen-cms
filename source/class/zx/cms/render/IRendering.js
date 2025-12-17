@@ -44,7 +44,7 @@ qx.Interface.define("zx.cms.render.IRendering", {
     /**
      * Called to get the query parameters as a map
      *
-     * @return {Map<String, String>}
+     * @return {Object<String, String>}
      */
     getQuery() {},
 
