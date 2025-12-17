@@ -103,6 +103,15 @@ qx.Class.define("zx.server.email.FlushQueue", {
           title: "Flush Email Queue",
           ...query
         });
+      } else {
+        await collection.updateOne(query, {
+          $set: {
+            title: "Flush Email Queue",
+            workJson: {
+              workClassname: "zx.server.email.FlushQueue"
+            }
+          }
+        });
       }
     }
   }

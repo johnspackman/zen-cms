@@ -581,10 +581,16 @@ qx.Class.define("zx.server.WebServer", {
           poolConfig
         });
       } else if (poolType == "node-thread") {
+        if (!workerCliPath) {
+          throw new Error("workerCliPath must be specified in cms.json work configuration for node-thread and node-process worker pools");
+        }
         pool = new zx.server.work.pools.NodeThreadWorkerPool(null, workerCliPath).set({
           poolConfig
         });
       } else {
+        if (!workerCliPath) {
+          throw new Error("workerCliPath must be specified in cms.json work configuration for node-thread and node-process worker pools");
+        }
         let settings = {
           poolConfig,
           nodeInspect: config.inspect || "none",

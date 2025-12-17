@@ -144,7 +144,7 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
         }
 
         if (taskJson.failCount >= zx.server.work.scheduler.ScheduledTask.MAX_FAIL_COUNT) {
-          this.debug(`Ignoring task ${taskDescription} because it has failed too many times`);
+          this.trace(`Ignoring task ${taskDescription} because it has failed too many times`);
           continue;
         }
 
