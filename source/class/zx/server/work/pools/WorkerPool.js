@@ -28,6 +28,7 @@ const fs = require("fs");
  * processes, allocating work to them, and communicating with the scheduler to
  * receive work to do and report back the status of the work to the scheduler.
  *
+ * @ignore(queueMicrotask)
  */
 qx.Class.define("zx.server.work.pools.WorkerPool", {
   extend: qx.core.Object,

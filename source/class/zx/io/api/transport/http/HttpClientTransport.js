@@ -32,8 +32,7 @@ qx.Class.define("zx.io.api.transport.http.HttpClientTransport", {
 
   members: {
     /**
-     * @param {string} path The URI to post the message to
-     * @param {zx.io.api.IRequestJson} requestJson
+     * @override
      */
     async postMessage(path, requestJson) {
       let url = zx.utils.Uri.join(this.getServerUri() ?? "", path ?? "");
@@ -77,7 +76,7 @@ qx.Class.define("zx.io.api.transport.http.HttpClientTransport", {
         body: zx.utils.Json.stringifyJson(request.toNativeObject()),
         headers: { "Content-Type": "text/plain" }
       }).catch(e => {
-        request.setStatusCode(502);
+        response.setStatusCode(502);
         throw new Error("Error fetching " + url + ": " + e.message);
       });
 

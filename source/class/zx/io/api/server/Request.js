@@ -153,7 +153,7 @@ qx.Class.define("zx.io.api.server.Request", {
      * @returns {boolean}
      */
     isFromClientApi() {
-      return this.getHeader("Client-Api-Uuid") !== undefined;
+      return this.getHeader("Client-Api-Uuid") !== undefined || this.getType() === "poll";
     },
     /**
      * Makes sure that a session exists; if it already exists, nothing happens

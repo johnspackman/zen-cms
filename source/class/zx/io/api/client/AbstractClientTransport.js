@@ -237,7 +237,7 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
       }
       let requestJson = { headers: { "Session-Uuid": this.__sessionUuid }, type: "poll", body: {} };
       try {
-        await this.postMessage(this.getServerUri(), requestJson);
+        await this.postMessage(null, requestJson);
         this.__numberConsecutiveFailures = 0;
       } catch (e) {
         this.__numberConsecutiveFailures++;
