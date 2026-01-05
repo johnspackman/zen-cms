@@ -25,13 +25,14 @@ qx.Class.define("zx.utils.FunctionResultCache", {
    *
    * @param {Generator?} generator
    */
-  construct(generator) {
+  construct(generator, expiryTime = 0) {
     super();
     if (generator) {
       this.setGenerator(generator);
     }
     this.__cleanupTimer = new zx.utils.Timeout(0, () => this.__cleanupExpiredValues()).set({ enabled: false, recurring: true });
     this.bind("cleanupInterval", this.__cleanupTimer, "duration");
+    this.setExpiryTime(expiryTime);
   },
   properties: {
     /**
