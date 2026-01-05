@@ -32,8 +32,7 @@ qx.Class.define("zx.io.api.transport.http.HttpClientTransport", {
 
   members: {
     /**
-     * @param {string} path The URI to post the message to
-     * @param {zx.io.api.IRequestJson} requestJson
+     * @override
      */
     async postMessage(path, requestJson) {
       let url = zx.utils.Uri.join(this.getServerUri() ?? "", path ?? "");
