@@ -30,7 +30,7 @@ qx.Class.define("zx.utils.FunctionResultCache", {
     if (generator) {
       this.setGenerator(generator);
     }
-    this.__cleanupTimer = new zx.utils.Timeout(0, () => this.__cleanupExpiredValues());
+    this.__cleanupTimer = new zx.utils.Timeout(0, () => this.__cleanupExpiredValues()).set({ enabled: false, recurring: true });
     this.bind("cleanupInterval", this.__cleanupTimer, "duration");
   },
   properties: {
@@ -50,7 +50,8 @@ qx.Class.define("zx.utils.FunctionResultCache", {
       check: "Number",
       init: 0, // Default to no expiry
       nullable: false,
-      event: "changeExpiryTime"
+      event: "changeExpiryTime",
+      apply: "__updateCleanupTimer"
     },
     /**
      * How often to check for expired values in the cache.
@@ -65,7 +66,7 @@ qx.Class.define("zx.utils.FunctionResultCache", {
   },
   members: {
     /**
-     * @type {Map<String, OutputData>}
+     * @type {Map<String, ValueData>}
      * We have to use a Map for this and not a POJO because otherwise we would only be limited to string-y keys.
      */
     __cache: new Map(),
@@ -99,7 +100,7 @@ qx.Class.define("zx.utils.FunctionResultCache", {
           record.value = value;
           delete record.promise;
           record.lastActive = Date.now();
-          this.__cleanupTimer.setEnabled(true); // Ensure the cleanup timer is running
+          this.__updateCleanupTimer();
           return value;
         };
 
@@ -148,34 +149,29 @@ qx.Class.define("zx.utils.FunctionResultCache", {
         }
         this.__cache.delete(input);
         let value = record.value;
-        if (value && typeof value.dispose === "function") {
+        if (value && value instanceof qx.core.Object) {
           value.dispose();
         }
+        this.__updateCleanupTimer();
       } else {
         this.warn(`Attempting to remove a non-existing cache entry for input: ${input}`);
       }
+    },
+
+    __updateCleanupTimer() {
+      this.__cleanupTimer.setEnabled(this.getExpiryTime() !== 0 && this.__cache.size > 0);
     },
 
     /**
      * Sweeper task that removes expired values from the cache.
      */
     __cleanupExpiredValues() {
-      let keysToDelete = [];
+      if (this.getExpiryTime() === 0) return;
+
       for (let [key, record] of this.__cache.entries()) {
-        if (record.lastActive + this.getExpiryTime() < Date.now()) {
-          keysToDelete.push(key);
+        if (record.value !== undefined && record.lastActive + this.getExpiryTime() < Date.now()) {
+          this.remove(key);
         }
-      }
-
-      for (let key of keysToDelete) {
-        let out = this.__cache.delete(key);
-        if (typeof out.dispose === "function") {
-          out.dispose();
-        }
-      }
-
-      if (this.__cache.size === 0) {
-        this.__cleanupTimer.setEnabled(false);
       }
     }
   }
