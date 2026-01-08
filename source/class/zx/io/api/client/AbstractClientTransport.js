@@ -123,9 +123,6 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
   },
 
   members: {
-    /** @type {Integer} number of consecutive times that we get an exception sending to the server */
-    __numberConsecutiveFailures: 0,
-
     /**
      * Timer used to poll all subscribed hostnames
      * every given interval
@@ -221,13 +218,6 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
      * @returns {Promise<void>}
      */
     async __poll() {
-      if (this.__numberConsecutiveFailures > zx.io.api.client.AbstractClientTransport.MAX_CONSECUTIVE_POLLING_FAILURES) {
-        this.error("Too many consecutive failures, stopping polling");
-        this.setPolling(false);
-        debugger;
-        return;
-      }
-
       if (!this.getServerUri()) {
         return;
       }
@@ -236,12 +226,7 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
         return;
       }
       let requestJson = { headers: { "Session-Uuid": this.__sessionUuid }, type: "poll", body: {} };
-      try {
-        await this.postMessage(null, requestJson);
-        this.__numberConsecutiveFailures = 0;
-      } catch (e) {
-        this.__numberConsecutiveFailures++;
-      }
+      await this.postMessage(null, requestJson);
     },
 
     /**
