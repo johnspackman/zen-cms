@@ -32,6 +32,13 @@ qx.Class.define("zx.cms.render.FastifyRendering", {
     __reply: null,
     __statusCode: null,
 
+    /**
+     * @Override
+     */
+    getHostName() {
+      return this.__req.hostname;
+    },
+
     /*
      * @Override
      */

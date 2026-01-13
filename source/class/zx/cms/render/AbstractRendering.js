@@ -23,6 +23,13 @@ qx.Class.define("zx.cms.render.AbstractRendering", {
   members: {
     __stopped: false,
 
+    /**
+     * @Override
+     */
+    getHostName() {
+      return zx.server.Standalone.getInstance().getWebsiteName();
+    },
+
     /*
      * @Override
      */

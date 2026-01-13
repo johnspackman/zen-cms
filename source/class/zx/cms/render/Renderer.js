@@ -88,6 +88,9 @@ qx.Class.define("zx.cms.render.Renderer", {
         parent: null,
         zx: {
           _rendering: rendering,
+          debug: !!qx.core.Environment.get("qx.debug"),
+          websiteName: server.getWebsiteName(),
+          hostName: rendering.getHostName(),
           user: {
             hasPermission: permname => {
               return user && user.hasPermission(permname);
