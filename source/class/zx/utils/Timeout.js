@@ -74,6 +74,15 @@ qx.Class.define("zx.utils.Timeout", {
       init: true,
       check: "Boolean",
       apply: "_applyEnabled"
+    },
+
+    /** Callback for exceptions during timeout processing
+     * @type {(ex: Error) => void}
+     */
+    exceptionCallback: {
+      init: null,
+      nullable: true,
+      check: "Function"
     }
   },
 
@@ -162,7 +171,11 @@ qx.Class.define("zx.utils.Timeout", {
         try {
           await this.fire();
         } catch (ex) {
-          this.error("Exception while firing timeout: " + ex, ex);
+          if (this.getExceptionCallback()) {
+            this.getExceptionCallback().call(this, ex);
+          } else {
+            throw ex;
+          }
         }
         if (this.isEnabled() && this.isRecurring() && !this.isDisposed()) {
           this.startTimer();

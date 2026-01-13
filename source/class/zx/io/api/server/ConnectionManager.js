@@ -153,9 +153,8 @@ qx.Class.define("zx.io.api.server.ConnectionManager", {
         //check if we are allowed to use this API
         let authProvider = this.getAuthProvider();
         if (!api.isPublic() && authProvider && !(await authProvider.canUseApi(api.getApiName()))) {
-          response.addData(`You are not authorized to use this API: ${api.getApiName()}`);
           response.setStatusCode(401);
-          return;
+          throw new Error(`Not authorized to use API ${api.getApiName()}`);
         }
 
         //Call the API
@@ -175,6 +174,8 @@ qx.Class.define("zx.io.api.server.ConnectionManager", {
           this.debug("Sending publication to transport", { publication, session });
           response.addData(publication);
         }
+      } else if (request.getType() === "poll") {
+        throw new Error("Received poll request with invalid session.");
       }
     },
 

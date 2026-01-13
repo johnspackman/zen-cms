@@ -52,7 +52,8 @@ qx.Class.define("zx.io.api.server.Request", {
 
   properties: {
     /**
-     * public readonly
+     * @public get
+     * @private set
      */
     type: {
       check: ["callMethod", "subscribe", "poll", "unsubscribe"],
@@ -68,7 +69,8 @@ qx.Class.define("zx.io.api.server.Request", {
       event: "changeData"
     },
     /**
-     * public readonly.
+     * @public get
+     * @private set
      * The transport that created this request
      */
     transport: {
@@ -77,7 +79,8 @@ qx.Class.define("zx.io.api.server.Request", {
     },
 
     /**
-     * public readonly.
+     * @public get
+     * @private set
      * Only set when this request's type is "callMethod".
      * Sometimes it may be a forward-slash-separated string, e.g. "/prefix/apiName/methodName",
      * or it can be just a string, which is the method name
@@ -89,7 +92,8 @@ qx.Class.define("zx.io.api.server.Request", {
     },
 
     /**
-     * public readonly.
+     * @public get
+     * @private set
      * If this request is part of a session, this property will be set to the session object
      */
     session: {
@@ -99,7 +103,8 @@ qx.Class.define("zx.io.api.server.Request", {
     },
 
     /**
-     * public readonly
+     * @public get
+     * @private set
      * @type {zx.io.api.IHeaders}
      */
     headers: {
@@ -108,7 +113,8 @@ qx.Class.define("zx.io.api.server.Request", {
 
     /**
      * @type {zx.io.api.IRequestJson.IBody | string}
-     * public readonly
+     * @public get
+     * @private set
      */
     body: {
       init: null,
