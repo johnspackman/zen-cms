@@ -35,7 +35,7 @@ qx.Class.define("zx.cms.render.FastifyRendering", {
     /**
      * @Override
      */
-    getHostName() {
+    getHostname() {
       return this.__req.hostname;
     },
 

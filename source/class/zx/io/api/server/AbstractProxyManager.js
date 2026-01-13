@@ -11,7 +11,7 @@ qx.Class.define("zx.io.api.server.AbstractProxyManager", {
     super();
     const MINUTE = 60 * 1000;
     this.__transportCache = new zx.utils.FunctionResultCache().set({
-      generator: hostName => this._createTransportForHostname(hostName),
+      generator: hostname => this._createTransportForHostname(hostname),
       expiryTime: 5 * MINUTE
     });
   },

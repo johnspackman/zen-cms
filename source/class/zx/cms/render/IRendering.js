@@ -31,7 +31,7 @@ qx.Interface.define("zx.cms.render.IRendering", {
      *
      * @return {String}
      */
-    getHostName() {},
+    getHostname() {},
 
     /**
      * Called to get a header value; `name` is case insensitive
