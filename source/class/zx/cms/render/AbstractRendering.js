@@ -26,7 +26,7 @@ qx.Class.define("zx.cms.render.AbstractRendering", {
     /**
      * @Override
      */
-    getHostName() {
+    getHostname() {
       return zx.server.Standalone.getInstance().getWebsiteName();
     },
 
