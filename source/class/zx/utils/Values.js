@@ -16,8 +16,7 @@
  * ************************************************************************ */
 
 qx.Class.define("zx.utils.Values", {
-  type: "singleton",
-  extend: qx.core.Object,
+  type: "static",
 
   statics: {
     /**
@@ -70,6 +69,15 @@ qx.Class.define("zx.utils.Values", {
       }
 
       return result;
+    },
+
+    /**
+     * Replaces newline characters with <br/>
+     * @param {string} str
+     * @returns {string}
+     */
+    nl2br(str) {
+      return str.replace(/\r\n|\n\r|\r|\n/g, "<br/>");
     },
 
     /**
