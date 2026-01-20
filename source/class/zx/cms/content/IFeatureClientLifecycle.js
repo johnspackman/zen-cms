@@ -26,6 +26,6 @@ qx.Interface.define("zx.cms.content.IFeatureClientLifecycle", {
      *
      * @param options {Map?} options passed to the installer
      */
-    onReady(options) {}
+    async onReady(options) {}
   }
 });

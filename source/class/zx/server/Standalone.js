@@ -88,6 +88,8 @@ qx.Class.define("zx.server.Standalone", {
     async start() {
       let config = zx.server.Config.getInstance();
       this._config = await zx.server.Config.getConfig();
+      debugger;
+      await this._enableHeapDumps();
       if (this._config.smtpServer) {
         await zx.server.email.EmailJS.initialise();
         await zx.server.email.SMTPClient.initialise();
@@ -98,6 +100,94 @@ qx.Class.define("zx.server.Standalone", {
       await this._initSite();
       await this._initRenderer();
       await this._initUserDiscovery();
+    },
+
+    /**
+     * Enables heap dumps if configured; SIGHUP is used to trigger a heap dump
+     */
+    async _enableHeapDumps() {
+      const exitProcess = () => {
+        console.log("Exiting process as requested");
+        process.removeAllListeners("SIGINT");
+        process.removeAllListeners("SIGHUP");
+        process.removeAllListeners("SIGUSR2");
+        process.exit(0);
+      };
+      process.on("SIGUSR2", function () {
+        console.log("SIGUSR2 received, exiting");
+        exitProcess();
+      });
+      let enabled = false;
+      if (this._config.heapdumps) {
+        enabled = this._config.heapdumps.enabled;
+        if (enabled === undefined) {
+          enabled = qx.core.Environment.get("qx.debug");
+        }
+      }
+      if (!enabled) {
+        return;
+      }
+      let heapdumpDir = path.resolve(this._config.heapdumps.directory ? this._config.heapdumps.directory : path.join(this._config.directory, "heapdumps"));
+
+      let runningHeapDumps = false;
+      const writeHeapDump = async () => {
+        if (runningHeapDumps) {
+          console.log("Heap dump already in progress, ignoring request");
+          return;
+        }
+        runningHeapDumps = true;
+        await zx.utils.Path.makeDirs(heapdumpDir);
+        const v8 = require("v8");
+        let DF = new qx.util.format.DateFormat("yyyy-MM-dd'T'HH-mm-ss");
+        let baseFilename = path.join(heapdumpDir, `heapdump-${DF.format(new Date())}-${process.pid}`);
+        let filename = `${baseFilename}.heapsnapshot`;
+        console.log(`Writing heap dump to ${filename}...`);
+        let heapSnapshotStream = v8.getHeapSnapshot();
+        let fileStream = fs.createWriteStream(filename);
+        try {
+          await new Promise((resolve, reject) => {
+            fileStream.on("finish", resolve);
+            fileStream.on("error", reject);
+            heapSnapshotStream.pipe(fileStream);
+          });
+          console.log(`Heap dump written to ${filename}`);
+        } catch (err) {
+          console.error("Error writing heap dump: " + (err.stack || err));
+        }
+        if (qx.core.Environment.get("qx.dev.LeakDetector.enabled")) {
+          let stats = qx.dev.LeakDetector.getInstance().getStaticsByClass();
+          stats.sort((a, b) => a.key.localeCompare(b.key));
+          let str = "";
+          stats.forEach(stat => {
+            str += `${stat.key}: ${stat.count}\n`;
+          });
+          await fs.promises.writeFile(`${baseFilename}-classes.txt`, str, "utf8");
+          console.log("LeakDetector statistics: " + JSON.stringify(stats));
+        }
+        runningHeapDumps = false;
+      };
+      if (this._config.heapdumps.sigint) {
+        let lastSigint = 0;
+        process.on("SIGINT", function (code) {
+          let now = Date.now();
+          let diff = now - lastSigint;
+          lastSigint = now;
+          if (diff < 500) {
+            console.log("SIGINT received twice within 0.5 seconds, ignoring");
+            return;
+          }
+          if (diff < 5000) {
+            console.log(`SIGINT received twice within 5 seconds (${diff}ms), exiting`);
+            exitProcess();
+          }
+          console.log("SIGINT received, collecting heap dump");
+          setTimeout(writeHeapDump, 500);
+        });
+      }
+      process.on("SIGHUP", function (code) {
+        console.log("SIGHUP received, collecting heap dump");
+        writeHeapDump();
+      });
     },
 
     /**

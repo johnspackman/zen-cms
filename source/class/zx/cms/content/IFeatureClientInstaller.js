@@ -28,6 +28,6 @@ qx.Interface.define("zx.cms.content.IFeatureClientInstaller", {
      * @param piece {Object} the configuration of the piece
      * @param options {Map}
      */
-    clientInstall(piece, options) {}
+    async clientInstall(piece, options) {}
   }
 });

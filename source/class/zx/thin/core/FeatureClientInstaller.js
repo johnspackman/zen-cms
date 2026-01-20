@@ -23,7 +23,7 @@ qx.Class.define("zx.thin.core.FeatureClientInstaller", {
     /**
      * @Override
      */
-    clientInstall(piece, domNode, options) {
+    async clientInstall(piece, domNode, options) {
       let clazz = this._getTargetClass(options);
       if (!clazz) {
         this.error(`Cannot install piece for ${options.targetClassname} because class does not exist`);
@@ -45,7 +45,7 @@ qx.Class.define("zx.thin.core.FeatureClientInstaller", {
           domParent.appendChild(obj.getDomElement());
         }
         obj.setRoot(true);
-        this._onFeatureReady(obj, options);
+        await this._onFeatureReady(obj, options);
         return obj;
       }
 
@@ -68,7 +68,7 @@ qx.Class.define("zx.thin.core.FeatureClientInstaller", {
 
     async _onFeatureReady(feature, options) {
       if (qx.Class.hasInterface(feature.constructor, zx.cms.content.IFeatureClientLifecycle)) {
-        feature.onReady(options);
+        await feature.onReady(options);
       }
     }
   },
@@ -80,7 +80,7 @@ qx.Class.define("zx.thin.core.FeatureClientInstaller", {
      * @param piece {Object} the piece config
      * @param options {Map} map of options/config
      */
-    installPiece(piece, options) {
+    async installPiece(piece, options) {
       const useDom = (options && options.useDom) || false;
 
       let clazz = options.clientInstallerClassname ? qx.Class.getByName(options.clientInstallerClassname) : zx.thin.core.FeatureClientInstaller;
@@ -90,7 +90,7 @@ qx.Class.define("zx.thin.core.FeatureClientInstaller", {
 
       let obj = new clazz();
       let domNode = piece.uniqueDiv.firstElementChild;
-      return obj.clientInstall(piece, domNode, options);
+      return await obj.clientInstall(piece, domNode, options);
     }
   }
 });
