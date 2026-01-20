@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Class for debouncing a call, with promise support
@@ -110,6 +110,16 @@ qx.Class.define("zx.utils.Debounce", {
       this._startTimer();
       promise = this.__runPromise = new qx.Promise();
       return await promise;
+    },
+
+    /**
+     * Stops the debounced action from occurring, or occurring again if it is already running and
+     * a repeat is queued.  This does not stop the action if it is already running, nor does it
+     * abort any promises.
+     */
+    abort() {
+      this._cancelTimer();
+      this.__queuedRepeat = false;
     },
 
     /**
