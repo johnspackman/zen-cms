@@ -91,6 +91,17 @@ qx.Class.define("zx.server.email.Message", {
     },
 
     /**
+     * Reply-To email address
+     */
+    replyTo: {
+      "@": [zx.io.persistence.anno.Property.DEFAULT, zx.io.remote.anno.Property.PROTECTED],
+      init: null,
+      nullable: true,
+      check: "String",
+      event: "changeReplyTo"
+    },
+
+    /**
      * To email address(es)
      * @type {qx.data.Array<string>} read value
      */
@@ -285,9 +296,13 @@ qx.Class.define("zx.server.email.Message", {
         bcc: this.getBcc(),
         subject: this.getSubject(),
         attachment: attachmentsData,
-        text: this.getTextBody(),
-        ...(this.getFrom() ? { "reply-to": this.getFrom() } : {})
+        text: this.getTextBody()
       };
+      if (this.getReplyTo()) {
+        emailConfig["reply-to"] = this.getReplyTo();
+      } else if (this.getFrom()) {
+        emailConfig["reply-to"] = this.getFrom();
+      }
       if (config.smtpServer.fromAddr) {
         emailConfig.from = config.smtpServer.fromAddr;
       }
