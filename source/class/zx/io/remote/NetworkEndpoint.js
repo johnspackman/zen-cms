@@ -93,6 +93,9 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
     /** @type{zx.utils.Debounce} debounce for flushing property changes (client-side only) */
     __flushDebounce: null,
 
+    /** @type{Map<String, {obj: qx.core.Object, listeners: Object<String, Number>}>} per-uuid bookkeeping for remote event listeners */
+    __remoteEventListeners: null,
+
     /**
      * Whether the end point is open
      *
@@ -316,6 +319,7 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
      */
     watchObject(obj) {
       this.getController().getSharedWatcher().watchObject(obj, this);
+      this.__attachRemoteEventListeners(obj);
     },
 
     /**
@@ -324,9 +328,59 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
      * @param obj {zx.io.persistence.IObject} the object
      */
     unwatchObject(obj) {
+      this.__detachRemoteEventListeners(obj);
       this.getController().getSharedWatcher().unwatchObject(obj, this);
       let uuid = obj.toUuid();
-      delete this.__propertyChangeStore[uuid];
+      if (this.__propertyChangeStore) {
+        delete this.__propertyChangeStore[uuid];
+      }
+    },
+
+    /**
+     * Attaches qx-listeners for every event of `obj`'s class hierarchy
+     * that carries a zx.io.remote.anno.Event annotation. Listener
+     * callbacks queue zx:remoteEvent packets.
+     *
+     * @param obj {qx.core.Object} the object
+     */
+    __attachRemoteEventListeners(obj) {
+      let eventNames = zx.io.remote.NetworkEndpoint.__getRemoteEventNames(obj.constructor);
+      if (!eventNames.length) {
+        return;
+      }
+      if (!this.__remoteEventListeners) {
+        this.__remoteEventListeners = new Map();
+      }
+      let listeners = {};
+      for (let name of eventNames) {
+        listeners[name] = obj.addListener(name, evt => {
+          let data = typeof evt.getData === "function" ? evt.getData() : null;
+          this._queuePacket({
+            type: "zx:remoteEvent",
+            uuid: obj.toUuid(),
+            eventName: name,
+            data: data === undefined ? null : data
+          });
+          this.__flushDebounce?.trigger();
+        });
+      }
+      this.__remoteEventListeners.set(obj.toUuid(), { obj, listeners });
+    },
+
+    /**
+     * Removes the listeners installed by __attachRemoteEventListeners.
+     *
+     * @param obj {qx.core.Object} the object
+     */
+    __detachRemoteEventListeners(obj) {
+      let entry = this.__remoteEventListeners?.get(obj.toUuid());
+      if (!entry) {
+        return;
+      }
+      for (let id of Object.values(entry.listeners)) {
+        obj.removeListenerById(id);
+      }
+      this.__remoteEventListeners.delete(obj.toUuid());
     },
 
     /**
@@ -694,6 +748,18 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
       for (let i = 0; i < packets.length; i++) {
         let packet = packets[i];
 
+        if (packet.type === "zx:remoteEvent") {
+          let known = this.getController()._getKnownObject(packet.uuid);
+          if (known) {
+            if (packet.data === null || packet.data === undefined) {
+              known.fireEvent(packet.eventName);
+            } else {
+              known.fireDataEvent(packet.eventName, packet.data);
+            }
+          }
+          continue;
+        }
+
         if (packet.type == "sendObject") {
           let clazz = qx.Class.getByName(packet.json._classname);
           if (!clazz) {
@@ -987,6 +1053,41 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
 
     /** @type{Map} map of all end points indexed by hash code */
     __allEndpoints: {},
+
+    /** @type{Map} cache of remote event names per class */
+    __remoteEventCache: new Map(),
+
+    /**
+     * Returns the list of event names of `clazz` (and its superclasses)
+     * that carry a zx.io.remote.anno.Event annotation. Cached per class.
+     *
+     * @param clazz {qx.Class}
+     * @return {String[]}
+     */
+    __getRemoteEventNames(clazz) {
+      let cached = this.__remoteEventCache.get(clazz);
+      if (cached) {
+        return cached;
+      }
+      let result = [];
+      let walk = clazz;
+      while (walk) {
+        let evts = walk.$$events;
+        if (evts) {
+          for (let name of Object.keys(evts)) {
+            let annos = qx.Annotation.getMember(walk, name, zx.io.remote.anno.Event);
+            if (annos && annos.length) {
+              if (!result.includes(name)) {
+                result.push(name);
+              }
+            }
+          }
+        }
+        walk = walk.superclass;
+      }
+      this.__remoteEventCache.set(clazz, result);
+      return result;
+    },
 
     /** @type {Array<{ constructor: new (...args: any[]) => any; method?: string }>} */
     __allowedConstructors: [],

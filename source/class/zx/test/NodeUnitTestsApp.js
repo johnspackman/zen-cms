@@ -38,6 +38,7 @@ qx.Class.define("zx.test.NodeUnitTestsApp", {
       zx.test.TestRunner.runAll(zx.test.io.persistence.TestImportExport);
       zx.test.TestRunner.runAll(zx.test.io.persistence.TestNedbDatabase);
       zx.test.TestRunner.runAll(zx.test.io.remote.TestPropertyChanges);
+      zx.test.TestRunner.runAll(zx.test.io.remote.TestRemoteEvents);
       zx.test.TestRunner.runAll(zx.test.cms.TestTemplates, ["testCms"]);
     }
   }
