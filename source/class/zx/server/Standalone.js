@@ -97,7 +97,6 @@ qx.Class.define("zx.server.Standalone", {
       await this._enableHeapDumps();
       if (this._config.smtpServer) {
         await zx.server.email.EmailJS.initialise();
-        await zx.server.email.SMTPClient.initialise();
       } else {
         console.warn("No SMTP server configuration, so sending emails not possible.");
       }

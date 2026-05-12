@@ -87,13 +87,21 @@ qx.Class.define("zx.utils.Debounce", {
      * Runs the function, completes when the function completes.  The function returns
      * whatever the callback function returned
      *
+     * @param {Boolean} runAsap if true then the function will run as soon as possible, ignoring the timeout.
      * @return {var?}
      */
-    async run() {
+    async run(runAsap = false) {
       let promise = this.__runPromise;
       if (promise) {
         let repeatedTrigger = this.getRepeatedTrigger();
-        if (repeatedTrigger == "restart") {
+
+        if (runAsap) {
+          this.__queuedRepeat = true;
+          if (this.__timerId) {
+            this._cancelTimer();
+            this._onTimeout();
+          }
+        } else if (repeatedTrigger == "restart") {
           // If there is a timer id then  we can restart it, otherwise it is already executing
           if (this.__timerId) {
             this._cancelTimer();

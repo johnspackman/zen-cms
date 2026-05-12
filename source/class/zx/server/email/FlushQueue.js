@@ -28,7 +28,12 @@ qx.Class.define("zx.server.email.FlushQueue", {
      * @param {boolean} clearQueue If true, we will delete emails that have been successfully sent from the queue.
      *  Otherwise, all emails (even the sent ones) will remain in the queue.
      */
-    async execute(worker, clearQueue = true) {
+    async execute(worker) {
+      debugger;
+      let clearQueue = worker.getWorkJson().clearQueue;
+      if (clearQueue === undefined) {
+        clearQueue = true;
+      }
       let emailsCollection = await zx.server.Standalone.getInstance().getDb().getCollection("zx.server.email.Message");
       worker.appendWorkLog("Got emails collection.");
 
