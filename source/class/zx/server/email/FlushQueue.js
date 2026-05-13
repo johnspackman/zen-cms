@@ -29,7 +29,12 @@ qx.Class.define("zx.server.email.FlushQueue", {
      * @param {zx.server.work.Worker} worker the worker which is executing this task
      *  Otherwise, all emails (even the sent ones) will remain in the queue.
      */
-    async execute(worker, clearQueue = true) {
+    async execute(worker) {
+      debugger;
+      let clearQueue = worker.getWorkJson().clearQueue;
+      if (clearQueue === undefined) {
+        clearQueue = true;
+      }
       let emailsCollection = await zx.server.Standalone.getInstance().getDb().getCollection("zx.server.email.Message");
       worker.appendWorkLog("Got emails collection.");
 

@@ -300,6 +300,9 @@ qx.Class.define("zx.reports.CollatingIterator", {
         if (!groupDataStack[groupInfos.length - 1].rows) {
           groupDataStack[groupInfos.length - 1].rows = [];
         }
+        if (groupDataStack[groupInfos.length - 1].rows.indexOf(row) > -1) {
+          throw new Error("Duplicate row added to group data");
+        }
         groupDataStack[groupInfos.length - 1].rows.push(row);
       }
       await this.__datasource.close();
