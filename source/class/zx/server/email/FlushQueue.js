@@ -23,6 +23,7 @@ qx.Class.define("zx.server.email.FlushQueue", {
   implement: [zx.server.work.IWork],
   members: {
     /**
+     * @override interface zx.server.work.IWork
      * Flushes the email queue and attempts to send all emails which have not failed to send i.e. have `lastErrorMessage` set to `null`.
      *
      * @param {boolean} clearQueue If true, we will delete emails that have been successfully sent from the queue.
@@ -30,7 +31,6 @@ qx.Class.define("zx.server.email.FlushQueue", {
      *  Otherwise, all emails (even the sent ones) will remain in the queue.
      */
     async execute(worker) {
-      debugger;
       let clearQueue = worker.getWorkJson().clearQueue;
       if (clearQueue === undefined) {
         clearQueue = true;
