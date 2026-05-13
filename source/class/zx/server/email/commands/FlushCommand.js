@@ -21,7 +21,7 @@
  * This command will attempt to send all emails in the queue, and remove the emails that have been successfully sent (if the clear-queue flag is set).
  */
 qx.Class.define("zx.server.email.commands.FlushCommand", {
-  extend: uk.co.spar.cli.accounts.AbstractWorkCommand,
+  extend: zx.cli.Command,
   construct() {
     super("flush");
 
@@ -39,15 +39,27 @@ qx.Class.define("zx.server.email.commands.FlushCommand", {
     /**
      * @Override
      */
-    async _queueWork(pool, scheduler) {
+    async _runImpl() {
       let { args, flags } = this.getValues();
 
-      scheduler.pushWork({
-        workClassname: "zx.server.email.FlushQueue",
-        uuid: qx.util.Uuid.createUuidV4(),
-        clearQueue: flags.clearQueue
-      });
+      let server = new zx.server.Standalone();
+      await server.start();
 
+      let worker = {
+        getWorkJson() {
+          return {
+            workClassname: "zx.server.email.FlushQueue",
+            uuid: qx.util.Uuid.createUuidV4(),
+            clearQueue: flags.clearQueue
+          };
+        },
+        appendWorkLog(msg) {
+          console.log(msg);
+        }
+      };
+
+      let flushWork = new zx.server.email.FlushQueue();
+      await flushWork.execute(worker);
       return 0;
     }
   }
