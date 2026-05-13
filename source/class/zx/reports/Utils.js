@@ -15,6 +15,9 @@
  *
  * ************************************************************************ */
 
+/**
+ * @ignore(BigNumber)
+ */
 qx.Class.define("zx.reports.Utils", {
   type: "static",
   statics: {
@@ -34,6 +37,15 @@ qx.Class.define("zx.reports.Utils", {
       }
       if (path == ".") {
         return new Function("return this;");
+      }
+      let isCurrency = false;
+      let isPercentage = false;
+      if (path[0] == "£" || path[0] == "€" || path[0] == "$") {
+        isCurrency = true;
+        path = path.substring(1);
+      } else if (path.endsWith("%")) {
+        path = path.substring(0, path.length - 1);
+        isPercentage = true;
       }
       let parts = path.split(".");
       let upnames = parts.map(part => qx.lang.String.firstUp(part));
@@ -59,6 +71,20 @@ qx.Class.define("zx.reports.Utils", {
         }
         if (obj === null || obj === undefined) {
           console.log(`Value for path ${path} is null/undefined at part #${i} (${parts[i]})`);
+        }
+        if (isCurrency) {
+          if (obj instanceof BigNumber) {
+            return grasshopper.utils.Values.getCurrencyFormat().format(obj.toNumber());
+          } else if (qx.lang.Type.isNumber(obj)) {
+            return grasshopper.utils.Values.getCurrencyFormat().format(obj);
+          }
+        }
+        if (isPercentage) {
+          if (obj instanceof BigNumber) {
+            return (obj.toNumber() * 100).toFixed(2) + "%";
+          } else if (qx.lang.Type.isNumber(obj)) {
+            return (obj * 100).toFixed(2) + "%";
+          }
         }
         return obj;
       };
