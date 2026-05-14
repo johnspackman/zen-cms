@@ -70,7 +70,7 @@ qx.Class.define("zx.reports.Utils", {
           }
         }
         if (obj === null || obj === undefined) {
-          console.log(`Value for path ${path} is null/undefined at part #${i} (${parts[i]})`);
+          console.log(`Value for path ${path} is null/undefined`);
         }
         if (isCurrency) {
           if (obj instanceof BigNumber) {
