@@ -309,7 +309,7 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
         if (value[prop] !== undefined) {
           pool["set" + upname](value[prop]);
         } else {
-          pool["reset" + upname](value[prop]);
+          pool["reset" + upname]();
         }
       });
     },
@@ -340,7 +340,7 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
       let workResult = workerTracker.takeWorkResult();
       if (workResult) {
         this.__workResultQueue.push(workResult);
-        delete this.__runningWorkTrackers[workResult.getJsonWork().uuid];
+        delete this.__runningWorkTrackers[workResult.getWorkJson().uuid];
       }
       workerTracker.removeListener("changeStatus", this.__onWorkTrackerStatusChange, this);
     },
@@ -357,7 +357,7 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
       let workerTracker = evt.getTarget();
       let workResult = workerTracker.takeWorkResult();
       if (workResult) {
-        delete this.__runningWorkTrackers[workResult.getJsonWork().uuid];
+        delete this.__runningWorkTrackers[workResult.getWorkJson().uuid];
       }
       if (status === "dead") {
         pool.destroyResource(workerTracker);

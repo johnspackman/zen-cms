@@ -91,6 +91,17 @@ qx.Class.define("zx.server.email.Message", {
     },
 
     /**
+     * Reply-To email address
+     */
+    replyTo: {
+      "@": [zx.io.persistence.anno.Property.DEFAULT, zx.io.remote.anno.Property.PROTECTED],
+      init: null,
+      nullable: true,
+      check: "String",
+      event: "changeReplyTo"
+    },
+
+    /**
      * To email address(es)
      * @type {qx.data.Array<string>} read value
      */
@@ -229,6 +240,18 @@ qx.Class.define("zx.server.email.Message", {
     },
 
     /**
+     * Adds an attachment to the email
+     *
+     * @param {zx.server.email.Attachment} attachment
+     */
+    addAttachment(attachment) {
+      if (!this.getAttachments()) {
+        this.setAttachments(new qx.data.Array());
+      }
+      this.getAttachments().push(attachment);
+    },
+
+    /**
      * @returns {Promise<void>} A promise that resolves when the email has been sent or failed to send
      * @throws {Error} If the email cannot be sent
      */
@@ -241,8 +264,16 @@ qx.Class.define("zx.server.email.Message", {
       }
 
       /** @type {Array<Record<keyof any, any>>} */
-      let attachmentsData = [{ data: htmlBody, alternative: true }];
-      this.debug("Before getting attachments");
+      let attachmentsData = undefined;
+      const addAttachmentData = data => {
+        if (!attachmentsData) {
+          attachmentsData = [];
+        }
+        attachmentsData.push(data);
+      };
+      if (htmlBody) {
+        addAttachmentData({ data: htmlBody, alternative: true });
+      }
       if (this.getAttachments()) {
         let mime = (await import("mime")).default;
         this.getAttachments().forEach(attachment => {
@@ -273,11 +304,9 @@ qx.Class.define("zx.server.email.Message", {
           }
 
           attachmentData.name = attachment.getName() || path.basename(filename);
-          attachmentsData.push(attachmentData);
+          addAttachmentData(attachmentData);
         });
       }
-
-      this.debug("Before getting creating emailJsMessage");
 
       let emailConfig = {
         to: this.getTo(),
@@ -285,22 +314,24 @@ qx.Class.define("zx.server.email.Message", {
         bcc: this.getBcc(),
         subject: this.getSubject(),
         attachment: attachmentsData,
-        text: this.getTextBody(),
-        ...(this.getFrom() ? { "reply-to": this.getFrom() } : {})
+        text: this.getTextBody()
       };
+      if (this.getReplyTo()) {
+        emailConfig["reply-to"] = this.getReplyTo();
+      } else if (this.getFrom()) {
+        emailConfig["reply-to"] = this.getFrom();
+      }
       if (config.smtpServer.fromAddr) {
         emailConfig.from = config.smtpServer.fromAddr;
       }
       let emailJsMessage = zx.server.email.EmailJS.createNewMessage(emailConfig);
 
-      let client = zx.server.email.SMTPClient.getSmtpClientImpl();
+      let client = zx.server.email.EmailJS.getSmtpClientImpl();
 
       try {
-        this.debug("Before sending message via emailJs");
         await client.sendAsync(emailJsMessage);
         this.setDateDelivered(new Date());
         await this.save();
-        this.debug("After sending message via emailJs");
       } catch (err) {
         if (!(emailJsMessage instanceof zx.server.email.Message)) {
           let server = zx.server.Standalone.getInstance();

@@ -16,8 +16,10 @@
  * ************************************************************************ */
 
 const fs = require("fs");
-const path = require("path");
 
+/**
+ * @use(zx.io.persistence.anno.Property)
+ */
 qx.Class.define("zx.io.remote.proxy.ClassesWriter", {
   extend: qx.core.Object,
   implement: [qx.tool.compiler.ISourceTransformer],
@@ -98,6 +100,10 @@ qx.Class.define("zx.io.remote.proxy.ClassesWriter", {
         }
         return out;
       };
+
+      if (classname == "zx.io.remote.IProxied") {
+        return false;
+      }
 
       let interfaces = getInterfacesFlat(classname);
       if (!interfaces.includes("zx.io.remote.IProxied")) {

@@ -31,6 +31,8 @@ const path = require("path");
  *
  * @asset(zx/thin/theme/materials/*)
  * @asset(zx/db/template/*)
+ *
+ * @ignore(process)
  */
 qx.Class.define("zx.server.Standalone", {
   extend: qx.core.Object,
@@ -94,7 +96,6 @@ qx.Class.define("zx.server.Standalone", {
       await this._enableHeapDumps();
       if (this._config.smtpServer) {
         await zx.server.email.EmailJS.initialise();
-        await zx.server.email.SMTPClient.initialise();
       } else {
         console.warn("No SMTP server configuration, so sending emails not possible.");
       }
@@ -297,6 +298,9 @@ qx.Class.define("zx.server.Standalone", {
      */
     async _initSite() {
       let site = (this._site = await this.getObjectByUrl(zx.cms.website.Site, "configuration/site"));
+      if (!site) {
+        throw new Error("Cannot find site configuration object at url configuration/site");
+      }
       return site;
     },
 

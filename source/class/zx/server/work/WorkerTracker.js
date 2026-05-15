@@ -15,7 +15,6 @@
  *
  * ************************************************************************ */
 
-const Docker = require("dockerode");
 const fs = require("fs");
 const path = require("path");
 
@@ -65,7 +64,7 @@ qx.Class.define("zx.server.work.WorkerTracker", {
 
   members: {
     /**
-     * @type {zx.utils.Debounce} A watchdog which terminates the running work if its has
+     * @type {qx.util.Debounce} A watchdog which terminates the running work if its has
      * not shown activity for a certain time
      */
     __watchDog: null,
@@ -113,14 +112,14 @@ qx.Class.define("zx.server.work.WorkerTracker", {
         } else {
           this.error(data.message);
         }
-        this.__watchDog.run();
+        this.__watchDog.trigger();
         this.__lastActivity = new Date();
       });
       await this.__workerClientApi.subscribe("ping", () => {
         if (this.getStatus() !== "running") {
           return;
         }
-        this.__watchDog.run();
+        this.__watchDog.trigger();
         this.__lastActivity = new Date();
       });
     },
@@ -190,10 +189,10 @@ qx.Class.define("zx.server.work.WorkerTracker", {
 
       //Set up watchdog
       const WATCHDOG_TIMEOUT = 5 * 60 * 1000;
-      this.__watchDog = new zx.utils.Debounce(() => {
+      this.__watchDog = new qx.util.Debounce(() => {
         this.appendWorkLog("Task aborted due to inactivity timeout.");
         this.killWork();
-      }, WATCHDOG_TIMEOUT).set({ repeatedTrigger: "restart" });
+      }, WATCHDOG_TIMEOUT);
 
       //Run the work!
       let promise = this.__workerClientApi.run(jsonWork);
@@ -503,6 +502,7 @@ qx.Class.define("zx.server.work.WorkerTracker", {
           "  nodeDebugPort: " + this.__nodeDebugPort + "\n" +
           "  Docker Container Config: " + JSON.stringify(dockerConfig, null, 2));
 
+      const Docker = require("dockerode");
       let docker = new Docker();
       let container = await docker.createContainer(dockerConfig);
       this._container = container;

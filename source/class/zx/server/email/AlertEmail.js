@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 const os = require("os");
 
@@ -27,23 +27,20 @@ const os = require("os");
 qx.Class.define("zx.server.email.AlertEmail", {
   type: "singleton",
   extend: qx.core.Object,
+
   construct() {
     super();
-    const MINUTE = 60 * 1000;
-    const INTERVAL_MS = this.constructor.INTERVAL_MINUTES * MINUTE;
-    // const INTERVAL_MS = 2000;//for testing
-    this.__debounce = new zx.utils.Debounce(this.__sendEmail.bind(this), INTERVAL_MS).set({ repeatedTrigger: "ignore" });
   },
+
   members: {
-    /**
-     * @type {zx.utils.Debounce}
-     */
-    __debounce: null,
-    /**
-     * @type {string}
-     * The body of the email, accumulating the alerts util the email is sent
-     */
-    __body: "",
+    /** @type {String[]} array of alerts to be sent */
+    __queue: [],
+
+    /** @type {Integer} timer id, queue will be cleared at timeout */
+    __timerId: null,
+
+    /** @type {Integer} The number of alerts queued to be emailed */
+    __numAlerts: 0,
 
     /**
      * Adds an alert to send to the alerts email
@@ -53,33 +50,70 @@ qx.Class.define("zx.server.email.AlertEmail", {
     alert(title, text) {
       const config = zx.server.Config.getInstance().getConfigData();
       if (!config.alertsEmail) {
-        console.warn("Alerts email not set, cannot send alert email with title: " + title);
+        this.warn("Alerts email not set, cannot send alert email with title: " + title);
         return;
       }
 
-      let message = [
-        `================== Alert at ${new Date().toISOString()} ==================`,
-        `================== Title: ${title ?? "No title"} ==================`,
-        text, //
-        "\n"
-      ].join("\n");
+      this.__queue.push("\n\n============== ALERT: " + title + " ==============\n" + text);
+      let maxAlerts = config.maxAlerts || 100;
 
-      this.__body += message;
+      if (this.__queue.length > maxAlerts) {
+        this.warn(`Number of alerts (${this.__queue.length}) has reached the maximum (${maxAlerts}), sending email immediately`);
+        let body = this.__queue.join("\n");
+        this.__queue = [];
+        this.__cancelTimer();
+        this.__sendEmail(body);
+      } else {
+        this.__startTimer();
+      }
+    },
 
-      this.__debounce.run();
+    /**
+     * Starts the timer to send the email, if it is not already started
+     */
+    __startTimer() {
+      if (!this.__timerId) {
+        const MINUTE = 60 * 1000;
+        const INTERVAL_MS = zx.server.email.AlertEmail.INTERVAL_MINUTES * MINUTE;
+
+        this.__timerId = setTimeout(() => {
+          this.__timerId = null;
+          let queue = this.__queue;
+          this.__queue = [];
+          if (queue.length) {
+            let body = queue.join("\n");
+            this.__sendEmail(body);
+          }
+        }, INTERVAL_MS);
+      }
+    },
+
+    /**
+     * Cancels the timer to send the email, if it is started.  The queue will not be cleared, so an email will still be sent
+     * at the next timeout, or when the timer is started again.
+     */
+    __cancelTimer() {
+      if (this.__timerId) {
+        clearTimeout(this.__timerId);
+        this.__timerId = null;
+      }
     },
 
     /**
      * Sends the emails with alerts
      */
-    async __sendEmail() {
-      let client = zx.server.email.SMTPClient.getSmtpClientImpl();
-      const config = zx.server.Config.getInstance().getConfigData();
+    async __sendEmail(body) {
+      let client = zx.server.email.EmailJS.getSmtpClientImpl();
+      let config = zx.server.Config.getInstance().getConfigData();
+      if (config.alertsNoSend) {
+        this.info("alertsNoSend is set, not sending alert email with body:\n" + body);
+        return;
+      }
       let message = zx.server.email.EmailJS.createNewMessage({
         from: config.smtpServer.fromAddr,
         to: config.alertsEmail,
-        subject: `ZX Server alert for ${config.websiteName}, machine: ${os.hostname()}`,
-        text: this.__body
+        subject: `CRITICAL LOG ALERT for ${config.websiteName}, machine: ${os.hostname()}`,
+        text: body
       });
 
       try {
@@ -87,16 +121,6 @@ qx.Class.define("zx.server.email.AlertEmail", {
       } catch (err) {
         this.error("Error sending alert email: " + err.message + "\n" + err.stack);
       }
-
-      this.__body = "";
-    },
-
-    /**
-     *
-     * @returns {Promise<void>} A promise which resolves when all the queued alerts have been sent
-     */
-    async join() {
-      return this.__debounce.join();
     }
   },
 
