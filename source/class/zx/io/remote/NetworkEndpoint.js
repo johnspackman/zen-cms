@@ -34,9 +34,7 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
     this.__uuid = uuid || this.toUuid();
     this.__receiveQueue = new zx.utils.Queue(packets => this._receivePacketsImpl(packets));
 
-    if (!qx.core.Environment.get("zx.io.remote.NetworkEndpoint.server")) {
-      this.__flushDebounce = new qx.util.Debounce(() => this.flush(), 5).set({ onPending: "ignore" });
-    }
+    this.__flushDebounce = new qx.util.Debounce(() => this.flush(), 5).set({ onPending: "ignore" });
 
     zx.io.remote.NetworkEndpoint.__allEndpoints[this.__uuid] = this;
     if (qx.core.Environment.get("zx.io.remote.NetworkEndpoint.server") === undefined) {
