@@ -20,6 +20,8 @@
  *
  * @typedef {{code:string,anno:Object}} AnnoExtra
  * @typedef {qx.tool.compiler.meta.StdClassParser.PropertyMeta & {annosExtra: Object.<string,AnnoExtra>}} PropertyMetaExtra
+ * @typedef {Object} MethodMeta
+ * @property {{code:string, anno: qx.core.Object}[]=} annosExtra
  */
 qx.Class.define("zx.io.remote.proxy.ClassWriter", {
   extend: qx.core.Object,
@@ -56,11 +58,6 @@ qx.Class.define("zx.io.remote.proxy.ClassWriter", {
 
     /** @type {Object.<string,MethodMeta>} methods */
     __methods: null,
-
-    /**
-     * @typedef {Object} MethodMeta
-     * @property {{code:string, anno: qx.core.Object}[]=} annosExtra
-     */
 
     /**
      * Called to read the class and initialise

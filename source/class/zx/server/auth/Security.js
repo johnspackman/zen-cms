@@ -61,18 +61,18 @@ qx.Class.define("zx.server.auth.Security", {
      */
     async receiveDataNotification(key, data) {
       if (key == zx.io.persistence.IObjectNotifications.DATA_LOAD_COMPLETE) {
-        const DP = zx.server.auth.Security.__DEFAULT_PERMISSIONS;
+        const DEFAULT_PERMISSIONS = zx.server.auth.Security.__DEFAULT_PERMISSIONS;
         let perms = this.getPermissions();
         let modified = false;
-        for (let shortCode in DP) {
+        for (let shortCode in DEFAULT_PERMISSIONS) {
           if (!perms.lookup(shortCode)) {
             let perm = await zx.server.Standalone.getInstance().findOneObjectByType(zx.server.auth.Permission, { shortCode: shortCode });
 
             if (!perm) {
               perm = new zx.server.auth.Permission().set({
                 shortCode: shortCode,
-                title: DP[shortCode].title,
-                notes: DP[shortCode].notes
+                title: DEFAULT_PERMISSIONS[shortCode].title,
+                notes: DEFAULT_PERMISSIONS[shortCode].notes
               });
             }
 

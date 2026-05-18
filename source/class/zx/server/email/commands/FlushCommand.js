@@ -33,16 +33,34 @@ qx.Class.define("zx.server.email.commands.FlushCommand", {
         value: true
       })
     );
-
-    this.setRunFunc(async ({ flags, args }) => {
-      await new zx.server.Standalone().start();
-
-      let flushObj = new zx.server.email.FlushQueue();
-      await flushObj.run(flags["clear-queue"]);
-      console.log("Done.");
-      return 0;
-    });
   },
 
-  members: {}
+  members: {
+    /**
+     * @Override
+     */
+    async _runImpl() {
+      let { args, flags } = this.getValues();
+
+      let server = new zx.server.Standalone();
+      await server.start();
+
+      let worker = {
+        getWorkJson() {
+          return {
+            workClassname: "zx.server.email.FlushQueue",
+            uuid: qx.util.Uuid.createUuidV4(),
+            clearQueue: flags.clearQueue
+          };
+        },
+        appendWorkLog(msg) {
+          console.log(msg);
+        }
+      };
+
+      let flushWork = new zx.server.email.FlushQueue();
+      await flushWork.execute(worker);
+      return 0;
+    }
+  }
 });

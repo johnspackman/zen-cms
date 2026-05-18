@@ -57,6 +57,9 @@ qx.Class.define("zx.reports.Utils", {
             obj = obj[parts[i]];
           }
         }
+        if (obj === null || obj === undefined) {
+          console.log(`Value for path ${path} is null/undefined at part #${i} (${parts[i]})`);
+        }
         return obj;
       };
     },

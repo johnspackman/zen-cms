@@ -110,7 +110,7 @@ qx.Class.define("zx.io.api.server.Response", {
       // This is because the client API can have multiple data items
       // (e.g. publications), while REST requests can only have one data item
       if (this.getRequest() && !this.getRequest().isFromClientApi()) {
-        return this.__data[0];
+        return this.getErrorMessage() ?? this.__data[0];
       } else {
         return {
           data: this.__data,

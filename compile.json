@@ -146,6 +146,24 @@
       "exclude": ["qx.bom.Selector"],
       "type": "node",
       "class": "zx.demo.io.api.srv.ServerApp"
+    },
+    {
+      "title": "Tests - WebSocket peer server",
+      "description": "Node peer app: Fastify+WebSocket server publishing a Person fixture; pairs with peer-ws-client",
+      "class": "zx.test.io.remote.RemoteWebSocketServer",
+      "type": "node",
+      "name": "peer-ws-server",
+      "exclude": ["qx.ui.*"],
+      "group": ["tests"]
+    },
+    {
+      "title": "Tests - WebSocket peer client",
+      "description": "Node peer app: connects to peer-ws-server via WebSocket and reads the Person fixture",
+      "class": "zx.test.io.remote.DemoRemoteWebSocketClient",
+      "type": "node",
+      "name": "peer-ws-client",
+      "exclude": ["qx.ui.*"],
+      "group": ["tests"]
     }
   ],
   "sass": {

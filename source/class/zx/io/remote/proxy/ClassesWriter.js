@@ -101,6 +101,10 @@ qx.Class.define("zx.io.remote.proxy.ClassesWriter", {
         return out;
       };
 
+      if (classname == "zx.io.remote.IProxied") {
+        return false;
+      }
+
       let interfaces = getInterfacesFlat(classname);
       if (!interfaces.includes("zx.io.remote.IProxied")) {
         return false;
