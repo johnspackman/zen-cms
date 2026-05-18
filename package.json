@@ -85,5 +85,13 @@
     "@types/express": "^5.0.0",
     "cheerio": "^1.0.0-rc.9",
     "globby": "^10.0.2"
+  },
+  "peerDependencies": {
+    "@fastify/websocket": "^11.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@fastify/websocket": {
+      "optional": true
+    }
   }
 }
