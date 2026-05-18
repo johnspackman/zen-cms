@@ -1070,11 +1070,10 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
       let result = [];
       let walk = clazz;
       while (walk) {
-        let evts = walk.$$events;
-        if (evts) {
-          for (let name of Object.keys(evts)) {
-            let annos = qx.Annotation.getMember(walk, name, zx.io.remote.anno.Event);
-            if (annos && annos.length) {
+        let annoEvents = walk.$$annotations && walk.$$annotations.events;
+        if (annoEvents) {
+          for (let [name, annos] of Object.entries(annoEvents)) {
+            if (annos.some(a => a instanceof zx.io.remote.anno.Event)) {
               if (!result.includes(name)) {
                 result.push(name);
               }
