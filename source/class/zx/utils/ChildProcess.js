@@ -125,7 +125,7 @@ qx.Class.define("zx.utils.ChildProcess", {
 
       proc.stdout.on("data", data => this.__onConsole(data.toString(), "stdout"));
       proc.stderr.on("data", data => this.__onConsole(data.toString(), "stderr"));
-      proc.on("close", ({ exitCode, signal }) => this.__onProcessTerminate(exitCode, signal));
+      proc.on("close", (exitCode, signal) => this.__onProcessTerminate(exitCode, signal));
       proc.on("error", err => this.__onProcessError(err));
       this.__process = proc;
       this.fireDataEvent("onStart", proc.pid);
