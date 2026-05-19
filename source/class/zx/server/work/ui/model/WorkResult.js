@@ -11,7 +11,7 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
    */
   construct(workResultJson) {
     super();
-    this.setExplicitUuid(this.constructor.getUuid(workResultJson));
+    this.setExplicitUuid(workResultJson.uuid);
     if (workResultJson) {
       this.__update(workResultJson);
     }
@@ -132,7 +132,7 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
      * @returns {zx.server.work.ui.model.WorkResult}
      */
     get(json) {
-      let uuid = typeof json === "string" ? json : this.getUuid(json);
+      let uuid = typeof json === "string" ? json : json.uuid;
       let instance = this.__instances[uuid];
       if (!instance) {
         instance = new zx.server.work.ui.model.WorkResult(json);
@@ -142,15 +142,6 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
 
       this.__instances[uuid] = instance;
       return instance;
-    },
-
-    /**
-     *
-     * @param {zx.server.work.WorkResult.WorkResultJson} workResultJson
-     * @returns {string} The UUID to assign to a work result based on its workJson
-     */
-    getUuid(workResultJson) {
-      return workResultJson.workJson.uuid + "/" + workResultJson.workStatus.started.getTime();
     }
   },
   members: {
