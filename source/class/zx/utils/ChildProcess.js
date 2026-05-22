@@ -212,7 +212,7 @@ qx.Class.define("zx.utils.ChildProcess", {
       if (!signal) {
         signal = "SIGTERM";
       }
-      const psTree = qx.utils.Promisify.promisify(require("ps-tree"));
+      const psTree = qx.tool.utils.Promisify.promisify(require("ps-tree"));
       let childProcesses = await psTree(this.__process.pid);
       for (let childProcess of childProcesses) {
         try {
