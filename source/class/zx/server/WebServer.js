@@ -82,6 +82,13 @@ qx.Class.define("zx.server.WebServer", {
       init: null,
       nullable: true,
       check: "String"
+    },
+    /**
+     * Whether this server is running as an external worker pool as opposed to a main server
+     */
+    externalWorkerPool: {
+      init: false,
+      check: "Boolean"
     }
   },
 
@@ -556,8 +563,48 @@ qx.Class.define("zx.server.WebServer", {
         return;
       }
       await zx.server.email.FlushQueue.createTask();
-      let workerCliPath = config.workerCliPath;
+
+      let cm = zx.io.api.server.ConnectionManager.getInstance();
+
+      let externalPool = this.isExternalWorkerPool();
+      //Create scheduler
+      if (!externalPool) {
+        let workScheduler = new zx.server.work.scheduler.QueueScheduler("temp/scheduler/");
+        this.__workScheduler = workScheduler;
+        await fs.promises.rm(workScheduler.getWorkDir(), { force: true, recursive: true });
+        cm.registerApi(workScheduler.getServerApi(), "/scheduler");
+        await workScheduler.startup();
+
+        //Create DB scanner
+        let dbScanner = new zx.server.work.scheduler.DbScanner(workScheduler);
+        cm.registerApi(dbScanner.getServerApi(), "/tasks");
+        dbScanner.start();
+      }
+
+      //Create a worker pool
+      if (!config.pool.external || externalPool) {
+        let pool = await this._createWorkerPool(config);
+        let transport;
+        if (externalPool) {
+          // we are creating an external pool
+          transport = new zx.io.api.transport.http.HttpClientTransport(config.pool.schedulerServer);
+        } else {
+          // we are creating an internal pool, so register it directly with the scheduler
+          transport = zx.io.api.ApiUtils.getClientTransport();
+        }
+        let schedulerClientApi = zx.io.api.ApiUtils.createClientApi(zx.server.work.scheduler.ISchedulerApi, transport, "/scheduler");
+        pool.setSchedulerApi(schedulerClientApi);
+      }
+    },
+
+    /**
+     *
+     * @param {Object} config The work config from CMS config
+     * @returns {Promise<zx.server.work.pools.WorkerPool>}
+     */
+    async _createWorkerPool(config) {
       let poolType = config.pool.type || "local";
+      let workerCliPath = config.workerCliPath;
       let poolConfig = {
         minSize: config.pool.minSize || 1,
         maxSize: config.pool.maxSize || 1
@@ -614,26 +661,10 @@ qx.Class.define("zx.server.WebServer", {
       }
       this._configureWorkPool(pool);
 
+      await fs.promises.rm(pool.getWorkDir(), { force: true, recursive: true }); //!!
       await pool.cleanupOldContainers();
-
-      let workScheduler = new zx.server.work.scheduler.QueueScheduler("temp/scheduler/");
-      workScheduler.addPool(pool.getDescriptionJson());
-
-      let cm = zx.io.api.server.ConnectionManager.getInstance();
-      let dbScanner = new zx.server.work.scheduler.DbScanner(workScheduler);
-      cm.registerApi(dbScanner.getServerApi(), "/tasks");
-      await fs.promises.rm(pool.getWorkDir(), { force: true, recursive: true });
-      await fs.promises.rm(workScheduler.getWorkDir(), { force: true, recursive: true });
-
-      cm.registerApi(workScheduler.getServerApi(), "/scheduler");
-
-      let schedulerClientApi = zx.io.api.ApiUtils.createClientApi(zx.server.work.scheduler.ISchedulerApi, zx.io.api.ApiUtils.getClientTransport(), "/scheduler");
-      pool.setSchedulerApi(schedulerClientApi);
-
       await pool.startup();
-      await workScheduler.startup();
-      dbScanner.start();
-      this.__workScheduler = workScheduler;
+      return pool;
     },
 
     /**
