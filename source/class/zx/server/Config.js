@@ -50,6 +50,11 @@ qx.Class.define("zx.server.Config", {
     _rootDir: null,
 
     /**
+     * @type {String}
+     */
+    _configFilename: null,
+
+    /**
      * Loads configuration file, but will only do it once
      *
      * @return {Object} the configuration
@@ -89,12 +94,24 @@ qx.Class.define("zx.server.Config", {
     },
 
     /**
+     * @param {string} filename
+     */
+    setConfigFilename(filename) {
+      if (qx.core.Environment.get("qx.debug")) {
+        if (this._config) {
+          throw new Error("Cannot change config filename after config has been loaded");
+        }
+      }
+      this._configFilename = filename;
+    },
+
+    /**
      * Returns the filename to load (this exists to be overridden
      *
      * @returns {String}
      */
     _getConfigFilename() {
-      return "cms.json";
+      return this._configFilename || "cms.json";
     },
 
     /**
