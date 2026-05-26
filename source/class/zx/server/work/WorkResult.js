@@ -141,7 +141,6 @@ qx.Class.define("zx.server.work.WorkResult", {
      */
     serializeForScheduler() {
       return {
-        uuid: this.__workJson.uuid + "/" + this.__workStatus.started.getTime(),
         workJson: this.__workJson,
         workStatus: this.__workStatus,
         log: this.__logOutput ?? "",

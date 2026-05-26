@@ -395,7 +395,8 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
 
       //First try to see if it is running
       result = await this.getRunningWorkResult(workUuid, true);
-      if (result && result.uuid === workResultUuid) {
+      let started = result?.workStatus?.started?.getTime();
+      if (started && started == startTime) {
         return result.log.substring(start, end);
       }
 
