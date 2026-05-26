@@ -11,7 +11,7 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
    */
   construct(workResultJson) {
     super();
-    this.setExplicitUuid(this.constructor.getUuid(workResultJson));
+    this.setExplicitUuid(zx.server.work.ui.model.WorkResult.getUuid(workResultJson));
     if (workResultJson) {
       this.__update(workResultJson);
     }
