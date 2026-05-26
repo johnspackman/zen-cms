@@ -125,8 +125,11 @@ qx.Class.define("zx.server.work.WorkResult", {
       this.__logStream = fs.createWriteStream(logFilePath);
       this.__logOutput = "";
       await fs.promises.writeFile(path.join(this.__workdir, "work.json"), JSON.stringify(jsonWork, null, 2));
+      let started = new Date();
       this.__workStatus = {
-        started: new Date(),
+        started: started,
+        startedTime: started.getTime(), //This is required because when dates are serialized to the client, they preserve the date/time values but not the time zone,
+        //but we care about the exact time point when this was started.
         completed: null,
         logFile: path.resolve(logFilePath)
       };
