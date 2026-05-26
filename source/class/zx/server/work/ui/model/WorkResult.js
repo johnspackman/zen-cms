@@ -150,7 +150,7 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
      * @returns {string} The UUID to assign to a work result based on its workJson
      */
     getUuid(workResultJson) {
-      return workResultJson.workJson.uuid + "/" + workResultJson.workStatus.started.getTime();
+      return workResultJson.workJson.uuid + "/" + workResultJson.workStatus.startedTime;
     }
   },
   members: {
