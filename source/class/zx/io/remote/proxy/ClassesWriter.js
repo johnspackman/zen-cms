@@ -124,7 +124,11 @@ qx.Class.define("zx.io.remote.proxy.ClassesWriter", {
       return true;
     },
 
-    /**@override interface qx.tool.compiler.ISourceTransformer */
+    /**
+     * @override interface qx.tool.compiler.ISourceTransformer
+     * @param {qx.tool.compiler.Controller.SourceInfo}
+     * @returns {string}
+     */
     transform(sourceInfo) {
       return this.generateProxy(sourceInfo.classname);
     },
