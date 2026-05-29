@@ -18,6 +18,9 @@
 qx.Class.define("zx.reports.table.Table", {
   extend: zx.reports.Group,
 
+  /**
+   * @type {string[]}
+   */
   construct(...captions) {
     super();
     this.__captions = captions;
@@ -32,6 +35,10 @@ qx.Class.define("zx.reports.table.Table", {
   },
 
   members: {
+    /**
+     * @type {string[]}
+     */
+    __captions: null,
     /**
      * @override
      */
