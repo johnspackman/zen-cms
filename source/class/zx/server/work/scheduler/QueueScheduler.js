@@ -353,10 +353,10 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
      * NOTE: ATM, this only works when the scheduler and and pool are running in the same process and thread!
      *
      * @param {string} workUuid
-     * @param {boolean} fullData If true, the full WorkResultJson is returned, otherwise WorkResultJsonMin is returned.
+     * @param {boolean} includeLogs If true, the full WorkResultJson is returned, otherwise WorkResultJsonMin is returned.
      * @returns {Promise<zx.server.work.WorkResult.WorkResultJsonMin|zx.server.work.WorkResult.WorkResultJson|null>}
      */
-    async getRunningWorkResult(workUuid, fullData = false) {
+    async getRunningWorkResult(workUuid, includeLogs = false) {
       let running = this.__running[workUuid];
       if (!running) {
         return null;
@@ -364,13 +364,13 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
       let poolInfo = this.__poolsByUuid[running.pool.uuid];
       let transport = zx.io.api.ApiUtils.getClientTransport();
       let api = zx.io.api.ApiUtils.createClientApi(zx.server.work.pools.IWorkerPoolApi, transport, poolInfo.apiPath);
-      let poolDescription = await api.getDescriptionJson();
+      let poolDescription = await api.getDescriptionJson(includeLogs);
       api.dispose();
       let tracker = poolDescription.runningWorkerTrackers.find(tracker => tracker.workResult.workJson.uuid === workUuid);
       if (!tracker?.workResult) {
         return null;
       }
-      return fullData ? tracker.workResult : this.__minifyWorkResult(tracker.workResult);
+      return tracker.workResult;
     },
 
     /**
