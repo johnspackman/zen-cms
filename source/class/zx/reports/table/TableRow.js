@@ -131,6 +131,17 @@ qx.Class.define("zx.reports.table.TableRow", {
         }
       }
       return cells;
+    },
+
+    /**
+     * @Override
+     */
+    toString() {
+      let str = super.toString();
+      if (!str) {
+        str = "TableRow";
+      }
+      return str;
     }
   }
 });

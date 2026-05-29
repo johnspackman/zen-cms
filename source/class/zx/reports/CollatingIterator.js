@@ -264,6 +264,10 @@ qx.Class.define("zx.reports.CollatingIterator", {
       await this.__datasource.open();
       while (await this.__datasource.next()) {
         let row = this.__datasource.current();
+        let desc = row.toString();
+        if (desc) {
+          row.$$desc = row.toString();
+        }
         let currentData = rootData;
         for (let groupIndex = 0; groupIndex < groupInfos.length; groupIndex++) {
           let groupInfo = groupInfos[groupIndex];
@@ -285,6 +289,10 @@ qx.Class.define("zx.reports.CollatingIterator", {
                 value: groupInfo.getValue(row),
                 valueUuid
               };
+              let desc = groupInfo.group.toString();
+              if (desc) {
+                groupDataStack[groupIndex].$$desc = desc;
+              }
               if (groupIndex > 0) {
                 let parentGroupData = groupDataStack[groupIndex - 1];
                 if (!parentGroupData.children) {
