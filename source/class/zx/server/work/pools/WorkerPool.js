@@ -447,14 +447,18 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
       delete this.__runningWorkTrackers[uuid];
     },
 
-    /**@override */
-    getDescriptionJson() {
+    /**
+     * @override
+     * @param {boolean?false} includeLogs
+     * @returns {Promise<zx.server.work.pools.IWorkerPoolApi.WorkerPoolDescription>}
+     */
+    getDescriptionJson(includeLogs = false) {
       return {
         uuid: this.toUuid(),
         title: this.classname, //for now
         classname: this.classname,
         apiPath: this.getApiPath(),
-        runningWorkerTrackers: Object.values(this.__runningWorkTrackers).map(workerTracker => workerTracker.getDescriptionJson())
+        runningWorkerTrackers: Object.values(this.__runningWorkTrackers).map(workerTracker => workerTracker.getDescriptionJson(includeLogs))
       };
     },
 

@@ -27,7 +27,7 @@ const path = require("path");
  * @typedef DescriptionJson
  * @property {string} uuid
  * @property {string} status
- * @property {zx.server.work.WorkResult.Description?} workResult
+ * @property {(zx.server.work.WorkResult.WorkResultJson | zx.server.work.WorkResult.WorkResultJsonMin)?} workResult
  * @property {Date?} lastActivity
  */
 qx.Class.define("zx.server.work.WorkerTracker", {
@@ -590,10 +590,11 @@ qx.Class.define("zx.server.work.WorkerTracker", {
 
     /**
      *
+     * @param {boolean} includeLogs whether to include the logs of the work results (this will result in a lot of data being returned, so be careful!)
      * @returns {DescriptionJson}
      */
-    getDescriptionJson() {
-      let workResult = this.__workResult?.serializeForScheduler();
+    getDescriptionJson(includeLogs = false) {
+      let workResult = this.__workResult?.getDescriptionJson(includeLogs);
       if (workResult && !workResult.workStatus) {
         //we don't care about it if it has no work status, because we only care about work results that have started.
         workResult = null;

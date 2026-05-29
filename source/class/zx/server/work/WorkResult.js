@@ -31,14 +31,13 @@ const path = require("path");
  * @typedef WorkResultJson
  * @property {zx.server.work.IWork.WorkJson} workJson the JSON for the work, as passed to `zx.server.work.Worker.run`
  * @property {WorkStatus} workStatus the status of the work, as written to disk
- * @property {String} log the contents of the log file, as written to disk
+ * @property {String} log the contents of the log file, as written to disk.
+ * @property {String} logLength the length of the log output
  * @property {zx.server.work.IWorkerApi.WorkResponse} response
  *
  * @typedef WorkResultJsonMin A minified version of WorkResultJson. Does not contain the log because it can be very large.
- * @property {zx.server.work.IWork.WorkJson} workJson the JSON for the work, as passed to `zx.server.work.Worker.run`
- * @property {WorkStatus} workStatus the status of the work, as written to disk
- * @property {String} logLength the length of the log output
- * @property {zx.server.work.IWorkerApi.WorkResponse} response
+ * @extends WorkResultJson
+ * @property {undefined} log the log is not included in this version of the JSON
  */
 qx.Class.define("zx.server.work.WorkResult", {
   extend: qx.core.Object,
@@ -139,14 +138,24 @@ qx.Class.define("zx.server.work.WorkResult", {
 
     /**
      * Serializes the WorkResult ready to send back to the Scheduler
-     * @returns {Promise<WorkResultJson>}
+     * @returns {WorkResultJson}
      *
      */
     serializeForScheduler() {
+      return this.getDescriptionJson(true);
+    },
+
+    /**
+     *
+     * @param {boolean?false} includeLogs whether to include the logs of the work results (this will result in a lot of data being returned, so be careful!)
+     * @returns {WorkResultJson | WorkResultJsonMin}
+     */
+    getDescriptionJson(includeLogs = false) {
       return {
         workJson: this.__workJson,
         workStatus: this.__workStatus,
-        log: this.__logOutput ?? "",
+        log: includeLogs ? this.__logOutput ?? "" : undefined,
+        logLength: this.__logOutput ? this.__logOutput.length : 0,
         response: this.__response
       };
     },
