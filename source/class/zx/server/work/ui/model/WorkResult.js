@@ -16,7 +16,7 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
       this.__update(workResultJson);
     }
 
-    this.__debounceUpdateLog = new qx.util.Debounce(() => this.__updateLogImpl(), 0).set({ onRunning: "queue" });
+    this.__debounceUpdateLog = new zx.server.work.ui.util.Debounce(() => this.__updateLogImpl(), 0).set({ onRunning: "queue" });
   },
   properties: {
     /**
