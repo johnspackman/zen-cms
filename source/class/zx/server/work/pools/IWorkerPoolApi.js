@@ -5,7 +5,7 @@
 qx.Interface.define("zx.server.work.pools.IWorkerPoolApi", {
   members: {
     /**
-     *
+     * @param {boolean?false} includeLogs Whether to include logs in the description JSON.
      * @returns {Promise<WorkerPoolDescription>} Information about all the current work that is running
      *
      * @typedef PoolInfo
@@ -16,7 +16,7 @@ qx.Interface.define("zx.server.work.pools.IWorkerPoolApi", {
      * @typedef WorkerPoolDescription @extends PoolInfo
      * @property {zx.server.work.WorkerTracker.DescriptionJson[]} runningWorkerTrackers
      */
-    async getDescriptionJson() {},
+    async getDescriptionJson(includeLogs = false) {},
 
     /**
      *

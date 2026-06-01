@@ -35,22 +35,20 @@ qx.Class.define("zx.server.email.FlushQueue", {
         clearQueue = true;
       }
       let emailsCollection = await zx.server.Standalone.getInstance().getDb().getCollection("zx.server.email.Message");
-      worker.appendWorkLog("Got emails collection.");
-
       let emailsCursor = await emailsCollection.find({ lastErrorMessage: null, dateDelivered: null });
-      worker.appendWorkLog("Got emails cursor.");
 
       let sentUuids = [];
 
-      //we will set this to true if any email fails to send
-      let error = false;
+      const alert = message => {
+        worker.appendWorkLog(message);
+        zx.server.email.AlertEmail.getInstance().alert("Error sending email", message);
+      };
 
       for await (let emailJson of emailsCursor) {
         let email = await zx.server.Standalone.getInstance()
           .findOneObjectByType(zx.server.email.Message, { _uuid: emailJson._uuid }, false)
           .catch(e => {
-            worker.appendWorkLog(`Error getting email as ZX server Object ${emailJson._uuid}: ${e}. Skipping...`);
-            error = true;
+            alert(`Error getting email as ZX server Object ${emailJson._uuid}: ${e}.`);
             return null;
           });
 
@@ -65,7 +63,7 @@ qx.Class.define("zx.server.email.FlushQueue", {
           worker.appendWorkLog(`Email ${email.toUuid()} sent successfully`);
           sentUuids.push(email.toUuid());
         } catch (e) {
-          error = true;
+          alert(`Error sending email ${email.toUuid()}: ${e}.`);
         }
         email.removeListenerById(listener);
         worker.appendWorkLog(`After sending email ${email.toUuid()}.`);
@@ -77,10 +75,6 @@ qx.Class.define("zx.server.email.FlushQueue", {
         await server.deleteObjectsByType(zx.server.email.Message, { _id: { $in: sentUuids } });
       }
       worker.appendWorkLog("Email queue flushed");
-
-      if (error) {
-        throw new Error("Some emails failed to send, see logs for details");
-      }
     },
     /**@override*/
     async abort(worker) {}

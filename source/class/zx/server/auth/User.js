@@ -126,7 +126,8 @@ qx.Class.define("zx.server.auth.User", {
       init: false,
       check: "Boolean",
       nullable: false,
-      "@": [zx.io.persistence.anno.Property.DEFAULT, zx.io.remote.anno.Property.PROTECTED]
+      "@": [zx.io.persistence.anno.Property.DEFAULT, zx.io.remote.anno.Property.PROTECTED],
+      event: "changeVirtual"
     }
   },
 
