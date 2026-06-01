@@ -106,7 +106,7 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
      * The length of the log output that the server reports.
      *
      * When we call __update, we get the length of the log that the server has.
-     * If we call updateLog, and this.__logLength > this.__hasLogLength (i.e. we need to download some new log messages),
+     * If we call updateLog, and this.logLength > this.__hasLogLength (i.e. we need to download some new log messages),
      * we download the new log messages from the server,
      * and then we update this.__hasLogLength.
      * Note: To save memory and CPU, we don't store the full log (it's limited to 1000 characters).
@@ -114,7 +114,7 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
      * they don't represent the full length of the log we have.
      *
      */
-    __logLength: {
+    logLength: {
       check: "Integer",
       init: -1,
       event: "changeLogLength"
@@ -193,22 +193,22 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
         scheduler: zx.server.work.ui.model.Scheduler.get(workResultJson.schedulerId ?? "scheduler") // for now, we assume that there is only one scheduler
       });
 
-      this.__logLength = workResultJson.logLength;
+      this.setLogLength(workResultJson.logLength);
     },
 
     async __updateLogImpl() {
-      if (this.__logLength == this.__hasLogLength) return;
+      if (this.getLogLength() == this.__hasLogLength) return;
 
       const MAX_LENGTH = 10000;
       //ensure we only download just enough data that fits inside MAX_LENGTH
-      if (this.__logLength - this.__hasLogLength > MAX_LENGTH) {
-        this.__hasLogLength = this.__logLength - MAX_LENGTH;
+      if (this.getLogLength() - this.__hasLogLength > MAX_LENGTH) {
+        this.__hasLogLength = this.getLogLength() - MAX_LENGTH;
       }
-      let newData = await this.getScheduler().getApi().getWorkLog(this.toUuid(), this.__hasLogLength, this.__logLength);
+      let newData = await this.getScheduler().getApi().getWorkLog(this.toUuid(), this.__hasLogLength, this.getLogLength());
       if (!newData) return; //if it's null, this means that the task isn't running anymore
       let newLog = this.getLogOutput() + newData;
       this.setLogOutput(newLog.substring(newLog.length - MAX_LENGTH, newLog.length));
-      this.__hasLogLength = this.__logLength;
+      this.__hasLogLength = this.getLogLength();
     },
 
     async kill() {
