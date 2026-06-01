@@ -47,7 +47,7 @@ qx.Mixin.define("zx.utils.mongo.MMongoClient", {
      * @returns {*}
      */
     unescapeMapKeys(json) {
-      if (json && qx.lang.Type.isObject(json) && !qx.lang.Type.isArray(json)) {
+      if (json && qx.lang.Type.isPojo(json) && !qx.lang.Type.isArray(json)) {
         let result = {};
         for (let key in json) {
           let unescapedKey = zx.utils.mongo.MMongoClient.unescapeMapKey(key);
