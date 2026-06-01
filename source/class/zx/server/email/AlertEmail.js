@@ -48,7 +48,7 @@ qx.Class.define("zx.server.email.AlertEmail", {
      * @param {string} text Full text or message of the alert
      */
     alert(title, text) {
-      const config = zx.server.Config.getInstance().getConfigData();
+      let config = zx.server.Config.getInstance().getConfigData();
       if (!config.alertsEmail) {
         this.warn("Alerts email not set, cannot send alert email with title: " + title);
         return;
