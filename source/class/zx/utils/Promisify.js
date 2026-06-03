@@ -32,6 +32,9 @@ qx.Class.define("zx.utils.Promisify", {
         if (this.IGNORED_PROPS.test(key) || (fn && fn(key, target) === false)) {
           return;
         }
+        if (key == "R_OK" || key == "F_OK" || key == "W_OK" || key == "X_OK") {
+          return;
+        }
         if (typeof target[key] !== "function") {
           return;
         }
