@@ -28,6 +28,21 @@ const child_process = require("child_process");
 qx.Class.define("zx.utils.ChildProcess", {
   extend: qx.core.Object,
 
+  /**
+   *
+   * @param {string?} command Value for the `command` property
+   * @param {Array?} args Value for the `args` property
+   */
+  construct(command, args) {
+    super();
+    if (command) {
+      this.setCommand(command);
+      if (args) {
+        this.setArguments(args);
+      }
+    }
+  },
+
   properties: {
     /** Command to execute - this is just the process executable name, @see `arguments` property for command line arguments */
     command: {
@@ -95,19 +110,22 @@ qx.Class.define("zx.utils.ChildProcess", {
   },
 
   members: {
-    /** @type{child_process.ChildProcess|null} the child process */
+    /** @type {child_process.ChildProcess|null} the child process */
     __process: null,
 
-    /** @type{qx.Promise|null} promise that resolves/rejects when the process terminates */
+    /**
+     * @type {qx.Promise<number>|null} promise that resolves/rejects when the process terminates.
+     * Its value is the exit code of the process
+     */
     __processPromise: null,
 
-    /** @type{String|null} collected output (if `collectOutput` is true) */
+    /** @type {String|null} collected output (if `collectOutput` is true) */
     __output: null,
 
     /**
      * Starts the process
      */
-    async start() {
+    start() {
       if (this.__process) {
         throw new Error("Process is already running");
       }
@@ -125,7 +143,7 @@ qx.Class.define("zx.utils.ChildProcess", {
 
       proc.stdout.on("data", data => this.__onConsole(data.toString(), "stdout"));
       proc.stderr.on("data", data => this.__onConsole(data.toString(), "stderr"));
-      proc.on("close", ({ exitCode, signal }) => this.__onProcessTerminate(exitCode, signal));
+      proc.on("close", (exitCode, signal) => this.__onProcessTerminate(exitCode, signal));
       proc.on("error", err => this.__onProcessError(err));
       this.__process = proc;
       this.fireDataEvent("onStart", proc.pid);
@@ -194,7 +212,7 @@ qx.Class.define("zx.utils.ChildProcess", {
       if (!signal) {
         signal = "SIGTERM";
       }
-      const psTree = qx.utils.Promisify.promisify(require("ps-tree"));
+      const psTree = qx.tool.utils.Promisify.promisify(require("ps-tree"));
       let childProcesses = await psTree(this.__process.pid);
       for (let childProcess of childProcesses) {
         try {

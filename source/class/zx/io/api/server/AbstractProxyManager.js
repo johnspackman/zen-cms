@@ -29,6 +29,25 @@ qx.Class.define("zx.io.api.server.AbstractProxyManager", {
      * @returns {Promise<boolean>} True if the request was handled by this proxy, false if not.
      */
     async processRequest(request, response) {
+      //If our environment supports a web server, and the web server depends on an external worker pool but it not a pool itself,
+      //and this is a request to the worker pool API, then we need to forward this request to the worker pool server
+      let config = zx.server.Config.getInstance().getConfigData();
+      if (request.getPath().startsWith("/workers/pools/")) {
+        let WebServer = qx.Class.getByName("zx.server.WebServer");
+        if (WebServer) {
+          let Standalone = qx.Class.getByName("zx.server.Standalone");
+          let server = Standalone.getInstance();
+          if (server instanceof WebServer && !server.isExternalWorkerPool() && config.work?.pool.external) {
+            if (!this.__workerPoolServerTransport) {
+              this.__workerPoolServerTransport = new zx.io.api.transport.http.HttpClientTransport(config.work.pool.server);
+            }
+            let transport = this.__workerPoolServerTransport;
+            await transport.sendRequest(request, response);
+            return true;
+          }
+        }
+      }
+
       let forwardTo = request.getHeader("Forward-To");
       if (!forwardTo) {
         return false; // No forwarding header, do nothing

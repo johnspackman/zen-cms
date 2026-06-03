@@ -378,7 +378,7 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
       if (this.getQxObject("pool").available()) {
         let jsonWork = null;
         try {
-          jsonWork = await this.getSchedulerApi().pollForWork({ id: this.classname, uuid: this.toUuid() });
+          jsonWork = await this.getSchedulerApi().pollForWork(this.getDescriptionJson());
         } catch (e) {
           this.debug(`failed to poll for work: ${e}`);
         }
@@ -451,6 +451,7 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
     getDescriptionJson() {
       return {
         uuid: this.toUuid(),
+        title: this.classname, //for now
         classname: this.classname,
         apiPath: this.getApiPath(),
         runningWorkerTrackers: Object.values(this.__runningWorkTrackers).map(workerTracker => workerTracker.getDescriptionJson())

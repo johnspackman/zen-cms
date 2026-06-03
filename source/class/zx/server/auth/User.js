@@ -120,6 +120,17 @@ qx.Class.define("zx.server.auth.User", {
     },
 
     /**
+     * Name of the website this user belongs to.
+     * Useful for multi-homed servers.
+     */
+    websiteName: {
+      init: null,
+      nullable: true,
+      check: "String",
+      "@": [zx.io.persistence.anno.Property.DEFAULT, zx.io.remote.anno.Property.PROTECTED]
+    },
+
+    /**
      * Whether this user is virtual, ie created from remote auth
      */
     virtual: {

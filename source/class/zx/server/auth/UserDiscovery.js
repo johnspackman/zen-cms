@@ -69,14 +69,17 @@ qx.Class.define("zx.server.auth.UserDiscovery", {
     async _getUserFromEmailImpl(email, create) {
       let server = zx.server.Standalone.getInstance();
       let clazz = zx.server.auth.User.getUserClass();
+      let websiteName = zx.server.Config.getInstance().getConfigData().websiteName;
       let user = await server.findOneObjectByType(clazz, {
-        username: email.toLowerCase()
+        username: email.toLowerCase(),
+        websiteName: websiteName
       });
 
       if (!user && create) {
         user = new clazz().set({
           username: email,
-          fullName: ""
+          fullName: "",
+          websiteName
         });
 
         await user.save();

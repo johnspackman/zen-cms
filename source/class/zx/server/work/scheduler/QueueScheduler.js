@@ -87,14 +87,6 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
     __serverApi: null,
 
     /**
-     * Registers a pool with this scheduler.
-     * @param {zx.server.work.pools.IWorkerPoolApi.PoolInfo} pool
-     */
-    addPool(pool) {
-      this.__poolsByUuid[pool.uuid] = pool;
-    },
-
-    /**
      * Starts the scheduler
      */
     async startup() {
@@ -181,6 +173,7 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
       let info = this.__queue.shift();
       info.pool = poolInfo;
       this.__running[info.workJson.uuid] = info;
+      this.__poolsByUuid[poolInfo.uuid] = poolInfo;
       await this.fireDataEventAsync("workStarted", info.workJson);
       return info.workJson;
     },
