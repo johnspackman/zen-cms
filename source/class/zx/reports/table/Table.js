@@ -18,12 +18,27 @@
 qx.Class.define("zx.reports.table.Table", {
   extend: zx.reports.Group,
 
+  /**
+   * @type {string[]}
+   */
   construct(...captions) {
     super();
     this.__captions = captions;
   },
 
+  properties: {
+    cssClass: {
+      init: null,
+      nullable: true,
+      check: "String"
+    }
+  },
+
   members: {
+    /**
+     * @type {string[]}
+     */
+    __captions: null,
     /**
      * @override
      */
@@ -36,7 +51,7 @@ qx.Class.define("zx.reports.table.Table", {
      */
     async executeWrapBody(row, content) {
       return [
-        <table>
+        <table class={this.getCssClass()}>
           <thead>
             <tr>
               {this.__captions.map(caption => (

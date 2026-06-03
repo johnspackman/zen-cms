@@ -64,6 +64,13 @@ qx.Class.define("zx.reports.Block", {
       init: null,
       nullable: true,
       check: "Function"
+    },
+
+    /** Description of the block, used to help debugging */
+    desc: {
+      init: null,
+      nullable: true,
+      check: "String"
     }
   },
 
@@ -256,6 +263,20 @@ qx.Class.define("zx.reports.Block", {
 
       let str = String(block);
       return str;
+    },
+
+    /**
+     * @Override
+     */
+    toString() {
+      let desc = this.getDesc();
+      if (!desc) {
+        desc = this.getValueAccessor();
+        if (typeof desc != "string") {
+          desc = null;
+        }
+      }
+      return desc;
     }
   }
 });
