@@ -52,6 +52,46 @@ qx.Class.define("zx.thin.app.login.LoginForm", {
     login: "qx.event.type.Data"
   },
 
+  objects: {
+    form() {
+      let form = <form method="post" action="#"></form>;
+      form.add(this.getQxObject("edtEmail"));
+      form.add(this.getQxObject("edtPassword"));
+      form.add(this.getQxObject("btnLogin"));
+      form.addListener("submit", evt => evt.preventDefault());
+      return form;
+    },
+
+    edtEmail() {
+      return new zx.thin.ui.form.TextField().set({
+        label: "Email Address",
+        autoCompleteName: "email"
+      });
+    },
+
+    edtPassword() {
+      return new zx.thin.ui.form.TextField().set({
+        label: "Password",
+        autoCompleteName: "password",
+        password: true
+      });
+    },
+
+    btnLogin() {
+      var btn = new zx.thin.ui.form.Button("Login").set({
+        loadingStyle: "ball-clip-rotate-multiple"
+      });
+
+      btn.addListener("execute", async evt => {
+        let email = this.getQxObject("edtEmail").getValue();
+        let password = this.getQxObject("edtPassword").getValue();
+        btn.setLoading(true);
+        this.fireDataEvent("login", { email, password });
+      });
+      return btn;
+    }
+  },
+
   members: {
     setErrorText(message) {
       this.getQxObject("edtPassword").setErrorText(message);
@@ -83,46 +123,6 @@ qx.Class.define("zx.thin.app.login.LoginForm", {
       if (!value) {
         this.reset();
       }
-    },
-
-    _createQxObjectImpl(id) {
-      switch (id) {
-        case "form":
-          let form = <form method="post" action="#"></form>;
-          form.add(this.getQxObject("edtEmail"));
-          form.add(this.getQxObject("edtPassword"));
-          form.add(this.getQxObject("btnLogin"));
-          form.addListener("submit", evt => evt.preventDefault());
-          return form;
-
-        case "edtEmail":
-          return new zx.thin.ui.form.TextField().set({
-            label: "Email Address",
-            autoCompleteName: "email"
-          });
-
-        case "edtPassword":
-          return new zx.thin.ui.form.TextField().set({
-            label: "Password",
-            autoCompleteName: "password",
-            password: true
-          });
-
-        case "btnLogin":
-          var btn = new zx.thin.ui.form.Button("Login").set({
-            loadingStyle: "ball-clip-rotate-multiple"
-          });
-
-          btn.addListener("execute", async evt => {
-            let email = this.getQxObject("edtEmail").getValue();
-            let password = this.getQxObject("edtPassword").getValue();
-            btn.setLoading(true);
-            this.fireDataEvent("login", { email, password });
-          });
-          return btn;
-      }
-
-      return super._createQxObjectImpl(id);
     }
   }
 });

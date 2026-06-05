@@ -40,6 +40,14 @@ qx.Class.define("zx.thin.app.login.LoginController", {
     }
   },
 
+  objects: {
+    loginForm() {
+      let loginForm = new zx.thin.app.login.LoginForm();
+      loginForm.addListener("login", this.__onLogin, this);
+      return loginForm;
+    }
+  },
+
   members: {
     __loginApi: null,
 
@@ -98,17 +106,6 @@ qx.Class.define("zx.thin.app.login.LoginController", {
       let loginForm = this.getQxObject("loginForm");
       loginForm.reset();
       loginForm.show();
-    },
-
-    _createQxObjectImpl(id) {
-      switch (id) {
-        case "loginForm":
-          var form = new zx.thin.app.login.LoginForm();
-          form.addListener("login", this.__onLogin, this);
-          return form;
-      }
-
-      return super._createQxObjectImpl(id);
     }
   },
 
