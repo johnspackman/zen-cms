@@ -661,7 +661,7 @@ qx.Class.define("zx.server.WebServer", {
       }
       this._configureWorkPool(pool);
 
-      await fs.promises.rm(pool.getWorkDir(), { force: true, recursive: true }); //!!
+      await fs.promises.rm(pool.getWorkDir(), { force: true, recursive: true });
       await pool.cleanupOldContainers();
       await pool.startup();
       return pool;
