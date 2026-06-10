@@ -661,7 +661,7 @@ qx.Class.define("zx.server.WebServer", {
       }
       this._configureWorkPool(pool);
 
-      await fs.promises.rm(pool.getWorkDir(), { force: true, recursive: true }); //!!
+      await fs.promises.rm(pool.getWorkDir(), { force: true, recursive: true });
       await pool.cleanupOldContainers();
       await pool.startup();
       return pool;
@@ -988,46 +988,6 @@ qx.Class.define("zx.server.WebServer", {
     async _handleCustomAction(req, reply, customCode) {
       this.error(`No action to perform for customCode ${customCode} for ${req.url}`);
       this.sendErrorPage(req, reply, 404);
-    },
-
-    /**
-     * Attempts to get a hash from a url and appends it to the url as a query string; this
-     * is used in the html layouts so that URLs to files which are generated can include
-     * something to make them unique and cache-busting.  This approach allows long cache
-     * expiry headers to be used (with immutable, where supported) but also guarantees that
-     * changes are seen by the browser.
-     *
-     * @param {String} url
-     * @returns {String} the modified url, or the same url if there is no change to be had
-     */
-    getUrlFileHash(url) {
-      function addHash(filename) {
-        let stat = fs.statSync(filename, { throwIfNoEntry: false });
-        if (!stat) {
-          return url;
-        }
-        let pos = url.indexOf("?");
-        if (pos > -1) {
-          url += "&";
-        } else url += "?";
-        url += stat.mtimeMs;
-        return url;
-      }
-
-      if (url.startsWith("/zx/code/")) {
-        let targets = this._config.targets || {};
-        let tmp = url.substring(9);
-        tmp = zx.server.Config.resolveApp("compiled", targets.browser || "source", tmp);
-        return addHash(tmp);
-      } else if (url.startsWith("/zx/theme/")) {
-        let tmp = url.substring(10);
-        tmp = this._renderer.getTheme().resolveSync(tmp);
-        if (tmp) {
-          return addHash(tmp);
-        }
-      }
-
-      return url;
     },
 
     /**

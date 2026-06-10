@@ -63,19 +63,19 @@ qx.Class.define("zx.server.Standalone", {
   },
 
   members: {
-    /** {zx.server.Config} config */
+    /** @type {zx.server.Config} config */
     _config: null,
 
-    /** {zx.io.persistence.db.Database} the database */
+    /** @type {zx.io.persistence.db.Database} the database */
     _db: null,
 
-    /** {zx.io.persistence.DatabaseController} the database persistance controller */
+    /** @type {zx.io.persistence.DatabaseController} the database persistance controller */
     _dbController: null,
 
-    /** {zx.cms.website.Site} site configuration data */
+    /** @type {zx.cms.website.Site} site configuration data */
     _site: null,
 
-    /** {zx.cms.render.Renderer} the renderer for generating content */
+    /** @type {zx.cms.render.Renderer} the renderer for generating content */
     _renderer: null,
 
     /** Cache Data for object retrieved from the database */
@@ -607,6 +607,50 @@ qx.Class.define("zx.server.Standalone", {
      */
     getRenderer() {
       return this._renderer;
+    },
+    /**
+     * Attempts to get a hash from a url and appends it to the url as a query string; this
+     * is used in the html layouts so that URLs to files which are generated can include
+     * something to make them unique and cache-busting.  This approach allows long cache
+     * expiry headers to be used (with immutable, where supported) but also guarantees that
+     * changes are seen by the browser.
+     *
+     * @param {String} url
+     * @param {String} filename
+     * @returns {String} the modified url, or the same url if there is no change to be had
+     */
+    getUrlFileHash(url, filename) {
+      let stat = fs.statSync(filename, { throwIfNoEntry: false });
+      if (!stat) {
+        return url;
+      }
+      let pos = url.indexOf("?");
+      if (pos > -1) {
+        url += "&";
+      } else url += "?";
+      url += stat.mtimeMs;
+      return url;
+    },
+
+    /**
+     * Resolves a ZX URL to an absolute filename
+     * @param {string} url
+     * @returns {string}
+     */
+    resolveUrl(url) {
+      if (url.startsWith("/zx/code/")) {
+        let targets = this._config.targets || {};
+        let tmp = url.substring("/zx/code/".length);
+        tmp = zx.server.Config.resolveApp("compiled", targets.browser || "source", tmp);
+        return tmp;
+      } else if (url.startsWith("/zx/theme/")) {
+        let tmp = url.substring("/zx/theme/".length);
+        tmp = this._renderer.getTheme().resolveSync(tmp);
+        if (tmp) {
+          return tmp;
+        }
+      }
+      return null;
     }
   },
 
@@ -615,6 +659,7 @@ qx.Class.define("zx.server.Standalone", {
 
     /**
      * Returns the singleton instance
+     * @returns {zx.server.Standalone}
      */
     getInstance() {
       return zx.server.Standalone.__instance;

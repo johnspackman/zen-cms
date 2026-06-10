@@ -57,7 +57,7 @@
   ],
   "defaultTarget": "source",
   "locales": ["en"],
-  "libraries": [".", "../qxl.widgetbrowser", "../UploadMgr"],
+  "libraries": [".", "../UploadMgr"],
   "environment": {
     "qx.icontheme": "Tango",
     "zx.cms.client.theme": "zx.cms.client.theme.Simple",
