@@ -36,6 +36,7 @@ qx.Class.define("zx.io.remote.proxy.ClassesWriter", {
      * @type {qx.tool.compiler.meta.MetaDatabase}
      */
     __metaDb: null,
+    
     /**
      * @type {string}
      * The dot template for generating proxy classes
@@ -126,10 +127,8 @@ qx.Class.define("zx.io.remote.proxy.ClassesWriter", {
 
     /**
      * @override interface qx.tool.compiler.ISourceTransformer
-     * @param {qx.tool.compiler.Controller.SourceInfo}
-     * @returns {string}
      */
-    transform(sourceInfo) {
+    transform(sourceInfo, source) {
       return this.generateProxy(sourceInfo.classname);
     },
 
