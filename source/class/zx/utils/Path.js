@@ -21,7 +21,7 @@
  */
 
 const path = require("path");
-const fs = zx.utils.Promisify.fs;
+const fs = require("fs");
 
 qx.Class.define("zx.utils.Path", {
   extend: qx.core.Object,
@@ -93,15 +93,15 @@ qx.Class.define("zx.utils.Path", {
           made += "/";
         }
         made += segs[i];
-        if (!(await fs.existsAsync(made))) {
+        if (!fs.existsSync(made)) {
           try {
-            await fs.mkdirAsync(made);
+            await fs.promises.mkdir(made);
           } catch (err) {
             if (err.code !== "EEXIST") {
               throw err;
             }
           }
-          let stat = await fs.statAsync(made);
+          let stat = await fs.promises.stat(made);
           if (!stat.isDirectory()) {
             throw new Error("Cannot create " + made + " because it exists and is not a directory", "ENOENT");
           }

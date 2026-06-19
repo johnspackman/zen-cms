@@ -15,7 +15,7 @@
  *
  * ************************************************************************ */
 
-const fs = zx.utils.Promisify.fs;
+const fs = require("fs");
 const path = require("path");
 
 /**

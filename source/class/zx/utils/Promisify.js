@@ -426,8 +426,6 @@ qx.Class.define("zx.utils.Promisify", {
       return promise;
     },
 
-    fs: null,
-
     each(coll, fn) {
       return zx.utils.Promisify.eachOf(coll, fn);
     },
@@ -462,20 +460,6 @@ qx.Class.define("zx.utils.Promisify", {
         return qx.Promise.resolve(result).then(next);
       }
       return next();
-    }
-  },
-
-  /**
-   * @ignore(require)
-   */
-  defer(statics) {
-    if (typeof require == "function") {
-      statics.fs = statics.promisifyAll(require("fs"), function (key, fs) {
-        return key !== "SyncWriteStream" && key != "exists";
-      });
-      statics.fs.existsAsync = filename => {
-        return new qx.Promise(resolve => statics.fs.exists(filename, resolve));
-      };
     }
   }
 });

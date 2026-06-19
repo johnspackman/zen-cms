@@ -15,7 +15,7 @@
  *
  * ************************************************************************ */
 
-const fs = zx.utils.Promisify.fs;
+const fs = require("fs");
 
 qx.Class.define("zx.test.io.remote.TestPropertyChanges", {
   extend: qx.dev.unit.TestCase,

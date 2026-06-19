@@ -17,6 +17,7 @@
  * ************************************************************************ */
 
 const path = require("path");
+
 /**
  * Abstract class for server-side API
  * Implement methods here that can be called from the client

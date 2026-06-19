@@ -15,7 +15,7 @@
  *
  * ************************************************************************ */
 
-const fs = zx.utils.Promisify.fs;
+const fs = require("fs");
 const path = require("path");
 
 /**
@@ -73,7 +73,7 @@ qx.Class.define("zx.cms.render.Controller", {
       } else arrPaths = [vcp + "/" + name + ".html", cp + "/" + name + ".html"];
       for (var i = 0; i < arrPaths.length; i++) {
         let filename = zx.server.Config.RESOURCE_DIR + arrPaths[i];
-        if (await fs.existsAsync(filename)) {
+        if (fs.existsSync(filename)) {
           return new zx.cms.render.FileTemplate(filename, this.getViewableClass().classname, name);
         }
       }

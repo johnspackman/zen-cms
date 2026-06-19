@@ -32,49 +32,45 @@ qx.Class.define("zx.io.remote.proxy.ClassesWriter", {
   },
 
   members: {
-    /**
-     * @type {qx.tool.compiler.meta.MetaDatabase}
-     */
-    __metaDb: null,
-    
-    /**
-     * @type {string}
-     * The dot template for generating proxy classes
-     */
+    /** @type {qx.tool.compiler.meta.IShadowMetaDatabaseApi} */
+    __shadowMetaApi: null,
+
+    /** @type {String} The dot template for generating proxy classes */
     __template: "",
 
     /**
      *
-     * @param {qx.tool.compiler.meta.MetaDatabase} metaDb
      */
-    async init(metaDb) {
-      this.__metaDb = metaDb;
+    async initialise(metaDb) {
+      let shadowMetaApi = qx.tool.worker.WorkerServer.getThisServerInstance().getApi(qx.tool.compiler.meta.IShadowMetaDatabaseApi);
+      this.__shadowMetaApi = shadowMetaApi;
       let fname = qx.util.ResourceManager.getInstance().toUri("zx/io/remote/proxy/ProxyClass.tmpl");
       this.__template = await fs.promises.readFile(fname, "utf8");
     },
 
     /**
-     *
-     * @returns {string}
+     * Returns the dot template for generating proxy classes
+     * @returns {String}
      */
     getTemplate() {
       return this.__template;
     },
 
     /**
-     * @override interface qx.tool.compiler.ISourceTransformer
-     * @param {qx.tool.compiler.Controller.SourceInfo} sourceInfo
+     * @Override
      */
     shouldTransform(sourceInfo) {
       return this.shouldBeProxied(sourceInfo.classname);
     },
 
     /**
+     * Determines whether the given class should be proxied, based on whether it implements zx.io.remote.IProxied and any annotations
+     *
      * @param {string} classname
      * @returns {boolean} Whether this class should be proxied
      */
     shouldBeProxied(classname) {
-      let meta = this.__metaDb.getMetaData(classname);
+      let meta = this.__shadowMetaApi.getMetaData(classname);
 
       /**
        *
@@ -86,7 +82,7 @@ qx.Class.define("zx.io.remote.proxy.ClassesWriter", {
         let out = [];
         while (queue.length > 0) {
           let current = queue.shift();
-          let meta = this.__metaDb.getMetaData(current);
+          let meta = this.__shadowMetaApi.getMetaData(current);
           if (!meta) {
             continue;
           }
@@ -126,19 +122,20 @@ qx.Class.define("zx.io.remote.proxy.ClassesWriter", {
     },
 
     /**
-     * @override interface qx.tool.compiler.ISourceTransformer
+     * @Override interface qx.tool.compiler.ISourceTransformer
      */
     transform(sourceInfo, source) {
       return this.generateProxy(sourceInfo.classname);
     },
 
     /**
+     * Generates the proxy class for the given classname
      *
      * @param {string} classname
      * @returns {string} The resulting source
      */
     generateProxy(classname) {
-      let writer = new zx.io.remote.proxy.ClassWriter(this, classname, this.__metaDb);
+      let writer = new zx.io.remote.proxy.ClassWriter(this, classname, this.__shadowMetaApi);
       let str = writer.getProxyClassCode();
       return str;
     }

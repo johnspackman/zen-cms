@@ -21,7 +21,7 @@
 
 /* eslint-disable @qooxdoo/qx/no-illegal-private-usage */
 
-const fs = zx.utils.Promisify.fs;
+const fs = require("fs");
 const path = require("upath");
 
 /* global loadSass */
@@ -110,8 +110,8 @@ qx.Class.define("zx.cms.util.ScssFile", {
               return;
             }
 
-            fs.writeFileAsync(outputFilename, result.css.toString(), "utf8")
-              .then(() => fs.writeFileAsync(outputFilename + ".map", result.map.toString(), "utf8"))
+            fs.promises.writeFile(outputFilename, result.css.toString(), "utf8")
+              .then(() => fs.promises.writeFile(outputFilename + ".map", result.map.toString(), "utf8"))
               .then(() => resolve(null))
               .catch(reject);
           }
@@ -267,7 +267,7 @@ qx.Class.define("zx.cms.util.ScssFile", {
         return qx.Promise.resolve(this.__sourceFiles[absFilename]);
       }
 
-      let contents = await fs.readFileAsync(absFilename, "utf8");
+      let contents = await fs.promises.readFile(absFilename, "utf8");
       let promises = [];
       contents = contents.replace(/@import\s+["']([^;]+)["']/gi, (match, p1, offset) => {
         let pathInfo = this._analyseFilename(p1, absFilename);

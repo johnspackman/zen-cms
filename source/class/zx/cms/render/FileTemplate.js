@@ -15,7 +15,7 @@
  *
  * ************************************************************************ */
 
-const fs = zx.utils.Promisify.fs;
+const fs = require("fs");
 const path = require("path");
 
 /**
@@ -36,7 +36,7 @@ qx.Class.define("zx.cms.render.FileTemplate", {
      * @Override
      */
     async getSource() {
-      return await fs.readFileAsync(this.__filename, "utf8");
+      return await fs.promises.readFile(this.__filename, "utf8");
     },
 
     /*

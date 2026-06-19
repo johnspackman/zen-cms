@@ -15,7 +15,7 @@
  *
  * ************************************************************************ */
 
-const fs = zx.utils.Promisify.fs;
+const fs = require("fs");
 const path = require("path");
 
 /**
@@ -57,7 +57,7 @@ qx.Class.define("zx.io.persistence.db.FileDatabase", {
         };
       }
       if (!fs.existsSync(path.join(this.__rootDir, "_uuids"))) {
-        await fs.mkdirAsync(path.join(this.__rootDir, "_uuids"));
+        await fs.promises.mkdir(path.join(this.__rootDir, "_uuids"));
       }
       return await super.open();
     },
@@ -99,7 +99,7 @@ qx.Class.define("zx.io.persistence.db.FileDatabase", {
       const filename = path.join(this.__rootDir, indexData.filename);
       let mtime = null;
       try {
-        let stat = await fs.statAsync(filename);
+        let stat = await fs.promises.stat(filename);
         mtime = stat.mtime;
       } catch (ex) {
         throw new Error(`Cannot find data for uuid ${uuid}: ${ex}`);
@@ -114,7 +114,7 @@ qx.Class.define("zx.io.persistence.db.FileDatabase", {
         json: data,
         mtime: mtime,
         async isStale() {
-          let stat = await fs.statSync(filename, { throwIfNoEntry: false });
+          let stat = await fs.promises.stat(filename, { throwIfNoEntry: false });
           // File has been deleted
           if (!stat) {
             return true;
@@ -152,7 +152,7 @@ qx.Class.define("zx.io.persistence.db.FileDatabase", {
         this.error("Cannot delete UUID because it does not exist");
         return false;
       }
-      await fs.unlinkAsync(path.join(this.__rootDir, indexData.filename));
+      await fs.promises.unlink(path.join(this.__rootDir, indexData.filename));
       delete this._db.ids[uuid];
       delete this._db.idFromFilename[indexData.filename];
       return true;

@@ -233,7 +233,7 @@ qx.Class.define("zx.server.Standalone", {
       switch (database.type || "null") {
         case "nedb":
           let dbDir = config.resolve(database.nedb?.directory || "_cms/db/nedb");
-          isNewDatabase = !(await fs.exists(dbDir));
+          isNewDatabase = !(fs.existsSync(dbDir));
 
           await fs.ensureDir(dbDir);
           this._db = new zx.io.persistence.db.NedbDatabase(dbDir);

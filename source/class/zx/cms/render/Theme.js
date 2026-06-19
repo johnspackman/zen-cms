@@ -15,7 +15,7 @@
  *
  * ************************************************************************ */
 
-const fs = zx.utils.Promisify.fs;
+const fs = require("fs");
 const path = require("path");
 const chokidar = require("chokidar");
 const glob = require("glob").sync;
@@ -83,7 +83,7 @@ qx.Class.define("zx.cms.render.Theme", {
       }
 
       for (let i = 0; i < arrPaths.length; i++) {
-        if (await fs.existsAsync(arrPaths[i])) {
+        if (fs.existsSync(arrPaths[i])) {
           return new zx.cms.render.FileTemplate(arrPaths[i], ctlr.getViewableClass().classname, name);
         }
       }
@@ -99,11 +99,11 @@ qx.Class.define("zx.cms.render.Theme", {
      */
     async resolve(filename) {
       let tmp = path.join(this.__localDir, filename);
-      if (await fs.existsAsync(tmp)) {
+      if (fs.existsSync(tmp)) {
         return tmp;
       }
       tmp = path.join(this.__resourceDir, filename);
-      if (await fs.existsAsync(tmp)) {
+      if (fs.existsSync(tmp)) {
         return tmp;
       }
       return null;

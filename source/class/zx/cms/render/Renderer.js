@@ -15,7 +15,7 @@
  *
  * ************************************************************************ */
 
-const fs = zx.utils.Promisify.fs;
+const fs = require("fs");
 
 /**
  * Implements the rendering of objects for the middleware
@@ -204,7 +204,7 @@ qx.Class.define("zx.cms.render.Renderer", {
      */
     async resolveSystemPage(name) {
       let filename = zx.server.Config.getInstance().resolveApp("system-pages", name);
-      if (await fs.existsAsync(filename)) {
+      if (fs.existsSync(filename)) {
         return filename;
       }
 
@@ -214,7 +214,7 @@ qx.Class.define("zx.cms.render.Renderer", {
       }
 
       filename = zx.server.Config.RESOURCE_DIR + "zx/cms/system-pages/" + name;
-      if (await fs.existsAsync(filename)) {
+      if (fs.existsSync(filename)) {
         return filename;
       }
 

@@ -15,7 +15,7 @@
  *
  * ************************************************************************ */
 
-const fs = zx.utils.Promisify.fs;
+const fs = require("fs");
 
 /**
  * @ignore(BigNumber)
@@ -210,10 +210,10 @@ qx.Class.define("zx.utils.Json", {
      * @return {Object|null} the parsed contents, or null if the file does not exist
      */
     async loadJsonAsync(filename) {
-      if (!(await fs.existsAsync(filename))) {
+      if (!fs.existsSync(filename)) {
         return null;
       }
-      let data = await fs.readFileAsync(filename, "utf8");
+      let data = await fs.promises.readFile(filename, "utf8");
       try {
         return zx.utils.Json.parseJson(data);
       } catch (ex) {
@@ -229,9 +229,9 @@ qx.Class.define("zx.utils.Json", {
      */
     async saveJsonAsync(filename, data) {
       if (data !== null) {
-        await fs.writeFileAsync(filename, JSON.stringify(data, null, 2), "utf8");
-      } else if (await fs.existsAsync(filename)) {
-        fs.unlinkAsync(filename);
+        await fs.promises.writeFile(filename, JSON.stringify(data, null, 2), "utf8");
+      } else if (fs.existsSync(filename)) {
+        await fs.promises.unlink(filename);
       }
     }
   }
