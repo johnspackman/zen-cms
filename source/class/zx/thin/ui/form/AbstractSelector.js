@@ -64,7 +64,8 @@ qx.Class.define("zx.thin.ui.form.AbstractSelector", {
     value: {
       init: false,
       check: "Boolean",
-      apply: "_applyValue"
+      apply: "_applyValue",
+      event: "changeValue"
     }
   },
 
