@@ -18,7 +18,9 @@
 qx.Class.define("zx.server.HttpError", {
   extend: Error,
 
-  construct(msg) {
+  construct(msg, statusCode, statusMessage) {
     Error.apply(this, msg);
+    this.statusCode = statusCode;
+    this.statusMessage = statusMessage;
   }
 });

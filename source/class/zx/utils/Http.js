@@ -1,21 +1,22 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 const http = require("http");
+const https = require("https");
 
 /**
  * Helper method for HTTP requests
@@ -41,7 +42,7 @@ qx.Class.define("zx.utils.Http", {
      * @returns {HttpResult?}
      */
     async httpGet(url, headers) {
-      return await this.__simpleRequest("GET", url, headers);
+      return await this.httpRequest("GET", url, headers);
     },
 
     /**
@@ -54,7 +55,7 @@ qx.Class.define("zx.utils.Http", {
      * @returns {HttpResult?}
      */
     async httpPost(url, headers, body) {
-      return await this.__simpleRequest("POST", url, headers, body);
+      return await this.httpRequest("POST", url, headers, body);
     },
 
     /**
@@ -67,7 +68,7 @@ qx.Class.define("zx.utils.Http", {
      * @paran {String} body
      * @returns {HttpResult?}
      */
-    async __simpleRequest(method, url, headers, body) {
+    async httpRequest(method, url, headers, body) {
       return new Promise((resolve, reject) => {
         let options = {
           method,
@@ -96,7 +97,7 @@ qx.Class.define("zx.utils.Http", {
           let responseBody = "";
           let contentType = response.headers["content-type"];
           if (hasResponseFailed) {
-            reject(`Request to ${response.url} failed with HTTP ${response.statusCode}`);
+            reject(new zx.utils.Http.HttpError(response.statusCode, response.statusMessage));
           }
 
           response.on("data", chunk => (responseBody += chunk.toString()));
@@ -109,7 +110,12 @@ qx.Class.define("zx.utils.Http", {
           });
         };
 
-        let req = http.request(url, options, callback);
+        let req;
+        if (url.startsWith("https://")) {
+          req = https.request(url, options, callback);
+        } else {
+          req = http.request(url, options, callback);
+        }
         req.on("error", reject);
         if (body) {
           req.write(body);
