@@ -51,13 +51,15 @@ qx.Class.define("zx.io.api.server.Request", {
   properties: {
     /**
      * @public get
-     * @private set
+     * @private set Do not set this manually
      */
     type: {
       check: ["callMethod", "subscribe", "poll", "unsubscribe"],
       init: null
     },
     /**
+     * @public get
+     * @private set Do not set this manually
      * The raw data received from the transport
      * Only valid when the request is a REST request
      */
@@ -68,7 +70,7 @@ qx.Class.define("zx.io.api.server.Request", {
     },
     /**
      * @public get
-     * @private set
+     * @private set Do not set this manually
      * The transport that created this request
      */
     transport: {
@@ -91,7 +93,7 @@ qx.Class.define("zx.io.api.server.Request", {
 
     /**
      * @public get
-     * @private set
+     * @private set Do not set this manually
      * If this request is part of a session, this property will be set to the session object
      */
     session: {
@@ -102,7 +104,7 @@ qx.Class.define("zx.io.api.server.Request", {
 
     /**
      * @public get
-     * @private set
+     * @private set Do not set this manually
      * @type {zx.io.api.IHeaders}
      */
     headers: {
@@ -112,7 +114,7 @@ qx.Class.define("zx.io.api.server.Request", {
     /**
      * @type {zx.io.api.IRequestJson.IBody | string}
      * @public get
-     * @private set
+     * @private set Do not set this manually
      */
     body: {
       init: null,
@@ -122,6 +124,7 @@ qx.Class.define("zx.io.api.server.Request", {
     /**
      * A key-value map representing the query string of the request
      * For HTTP requests, this is the query string in the URL
+     * This should be set by the server transport when creating the request object
      */
     query: {
       check: "Object",

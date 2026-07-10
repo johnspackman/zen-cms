@@ -99,8 +99,7 @@ qx.Class.define("zx.io.api.server.Response", {
     },
 
     /**
-     * @returns {zx.io.api.IResponseJson | Object} A native object representing the data of this response
-     
+     * @returns {zx.io.api.IResponseJson | Object} A native object representing the data of this respons
      */
     toNativeObject() {
       //If the request is from REST (i.e. not from a client API),

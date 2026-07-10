@@ -15,8 +15,6 @@
  *
  * ************************************************************************ */
 
-const fs = require("fs");
-
 /**
  * @ignore(BigNumber)
  * @use(zx.utils.BigNumber)
@@ -210,6 +208,7 @@ qx.Class.define("zx.utils.Json", {
      * @return {Object|null} the parsed contents, or null if the file does not exist
      */
     async loadJsonAsync(filename) {
+      const fs = require("fs");
       if (!fs.existsSync(filename)) {
         return null;
       }
@@ -228,6 +227,7 @@ qx.Class.define("zx.utils.Json", {
      * @param data {Object|null} the data to write. If null, remove the file
      */
     async saveJsonAsync(filename, data) {
+      const fs = require("fs");
       if (data !== null) {
         await fs.promises.writeFile(filename, JSON.stringify(data, null, 2), "utf8");
       } else if (fs.existsSync(filename)) {

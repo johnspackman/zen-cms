@@ -62,8 +62,12 @@ qx.Class.define("zx.cms.render.Renderer", {
     /**
      * Renders an object to the response
      *
-     * @param rendering {zx.cms.render.IRendering} the rendering transport
-     * @param viewable {IViewable} the viewable object
+     * @param {zx.cms.render.IRendering} rendering the rendering transport
+     * @param {IViewable} viewable the viewable object
+     * @returns {Promise<Info>} an object containing rendering information
+     *
+     * @typedef {Object} Info
+     * @property {Object<string, string>} dependencies a map of client paths to absolute filenames that were used during rendering
      */
     async renderViewable(rendering, viewable) {
       let ctlr = zx.cms.render.Controller.getController(viewable);
@@ -83,6 +87,14 @@ qx.Class.define("zx.cms.render.Renderer", {
 
       let user = await rendering.getUser();
       let userAgent = rendering.getHeader("user-agent");
+
+      let dependencies = {};
+      const filehash = filename => {
+        let absPath = server.resolveUrl(filename);
+        let hash = server.getUrlFileHash(filename, absPath);
+        dependencies[filename] = absPath;
+        return hash;
+      };
       let context = {
         parentContext: null,
         parent: null,
@@ -103,10 +115,10 @@ qx.Class.define("zx.cms.render.Renderer", {
             navigation: []
           },
 
-          filehash: filename => server.getUrlFileHash(filename),
+          filehash,
           browser: {
-            name: qx.bom.client.Browser.detectName(userAgent).replace(/ /g, "-"),
-            deviceType: qx.bom.client.Device.detectDeviceType(userAgent)
+            name: userAgent ? qx.bom.client.Browser.detectName(userAgent).replace(/ /g, "-") : null,
+            deviceType: userAgent ? qx.bom.client.Device.detectDeviceType(userAgent) : null
           }
         }
       };
@@ -138,6 +150,7 @@ qx.Class.define("zx.cms.render.Renderer", {
         return;
       }
       await view.render(rendering, viewable, context);
+      return { dependencies };
     },
 
     /**
