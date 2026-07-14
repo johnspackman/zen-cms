@@ -279,6 +279,9 @@ qx.Class.define("zx.server.Standalone", {
           for (let i = 0; i < impDirs.length; i++) {
             let impDir = impDirs[i];
             let tmp = impDir + "/pages/index.json";
+
+            // If there is a resource (which means that impDir is something like "zx/db/template") then 
+            //  we need to convert it into a real path 
             let matched = qx.util.ResourceManager.getInstance().toUri(tmp);
             if (matched != tmp) {
               impDir = matched.substring(0, matched.length - 17);

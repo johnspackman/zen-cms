@@ -61,25 +61,21 @@ qx.Class.define("zx.io.persistence.db.ImportExport", {
             await scan(path.join(dir, file.name), fileUrl);
             continue;
           }
-          if (!file.isFile() || !file.name.endsWith(".json")) {
+          let extension = path.extname(file.name);
+          if (!file.isFile() || extension != ".json") {
             continue;
           }
 
-          let name = file.name.substring(0, file.name.length - 5);
+          let name = file.name.substring(0, file.name.length - extension.length);
           let fileUrl = (url.length ? url + "/" : "") + name;
 
           let filename = path.join(this.__rootDir, url, file.name);
           let data = await fs.readFile(filename, { encoding: "utf8" });
           data = data.trim();
           if (!data.length) {
-            let clazz = qx.Class.getByName(json._classname);
-            if (!clazz) {
-              this.error(`Cannot find class ${json._classname}`);
-              continue;
-            }
-            let current = this.__db.findOne(clazz, { websiteName, url: json.url });
+            let current = this.__db.findOne("zx.cms.content.Page", { websiteName, url: fileUrl });
             if (current) {
-              await this.__db.removeByUuid(clazz, json._uuid);
+              await this.__db.removeByUuid(current._classname, current._uuid);
             }
           } else {
             let json;
@@ -88,6 +84,17 @@ qx.Class.define("zx.io.persistence.db.ImportExport", {
             } catch (ex) {
               this.error(`Cannot parse JSON in ${filename}: ${ex}`);
               continue;
+            }
+
+            let htmlFilename = path.join(this.__rootDir, url, name + ".html");
+            if (fs.existsSync(htmlFilename)) {
+              let html = await fs.readFile(htmlFilename, { encoding: "utf8" });
+              json.pieces = [
+                {
+                  "_classname": "zx.cms.content.ContentPiece",
+                  "content": html
+                }
+              ];
             }
 
             if (json.url && json.url.toLowerCase() != fileUrl.toLowerCase()) {
@@ -124,6 +131,10 @@ qx.Class.define("zx.io.persistence.db.ImportExport", {
       await scan(this.__rootDir, "");
       await this.__db.flush();
       await this.__db.save();
+    },
+
+    async _importJson(json, url) {
+
     },
 
     /**
