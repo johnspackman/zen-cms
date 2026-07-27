@@ -416,7 +416,9 @@ qx.Class.define("zx.server.WebServer", {
 
       app.register(require("@fastify/formbody"));
       app.decorateReply("json", function (payload) {
-        this.code(200).header("Content-Type", "application/json; charset=utf-8").send(JSON.stringify(payload, null, 2));
+        this.code(200)
+          .header("Content-Type", "application/json; charset=utf-8")
+          .send(JSON.stringify(payload, null, 2));
         return this;
       });
       app.decorateReply("text", function (payload) {
@@ -468,6 +470,13 @@ qx.Class.define("zx.server.WebServer", {
         root: zx.server.Config.resolveApp("compiled", targets.browser || "source"),
         prefix: "/zx/code"
       });
+      if (targets.thin) {
+        app.register(fastifyStatic, {
+          root: zx.server.Config.resolveApp("compiled", targets.thin),
+          prefix: "/zx/thin",
+          decorateReply: false
+        });
+      }
 
       app.register(fastifyStatic, {
         root: zx.server.Config.resolveApp("node_modules/medium-editor/dist"),

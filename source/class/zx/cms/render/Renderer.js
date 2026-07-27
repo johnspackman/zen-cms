@@ -91,9 +91,12 @@ qx.Class.define("zx.cms.render.Renderer", {
       let dependencies = {};
       const filehash = filename => {
         let absPath = server.resolveUrl(filename);
-        let hash = server.getUrlFileHash(filename, absPath);
-        dependencies[filename] = absPath;
-        return hash;
+        if (absPath) {
+          let hash = server.getUrlFileHash(filename, absPath);
+          dependencies[filename] = absPath;
+          return hash;
+        }
+        return filename;
       };
       let context = {
         parentContext: null,
