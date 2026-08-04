@@ -469,7 +469,16 @@ qx.Class.define("zx.server.Standalone", {
       }
 
       if (create) {
-        let object = new clazz().set(properties);
+        let object = new clazz();
+        if (properties) {
+          for (let key in properties) {
+            if (key == "_uuid") {
+              object.setExplicitUuid(properties._uuid);
+            } else {
+              object[`set${qx.lang.String.firstUp(key)}`](properties[key]);
+            }
+          }
+        }
         await object.save();
         return object;
       }
