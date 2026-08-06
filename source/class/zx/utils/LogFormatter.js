@@ -9,7 +9,7 @@ qx.Class.define("zx.utils.LogFormatter", {
       var breakdown = this.normalizeEntryClass(entry);
       var result = "";
       if (breakdown.clazz) {
-        let classname = breakdown.clazz.classname;
+        let classname = breakdown.clazz.classname || breakdown.clazz.mixinName;
         let segs = classname.split(".");
         classname = segs.pop();
         classname = segs.map(seg => seg[0]).join(".") + "." + classname;
