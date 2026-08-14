@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 const http = require("http");
 
@@ -74,9 +74,17 @@ qx.Class.define("zx.utils.Http", {
           headers: headers || {}
         };
 
+        let match = url.match(/^http:\/\/([^/]+)(.*)$/);
+        if (match) {
+          options.hostname = match[1];
+          options.path = match[2];
+        } else {
+          options.path = url;
+        }
+
         if (body) {
           if (typeof body != "string") {
-            body = JSON.stringify(body, null, 2);
+            body = zx.utils.Json.stringifyJson(body, null, 2);
             if (!options.headers["Content-Type"]) {
               options.headers["Content-Type"] = "application/json";
             }
@@ -102,14 +110,14 @@ qx.Class.define("zx.utils.Http", {
           response.on("data", chunk => (responseBody += chunk.toString()));
           response.on("end", () => {
             if (contentType && contentType.match(/^application\/json/)) {
-              responseBody = JSON.parse(responseBody);
+              responseBody = zx.utils.Json.parseJson(responseBody);
             }
             httpResult.body = responseBody;
             resolve(httpResult);
           });
         };
 
-        let req = http.request(url, options, callback);
+        let req = http.request(options, callback);
         req.on("error", reject);
         if (body) {
           req.write(body);

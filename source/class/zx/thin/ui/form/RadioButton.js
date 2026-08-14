@@ -73,10 +73,10 @@ qx.Class.define("zx.thin.ui.form.RadioButton", {
           return wid;
 
         case "outer":
-          return <div className="qx-radio-outer"></div>;
+          return <div class="qx-radio-outer"></div>;
 
         case "inner":
-          return <div className="qx-radio-inner"></div>;
+          return <div class="qx-radio-inner"></div>;
       }
 
       return super._createQxObjectImpl(id);

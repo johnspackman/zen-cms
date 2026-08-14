@@ -9,6 +9,9 @@ $colorLabel: rgba(0, 0, 0, 0.6) !default;
 $colorInputBg: #f5f5f5 !default;
 $colorInputBorder: rgba(0, 0, 0, 0.42) !default;
 $colorInputBorderHover: black !default;
+$colorInputSelected: $colorLabelFocus !default;
+
+$sizeSelectorHeight: 40px !default;
 
 body {
   font-family: "Roboto", sans-serif;
@@ -138,8 +141,10 @@ body {
   }
 
   &.qx-button-contained {
-    box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2),
-      0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+    box-shadow:
+      0px 3px 1px -2px rgba(0, 0, 0, 0.2),
+      0px 2px 2px 0px rgba(0, 0, 0, 0.14),
+      0px 1px 5px 0px rgba(0, 0, 0, 0.12);
     background-color: $colorBannerBg;
     color: $colorTextInverse;
 
@@ -148,7 +153,8 @@ body {
     }
 
     &:hover {
-      box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.2),
+      box-shadow:
+        0px 2px 4px -1px rgba(0, 0, 0, 0.2),
         0px 4px 5px 0px rgba(0, 0, 0, 0.14),
         0px 1px 10px 0px rgba(0, 0, 0, 0.12);
     }
@@ -289,7 +295,7 @@ body {
   @extend .qx-form-field;
 
   position: relative;
-  height: 40px;
+  height: $sizeSelectorHeight;
 
   input {
     visibility: hidden;
@@ -310,8 +316,8 @@ body {
       -moz-appearance: none;
       -webkit-appearance: none;
       visibility: visible;
-      border: 18px solid $colorBannerBg;
-      border-radius: 24px;
+      border: 10px solid $colorBannerBg;
+      border-radius: 14px;
       width: 10px;
       height: 10px;
       display: inline-block;
@@ -341,7 +347,7 @@ body {
     svg {
       stroke: white;
       stroke-width: 3px;
-      background-color: blue;
+      background-color: $colorInputSelected;
     }
   }
 }
@@ -352,7 +358,7 @@ body {
   .qx-radio-outer {
     width: 14px;
     height: 14px;
-    border: 2px solid blue;
+    border: 2px solid $colorInputSelected;
     border-radius: 20px;
     top: 12px;
     left: 12px;
@@ -363,8 +369,8 @@ body {
     position: absolute;
     width: 6px;
     height: 6px;
-    border: 1px solid blue;
-    background-color: blue;
+    border: 1px solid $colorInputSelected;
+    background-color: $colorInputSelected;
     border-radius: 10px;
     top: 17px;
     left: 17px;
@@ -376,8 +382,8 @@ body {
   }
   &.qx-widget-focus {
     input {
-      top: 3px;
-      left: 3px;
+      top: -2px;
+      left: 6px;
     }
   }
 }
@@ -393,8 +399,10 @@ body {
     top: 12px;
     right: 24px;
     background-color: white;
-    box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2),
-      0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+    box-shadow:
+      0px 3px 1px -2px rgba(0, 0, 0, 0.2),
+      0px 2px 2px 0px rgba(0, 0, 0, 0.14),
+      0px 1px 5px 0px rgba(0, 0, 0, 0.12);
   }
   .qx-switch-track {
     width: 30px;

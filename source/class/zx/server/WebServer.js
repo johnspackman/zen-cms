@@ -468,15 +468,17 @@ qx.Class.define("zx.server.WebServer", {
       let targets = this._config.targets || {};
       app.register(fastifyStatic, {
         root: zx.server.Config.resolveApp("compiled", targets.browser || "source"),
-        prefix: "/zx/code"
+        prefix: "/zx/code",
+        allowedPath: (pathName, root, request) => {
+          console.log(`testing allowedPath: pathName=${pathName}, root=${root}, url=${request.url}`);
+          return true;
+        }
       });
-      if (targets.thin) {
-        app.register(fastifyStatic, {
-          root: zx.server.Config.resolveApp("compiled", targets.thin),
-          prefix: "/zx/thin",
-          decorateReply: false
-        });
-      }
+      app.register(fastifyStatic, {
+        root: zx.server.Config.resolveApp("compiled", targets.thin || "source-thin"),
+        prefix: "/zx/thin",
+        decorateReply: false
+      });
 
       app.register(fastifyStatic, {
         root: zx.server.Config.resolveApp("node_modules/medium-editor/dist"),

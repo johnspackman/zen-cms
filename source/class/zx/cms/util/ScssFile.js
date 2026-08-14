@@ -269,18 +269,18 @@ qx.Class.define("zx.cms.util.ScssFile", {
 
       let contents = await fs.promises.readFile(absFilename, "utf8");
       let promises = [];
-      contents = contents.replace(/@import\s+["']([^;]+)["']/gi, (match, p1, offset) => {
-        let pathInfo = this._analyseFilename(p1, absFilename);
+      contents = contents.replace(/@(import|use)\s+["']([^;]+)["']/gi, (match, importOrUse, importPath, offset) => {
+        let pathInfo = this._analyseFilename(importPath, absFilename);
         if (!pathInfo) {
-          this.error(`Cannot find file to import, url=${p1} in file ${absFilename}`);
+          this.error(`Cannot find file to import, url=${importPath} in file ${absFilename}`);
           return null;
         }
         if (pathInfo.filename) {
           promises.push(this.loadSource(pathInfo.filename));
-          return '@import "' + path.relative(process.cwd(), pathInfo.filename) + '"';
+          return `@${importOrUse} "` + path.relative(process.cwd(), pathInfo.filename) + '"';
         }
         if (pathInfo.externalUrl) {
-          return '@import "' + pathInfo.externalUrl + '"';
+          return `@${importOrUse} "` + pathInfo.externalUrl + '"';
         }
         return match;
       });
