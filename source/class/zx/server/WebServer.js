@@ -470,7 +470,7 @@ qx.Class.define("zx.server.WebServer", {
         root: zx.server.Config.resolveApp("compiled", targets.browser || "source"),
         prefix: "/zx/code",
         allowedPath: (pathName, root, request) => {
-          console.log(`testing allowedPath: pathName=${pathName}, root=${root}, url=${request.url}`);
+          //console.log(`testing allowedPath: pathName=${pathName}, root=${root}, url=${request.url}`);
           return true;
         }
       });
@@ -573,7 +573,6 @@ qx.Class.define("zx.server.WebServer", {
         this.error("No work configuration found in cms.json");
         return;
       }
-      await zx.server.email.FlushQueue.createTask();
 
       let cm = zx.io.api.server.ConnectionManager.getInstance();
 
