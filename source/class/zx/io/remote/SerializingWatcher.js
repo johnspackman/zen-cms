@@ -99,9 +99,10 @@ qx.Class.define("zx.io.remote.SerializingWatcher", {
             let value = io.toJsonValue(info.endpoints, evt.getTarget(), propertyDef, propertyPath);
             return zx.utils.Promisify.resolveNow(value, value => this._onSerializedPropertyChange(object, propertyName, "arrayReplace", value));
           } else {
+            let start = data.start;
             return allToJsonValueNow(data.removed, removed => {
               return allToJsonValueNow(data.added, added => {
-                let data = {};
+                let data = { start };
                 if (removed.length) {
                   data.removed = removed;
                 }

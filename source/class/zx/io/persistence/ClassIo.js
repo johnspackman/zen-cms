@@ -661,9 +661,10 @@ qx.Class.define("zx.io.persistence.ClassIo", {
               let value = this.toJsonValue(endpoint, evt.getTarget(), propertyDef, propertyPath);
               return zx.utils.Promisify.resolveNow(value, value => callback(obj, propertyName, "arrayReplace", value));
             } else {
+              let start = data.start;
               return allToJsonValueNow(data.removed, removed => {
                 return allToJsonValueNow(data.added, added => {
-                  let data = {};
+                  let data = { start };
                   if (removed.length) {
                     data.removed = removed;
                   }
@@ -817,7 +818,7 @@ qx.Class.define("zx.io.persistence.ClassIo", {
         if (store.arrayChange[propertyName] === undefined) {
           store.arrayChange[propertyName] = [];
         }
-        store.arrayChange[propertyName].push({ added: value.added, removed: value.removed });
+        store.arrayChange[propertyName].push({ start: value.start, added: value.added, removed: value.removed });
 
         if (store.setValue !== undefined) {
           delete store.setValue[propertyName];
@@ -881,6 +882,32 @@ qx.Class.define("zx.io.persistence.ClassIo", {
     },
 
     /**
+     * Finds an item removed on the other side. Values which are not qooxdoo objects arrive as new
+     * instances and are matched by value; of several equal values the one nearest to `start` wins,
+     * because `start` is not reliable for every change (eg qx.data.Array#pop)
+     *
+     * @param {qx.data.Array} array the local array
+     * @param {*} item the removed item, as deserialized
+     * @param {Integer?} start index of the change on the other side, `null` if unknown
+     * @return {Integer} index in `array`, -1 if not found
+     */
+    __indexOfRemoved(array, item, start) {
+      if (item instanceof qx.core.Object) {
+        return array.indexOf(item);
+      }
+      let found = -1;
+      array.forEach((candidate, index) => {
+        if (candidate instanceof qx.core.Object || !qx.lang.Object.equals(candidate, item)) {
+          return;
+        }
+        if (found < 0 || (start !== null && Math.abs(index - start) < Math.abs(found - start))) {
+          found = index;
+        }
+      });
+      return found;
+    },
+
+    /**
      * Sets a property value as received from the network
      *
      * @param {*zx.io.remote.NetworkEndpoint} endpoint
@@ -906,8 +933,17 @@ qx.Class.define("zx.io.persistence.ClassIo", {
             return zx.utils.Promisify.resolveNow(removed, removed => {
               return zx.utils.Promisify.resolveNow(added, added => {
                 let array = obj["get" + qx.lang.String.firstUp(propertyName)]();
-                removed.forEach(item => array.remove(item));
-                added.forEach(item => array.push(item));
+                let start = qx.lang.Type.isNumber(value.start) ? value.start : null;
+                removed.forEach(item => {
+                  let index = this.__indexOfRemoved(array, item, start);
+                  if (index > -1) {
+                    array.removeAt(index);
+                  }
+                });
+                if (added.length) {
+                  let index = start === null ? array.getLength() : Math.min(start, array.getLength());
+                  array.splice(index, 0, ...added);
+                }
               });
             });
           });
