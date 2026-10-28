@@ -279,7 +279,7 @@ qx.Class.define("zx.io.remote.BrowserXhrEndpoint", {
           console.log && console.log("Sending to server: " + body);
         }
 
-        let bodyAsString = zx.utils.Json.stringifyJson(body, 2);
+        let bodyAsString = zx.utils.Json.stringifyJson(body);
         if (qx.core.Environment.get("qx.debug")) {
           headers["X-Zx-Io-Remote-SHA1"] = zx.utils.Sha.sha1(bodyAsString);
         }
