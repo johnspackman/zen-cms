@@ -17,6 +17,7 @@
 
 /**
  * @ignore(BigNumber)
+ * @ignore(BigInt)
  * @use(zx.utils.BigNumber)
  */
 qx.Class.define("zx.utils.Json", {
@@ -25,10 +26,10 @@ qx.Class.define("zx.utils.Json", {
     __JSON_SUFFIX: "]]",
 
     /**
-     * Parses JSON string into an object, taking care of Dates and BigNumbers encoded by stringifyJson()
+     * Parses JSON string into an object, taking care of Dates, BigNumbers and BigInts encoded by stringifyJson()
      *
      * @param str {String} the data to parse
-     * @param reviver {Function?} optional reviver function
+     * @param reviver {Function?} optional reviver function; it receives the already decoded value
      * @return {Object}
      *
      * @todo similar to qx.tool.cli.commands.Command.parseJsonFile()
@@ -39,7 +40,10 @@ qx.Class.define("zx.utils.Json", {
       }
 
       try {
-        let result = JSON.parse(str, (key, value) => zx.utils.Json.decodeJsonValue(value));
+        let result = JSON.parse(str, function (key, value) {
+          value = zx.utils.Json.decodeJsonValue(value);
+          return typeof reviver == "function" ? reviver.call(this, key, value) : value;
+        });
         return result;
       } catch (ex) {
         qx.log.Logger.error("============= failed to parse:\n" + str + "\n======================\nException: " + (ex.stack || ex));
@@ -48,24 +52,26 @@ qx.Class.define("zx.utils.Json", {
     },
 
     /**
-     * Converts a POJO to a JSON string, encoding dates and BigNumbers
+     * Converts a POJO to a JSON string, encoding dates, BigNumbers and BigInts
      *
      * @param {Object} obj
-     * @param {Function?} replacer
+     * @param {Function?} replacer optional replacer function; it receives the value before it is encoded
      * @param {Number?} space
      * @returns {String}
      */
     stringifyJson(obj, replacer, space) {
-      function replacer(key, value) {
-        return zx.utils.Json.encodeJsonValue(this[key]);
+      // `this[key]` instead of `value`, because `value` has already been through `toJSON` (eg Date)
+      function encode(key) {
+        let value = typeof replacer == "function" ? replacer.call(this, key, this[key]) : this[key];
+        return zx.utils.Json.encodeJsonValue(value);
       }
 
-      var result = JSON.stringify(obj, replacer, space);
+      var result = JSON.stringify(obj, encode, space);
       return result;
     },
 
     /**
-     * Encodes a value to a string, specially encoding dates and BigNumbers
+     * Encodes a value to a string, specially encoding dates, BigNumbers and BigInts
      *
      * @param {*} value
      * @returns {string}
@@ -78,13 +84,15 @@ qx.Class.define("zx.utils.Json", {
         value = PREFIX + "Date(" + zx.utils.Dates.formatISO(value) + ")" + SUFFIX;
       } else if (value instanceof BigNumber) {
         value = PREFIX + "BigNumber(" + value + ")" + SUFFIX;
+      } else if (typeof value == "bigint") {
+        value = PREFIX + "BigInt(" + value + ")" + SUFFIX;
       }
 
       return value;
     },
 
     /**
-     * Decodes a value from a string, specially decoding dates and BigNumbers
+     * Decodes a value from a string, specially decoding dates, BigNumbers and BigInts
      * @param {string} value
      * @returns {*}
      */
@@ -102,6 +110,9 @@ qx.Class.define("zx.utils.Json", {
 
           case "BigNumber":
             return new BigNumber(argumentStr);
+
+          case "BigInt":
+            return BigInt(argumentStr);
         }
       }
 

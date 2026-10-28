@@ -605,7 +605,7 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
           }
           return value;
         }
-        const TYPEOF_PRIMITIVES = { string: 1, number: 1, boolean: 1 };
+        const TYPEOF_PRIMITIVES = { string: 1, number: 1, boolean: 1, bigint: 1 };
         if (controller.isCompatibleObject(value)) {
           let uuid = value.toUuid();
           if (!uuid || !this.hasObject(uuid)) {
