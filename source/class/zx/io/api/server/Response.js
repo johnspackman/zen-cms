@@ -22,6 +22,7 @@
  */
 qx.Class.define("zx.io.api.server.Response", {
   extend: qx.core.Object,
+
   /**
    *
    * @param {zx.io.api.server.Request?} request
@@ -36,6 +37,7 @@ qx.Class.define("zx.io.api.server.Response", {
     }
     this.setRequest(request);
   },
+
   properties: {
     /**
      * @readonly
@@ -60,7 +62,7 @@ qx.Class.define("zx.io.api.server.Response", {
      * General error.
      * E.g. proxy exception, etc.
      */
-    error: {
+    errorMessage: {
       init: null,
       nullable: true,
       check: "String"
@@ -114,7 +116,7 @@ qx.Class.define("zx.io.api.server.Response", {
       } else {
         return {
           data: this.__data,
-          error: this.getError()
+          errorMessage: this.getErrorMessage()
         };
       }
     }

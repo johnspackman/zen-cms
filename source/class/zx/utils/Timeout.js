@@ -199,7 +199,8 @@ qx.Class.define("zx.utils.Timeout", {
      * @returns
      */
     async sleep(duration) {
-      return new Promise(resolve => setTimeout(resolve, duration));
+      let promise = new Promise(resolve => setTimeout(resolve, duration));
+      await promise;
     }
   }
 });
