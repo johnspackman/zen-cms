@@ -264,7 +264,7 @@ qx.Class.define("zx.utils.Dates", {
     },
 
     /**
-     * Parses an ISO date time
+     * Parses an ISO date time in UTC, as written by `formatISO`
      * @param str {String} the string to parse
      * @return Date the date, or null if str was null
      */
@@ -285,30 +285,13 @@ qx.Class.define("zx.utils.Dates", {
         seconds = parseInt(m[6], 10),
         millis = parseInt(m[7], 10);
 
-      var dt = new Date(year, month, day, hours, minutes, seconds, millis);
+      // `formatISO` writes the UTC fields, so they must be read back as UTC and not as local time
+      var dt = new Date(Date.UTC(year, month, day, hours, minutes, seconds, millis));
       if (isNaN(dt.getYear())) {
         qx.log.Logger.warn("Could not parse date: str=" + str + ", m=" + JSON.stringify(m) + ", values=" + JSON.stringify([year, month, day, hours, minutes, seconds, millis]));
 
         return null;
       }
-      /*
-      Becaused Javascript is so unbelievably broken, all timezone information is ignored.
-      When we work on the server, we tell node that the timezone is UTC+0, and when we work on the browser,
-      we delete timezone information so that it is treated as UTC+0.
-
-      This means that in summer time, the date is correct *provided that you ignore the time zone*
-
-      var offset = dt.getTimezoneOffset();
-      if (offset != 0) {
-        dt = new Date(year, month, day, hours, minutes - offset, seconds, millis);
-
-        if (isNaN(dt.getYear())) {
-          qx.log.Logger.warn("Could not change date offset: str=" + str + ", offset=" + offset + ", m=" + JSON.stringify(m));
-
-          return null;
-        }
-      }
-      */
       return dt;
     },
 
