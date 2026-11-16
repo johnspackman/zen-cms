@@ -91,6 +91,7 @@ qx.Class.define("zx.server.Standalone", {
       if (qx.core.Environment.get("qx.debug")) {
         zx.test.TestRunner.runAll(zx.test.util.LruCache);
         zx.test.TestRunner.runAll(zx.test.util.Spreadsheet);
+        zx.test.TestRunner.runAll(zx.test.util.Dates);
       }
       this._config = await zx.server.Config.getConfig();
       await this._enableHeapDumps();
