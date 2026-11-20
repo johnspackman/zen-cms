@@ -27,6 +27,7 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
    * middleware. The result of this middleware is largely the same as `bodyParser.json()`, however it additionally
    * supports communicating certain classes, such as `Date`s, through JSON. See {@link zx.utils.Json} for details on
    * the additional classes supported.
+   *
    * @param {import("express").Express} app - the express instance to connect to.
    * @param {string} route - the route to listen on. Should not contain wildcards or pattern matches.
    */
@@ -44,9 +45,12 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
      * @type {string}
      */
     __route: null,
+
     postMessage() {},
 
-    /**@override */
+    /**
+     * @Override
+     */
     supportsServerPush() {
       return false;
     },
@@ -54,7 +58,7 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
     /**
      *
      * @param {import("express").Request} req
-     * @param {import("express").Respone} res
+     * @param {import("express").Response} res
      * @returns
      */
     async __serveRequest(req, res) {

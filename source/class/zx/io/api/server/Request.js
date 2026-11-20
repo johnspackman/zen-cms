@@ -59,6 +59,7 @@ qx.Class.define("zx.io.api.server.Request", {
       check: ["callMethod", "subscribe", "poll", "unsubscribe"],
       init: null
     },
+
     /**
      * The raw data received from the transport
      * Only valid when the request is a REST request
@@ -68,6 +69,7 @@ qx.Class.define("zx.io.api.server.Request", {
       init: null,
       event: "changeData"
     },
+
     /**
      * @public get
      * @private set
